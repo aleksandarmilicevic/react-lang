@@ -1,0 +1,80 @@
+keywords = context, record, whenever, every, on,
+           event, guard, handler, action, invariant,
+           new, true, false, return, if, else, while, trigger
+           
+separators = , . : ; ( ) [ ] { } = < > >= <= + - * / && || 
+
+type ::= bool, int, string (UTF8), nat?, bitvectors?
+
+formals ::=
+          | formals1
+formals1 ::= ident : type
+           | ident : type, formals1
+
+named_formals ::=
+                | ident : ident : type : literal  named_formals
+
+var_modifiers ::= 
+                | public
+                | active
+                | public active
+
+lhs := ident
+     | lhs.ident
+     | lhs[expr]
+
+stmnt_lst ::= stmnt
+            | stmnt; stmnt_lst
+
+stmnt ::= nop
+        | { stmnt_lst }
+        | if (expr) stmnt else stmnt
+        | while (expr) stmnt
+        | return expr
+        | trigger expr
+        | var ident: type ← expr
+        | val ident: type ← expr
+        | lhs ← expr
+        | expr
+
+args ::= 
+       | args1
+args1 ::= expr
+        | expr, args1
+
+named_args ::=
+             | ident : expr  named_args
+
+literal ::= int_literal
+          | float_literal
+          | string_literal
+          | bool_literal
+
+unop ::= -
+
+binop ::= + | - | * | / | %
+        | ∨ | ∧ | ¬ | = | ≠
+        | > | < | ≤ | ≥ | xor ?
+
+expr ::= lhs
+       | unop expr
+       | expr binop expr
+       | ( expr )
+       | new ident ( args )
+       | lhs( args )
+       | lhs named_args
+       | literal
+
+ctx_body ::= whenever ( expr ) stmnt
+           | every ( int_literal ) stmnt 
+           | on ident stmnt
+           | invariant expr
+           | var_modifiers ident: type = expr
+           | action ident named_formals stmnt
+
+rcd ::= record ident [ formals ]
+
+evt ::= event ident [ formals ] { guard expr handler stmnt }
+
+ctx ::= context ident [ formals ] { ctx_body }
+

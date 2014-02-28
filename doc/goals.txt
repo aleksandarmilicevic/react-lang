@@ -1,0 +1,14 @@
+Application domain
+------------------
+-simple and cheap robots
+-educational purpose
+-easy to learn
+
+Target audience
+---------------
+People without much technical background. The language should hide the messy stuff and make it easy to program the robots (and reason about the programs).
+
+Use case
+--------
+3 quadcopters flying around without colliding (and we can prove it)
+

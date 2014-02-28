@@ -1,0 +1,12 @@
+Which technology do we pick to implement the DSL ?
+
+-Python + PLY (lex-yacc): already in Python, lots of stuff to do manually, easy to get other people contribute
+-Scala+LMS: do a lot of stuff for free (typing etc), has C backend (but not yet python), not many peple around know Scala
+
+Scala+LMS
+---------
+http://scala-lms.github.io/
+https://github.com/TiarkRompf/virtualization-lms-core
+some tutorial/examples:
+-https://github.com/js-scala/js-scala
+-https://github.com/julienrf/lms-tutorial/wiki

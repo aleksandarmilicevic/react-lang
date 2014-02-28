@@ -1,0 +1,21 @@
+context Headbanger {
+	banging = 0
+	bangSpeed = 0
+
+	action bangHead! forTime:dur:5000 withEnthusiasm:enth {
+		banging = Clock.time + dur
+		bangSpeed = enth
+	}
+	whenever (banging > Clock.time) {
+		#spinhead(bangSpeed)
+	}
+}
+context Main {
+	on Main:enter {
+		Headbanger.enter!
+		Headbanger.bangHead! withEnthusiasm:10 forTime:10000
+	}
+	every (20000) {
+		Headbanger.bangHead! withEnthusiasm:20
+	}
+}

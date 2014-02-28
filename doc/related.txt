@@ -1,0 +1,26 @@
+Related work
+------------
+
+Some references, some of them are things we should avoid rather than copy.
+
+Language for robotics:
+    RoboForth,
+    RoboC,
+    WPI Robotics Library,
+    RoboLab,
+    EasyC,
+    NXT-G,
+    ...
+
+Synchronous language:
+    Esterel,
+    Lustre,
+    ...
+
+State-based language:
+    Statecharts,
+    ...
+
+Real-time Language:
+    Giotto (Labview),
+    ... 

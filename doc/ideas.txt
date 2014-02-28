@@ -1,0 +1,41 @@
+Language strucuture:
+-what are the link between the physical world and language abstractions:
+    -contexts corresponds to robots (or parts of robots)
+    -do we allow a more global view (swarm/formation) ?
+-do we need both events and function calls ? (yes or distinction between sync/async)
+-interface of context, event declaration
+-context: how to we enter/leave them?, execute in parallel, sequentially ?
+-states within context (each state can define its own event handler, context provide default one) ?
+-mapping input to events, output events ? (ghost machine)
+-deterministic concurrency (what about concurrent events ??) do we really want reproducibility if there is no way of getting twice the same env ?
+
+Doing something different:
+-rather than imperative: transition as a relation over primed and unprimed variables. set of directed/stratified/linear equations ?
+-noisy environement ? reasoning -> do we go toward probabilistic guarantees ?
+-I doubt the average user will care about verification for the sake of verification, what else can we offer him ?
+-The URDF files contains a physical description of the robots: parts, dimensions, connections, joints. Can we use that ?
+...
+
+Language constructs:
+-predefined events: on Enter, on Exit, on Error, ...
+-queuing of event (avoiding oveflow with idempotent events) ?
+-catch for exceptions (division by 0, out-of-memory, user-defined, ...) within function or as event ?
+-extension/inheritance/inclusion/renaming/nesting ?
+-sensor pull vs push ? elegant syntax to pull inputs
+-escape hatch (C/python code)
+-naming: function vs actions
+-tuples (mutable vs immutable)
+-records: by ref/value, (im)mutable ?
+-global definition ? (easily changing some type, e.g. increase the precision)
+
+Specifications and verification:
+-input (external vs internal) vs output
+-invariant for contexts
+-requires/ensures clauses for events/actions
+-decreases for loops
+-verification: something predictable
+
+Semantics and Time:
+-computational task: take some time
+-driver/actuators: take no time
+-...

@@ -1,0 +1,60 @@
+Core concepts and principles
+============================
+
+Identifying the important concepts around which we organize the language:
+    context,
+    states,
+    events,
+    action/function,
+    I/O components (sensor, actuator),
+    ...
+
+Language constructs can be nested to get some abstraction/modularity/reuse. This raises some interesting questions when we get to the boundary between a single robot and a group of robot (especially on the timing/implementation side)
+
+
+Time
+----
+A robot define its own clock zone (more or less real time).
+Between robots we have only logical time (Lamport clock).
+
+
+Communication
+-------------
+Asynchronous message passing between the robots.
+To make it simpler we can assume the best case: reliable FIFO channels.
+
+Do we provide primitive for group communication ? (consensus, broadcast, ...)
+
+How to mix internal (every/whenever) and external (messages) communication in a clean way ? (priority, interruption, ...)
+
+
+Resource management
+-------------------
+
+We are likely to run on hardware with very limited resources: memory, energy, ...
+
+
+Interactions with other languages
+---------------------------------
+name and type declaration, optionally method contract.
+
+Backend
+-------
+Python or C code for ROS
+
+
+Verification
+------------
+
+Properties, specification, and fault model
+    How much contracts/invariants should the user give ?
+    safety properties: no collision 
+    liveness properties: progress toward some task (probably very hard to prove) 
+    fault model: benign/byzantine, transient/permanent, at the communication level/at the controller level ?
+
+Methods
+    Explicit sate model checking: finite number of robots, discretization of space. Not the best performance but it is predictable.
+
+Parametric verification
+    if the user must give us an inductive invariant we can just generate verification conditions and discharge them with an SMT solver (need the appropriate logic).
+

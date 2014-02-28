@@ -1,0 +1,43 @@
+
+context Wheel(controller: Robot4W, motor: OutPort) {
+    ...
+}
+
+context Robot4W( ??? ) {
+    state Static {
+        on Key_UP_Pressed {
+        }
+        on Key_DOWN_Pressed {
+        }
+        on Key_LEFT_Pressed {
+        }
+        on Key_RIGHT_Pressed {
+        }
+    }
+    state Forward {
+        on Key_UP_Released {
+        }
+    }
+    state Backward {
+        on Key_DOWN_Released {
+        }
+    }
+    state Left {
+        on Key_LEFT_Released {
+        }
+    }
+    state Right {
+        on Key_RIGHT_Released {
+        }
+    }
+
+    Key_UP_Pressed
+    Key_UP_Released
+    Key_DOWN_Pressed
+    Key_DOWN_Released
+    Key_LEFT_Pressed
+    Key_LEFT_Released
+    Key_RIGHT_Pressed
+    Key_RIGHT_Released
+}
+

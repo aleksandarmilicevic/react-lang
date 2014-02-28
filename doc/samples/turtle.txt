@@ -1,0 +1,66 @@
+record Turtle [
+  name: str, 
+  x:    int, 
+  y:    int, 
+  vx:   int,
+  vy:   int
+]
+
+context TurtleSim [ Turtles: listof(Turtle)] {
+  invariant { 
+    Turtles.size() < MAX_TurtleS   
+  }
+  # ...
+}
+
+event Spawn [
+  receiver: TurtleSim, 
+  name:     str
+] {
+  guard   { name.length() == 1 }
+  handler { 
+    receiver.Turtles += Turtle.new(name: name, 
+                                   x:  0, y:  0, 
+                                   vx: 1, vy: 0)
+  }
+}
+
+event ChangeSpeed [
+	receiver: TurtleSim,
+	idx:      int,
+	dx:       int,
+	dy:       int ]
+{
+	guard   { 0 <= idx < receiver.turtle.size() }
+	handler {      receiver.turtles[idx].vx += dx     receiver.turtles[idx].vy += dy   }
+}
+
+context TurtleSim [
+  Turtles: listof(Turtle)
+] {
+  on_start    { @gui = MyGui.new; @gui.start() }
+  on_exit     { @gui.stop() }
+  
+  every(1000) {
+    @gui.draw_Turtles(Turtles)
+    for b in Turtles { b.x += b.vx; b.y += b.vy }
+  }
+
+  whenever(some b in Turtles | b.x < 0) {
+    b.x = 0; b.vx = -b.vx
+  }
+}
+
+context RemoteCtrl {
+  on start { @selected = -1 }
+
+  on KEY_0 { @selected = 0 }
+  on KEY_4 { @selected = 4 }
+
+  on KEY_c     { trigger Spawn.new(name) }
+
+  on KEY_UP    { trigger ChangeSpeed.new(idx: @selected dx: 0, dy: -1)}
+  on KEY_DOWN  { trigger ChangeSpeed.new(idx: @selected  dx: 0, dy: 1) }
+  on KEY_LEFT  { trigger ChangeSpeed.new(idx: @selected dx: -1, dy: 0)}
+  on KEY_RIGHT { trigger ChangeSpeed.new(idx: @selected dx: 1, dy: 0) }
+}
