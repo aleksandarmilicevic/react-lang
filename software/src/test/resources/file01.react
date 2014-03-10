@@ -1,0 +1,30 @@
+package some.pkg
+
+import other.pkg
+import somthingElse
+
+context Robot {
+    initial a_state
+
+    let cst <- 1
+    var variable ← "asdf"
+    var flt <- -0.5
+
+    state S0 {
+
+        on Evt( payload) { } S0
+
+        on TimeOut 1000 {} S0
+
+        whenever cst ≥ flt {}
+
+        every 200 {
+            var asdf ← 12345;
+            if true then
+                asdf ← -1 * asdf
+        }
+
+    }
+
+
+}

@@ -1,6 +1,6 @@
 keywords = context, record, whenever, every, on,
            event, guard, handler, action, invariant,
-           new, true, false, return, if, else, while, trigger
+           new, true, false, return, if, else, while, send, receive
            
 separators = , . : ; ( ) [ ] { } = < > >= <= + - * / && || 
 
@@ -50,11 +50,12 @@ literal ::= int_literal
           | string_literal
           | bool_literal
 
-unop ::= -
+unop ::= - | ¬
 
-binop ::= + | - | * | / | %
-        | ∨ | ∧ | ¬ | = | ≠
-        | > | < | ≤ | ≥ | xor ?
+binop ::= * | / | %
+        | + | -
+        | = | ≠ | > | < | ≤ | ≥
+        | ∨ | ∧ 
 
 expr ::= lhs
        | unop expr

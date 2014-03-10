@@ -6,21 +6,21 @@ organization := "edu.mit.csail.pac"
 
 
 //configuration for LMS
-scalaOrganization := "org.scala-lang.virtualized"
+//scalaOrganization := "org.scala-lang.virtualized"
 
-scalaVersion := "2.10.2-RC1"
-//scalaVersion := "2.10.3"
+//scalaVersion := "2.10.2-RC1"
+scalaVersion := "2.10.3"
 
-scalacOptions += "-Yvirtualize"
+//scalacOptions += "-Yvirtualize"
 
-//scalacOptions in Compile ++= Seq(Unchecked, Deprecation)
+scalacOptions in Compile ++= Seq("-unchecked", "-deprecation")
 
-libraryDependencies += "EPFL" %% "lms" % "0.3-SNAPSHOT"
+//libraryDependencies += "EPFL" %% "lms" % "0.3-SNAPSHOT"
 
 // needed for scala.tools, which is apparently not included in sbt's built in version
-libraryDependencies += "org.scala-lang.virtualized" % "scala-library" % scalaVersion.value
+//libraryDependencies += "org.scala-lang.virtualized" % "scala-library" % scalaVersion.value
 
-libraryDependencies += "org.scala-lang.virtualized" % "scala-compiler" % scalaVersion.value
+//libraryDependencies += "org.scala-lang.virtualized" % "scala-compiler" % scalaVersion.value
 
 libraryDependencies += "org.scala-lang" % "scala-actors" % scalaVersion.value // for ScalaTest
 
