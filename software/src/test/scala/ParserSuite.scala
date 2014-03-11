@@ -8,7 +8,8 @@ class ParserSuite extends FunSuite {
   val testDir = "src/test/resources/"
 
   val files = List( "empty.react",
-                    "file01.react")
+                    "file01.react",
+                    "buggy.react")
 
   for (f <- files) {
     test("should parse: " + f) {

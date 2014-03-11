@@ -3,8 +3,11 @@ package some.pkg
 import other.pkg
 import somthingElse
 
+//a comment 
+
+/* also commented out */
+
 context Robot {
-    initial a_state
 
     let cst <- 1
     var variable ← "asdf"
@@ -27,6 +30,10 @@ context Robot {
         }
 
     }
+
+    on Create(args) {
+      //TODO init
+    } S0
 
 
 }

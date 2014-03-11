@@ -17,12 +17,23 @@ object Parser extends StandardTokenParsers {
                           "|", "_",
                           "<-", "←",
                           "->", "→")
-  lexical.reserved += ("package", "import", "context", "state", "initial",
+  lexical.reserved += ("int", "float", "string", "bool",
+                       "package", "import", "context", "state",
                        "whenever", "every", "on",
                        "event", "TimeOut", "action", "invariant",
                        "new", "true", "false", "not", "as",
                        "return", "if", "then", "else", "do", "while", "send", "to", "let", "var")
+  
+  def path: Parser[Id] = ident ~ opt("." ~> path) ^^ { case id ~ None => Id(id)
+                                                       case id ~ Some(p) => p.addPrefix(id) }
 
+  def tpe: Parser[Type] = (
+      "int"         ^^^ TInt
+    | "float"       ^^^ TFloat
+    | "string"      ^^^ TString
+    | "bool"        ^^^ TBool
+    | path          ^^ (TObj(_))
+    )
   
   def literal: Parser[Literal] = positioned(
       "true"                                ^^^ Literal(true).setType(TBool)
@@ -32,8 +43,6 @@ object Parser extends StandardTokenParsers {
     | stringLit                             ^^ (x => Literal(x).setType(TString) )
     )
 
-  def path: Parser[Id] = ident ~ opt("." ~> path) ^^ { case id ~ None => Id(id)
-                                                       case id ~ Some(p) => p.addPrefix(id) }
 
   def lhsSuffix: Parser[(LHS => LHS)] = (
       "[" ~> expr ~ ("]" ~> opt(lhsSuffix)) ^^ { case idx ~ suf => ((x: LHS) => suf.getOrElse((x: LHS) => x)(ArrayAccess(x, idx))) }
@@ -122,9 +131,14 @@ object Parser extends StandardTokenParsers {
     | ident                                             ^^ ( id => Alias(Id(id), WildCard()))
     | "(" ~> pattern <~ ")"
     )
+  
+  def pattern2: Parser[Pattern] = positioned(
+      patternBottom ~ opt(":" ~> tpe)       ^^ { case p ~ Some(t) => p.setType(t) //TODO careful with PLiteral
+                                                 case p ~ None => p }
+    )
 
   def pattern1: Parser[Pattern] = positioned(
-      patternBottom ~ opt("as" ~> ident)       ^^ { case p ~ Some(id) => Alias(Id(id), p)
+      pattern2 ~ opt("as" ~> ident)            ^^ { case p ~ Some(id) => Alias(Id(id), p)
                                                     case p ~ None => p }
     )
 
@@ -147,8 +161,8 @@ object Parser extends StandardTokenParsers {
     )
 
   def context: Parser[Context] = positioned(
-      "context" ~> ident ~ ("{" ~> "initial" ~> ident) ~ rep(let) ~ rep(state) ~ rep(handler) <~ "}"
-        ^^ { case id ~ init ~ decls ~ states ~ defaults => new Context(Id(id), decls, states, Id(init), defaults) }
+      "context" ~> ident ~ ("{" ~> rep(let)) ~ rep(state) ~ rep(handler) <~ "}"
+        ^^ { case id ~ decls ~ states ~ defaults => new Context(Id(id), decls, states, defaults) }
     )
 
   def pckg: Parser[Id] = "package" ~> path

@@ -64,8 +64,9 @@ case object TInt extends Type
 case object TFloat extends Type
 case object TString extends Type
 case class TArray(cnt: Type) extends Type //TODO or field
-case class TTuple(elts: List[Type]) extends Type
+case class TTuple(elts: List[Type]) extends Type //TODO record
 case class TFun(args: List[Type], ret: List[Type]) extends Type
+case class TObj(name: Id) extends Type
 //TODO record ? (and tuples as syntactic sugar for records with idx for members)
 //react specific types: events, machines, ...
 
@@ -79,7 +80,7 @@ trait Typed {
 }
 
 sealed abstract class Expr extends Positional with Typed 
-case class Literal(l: Any) extends Expr //TODO specialize to primitive types ?
+case class Literal(l: Any) extends Expr //specialize to primitive types ?
 case class App(fct: Symbol, args: List[Expr]) extends Expr
 case class New(ctor: Id, args: List[Expr]) extends Expr
 abstract class LHS extends Expr
@@ -106,24 +107,25 @@ case class Let(lhs: Id, e: Expr, mutable: Boolean) extends Stmnt //let bindings 
 //TODO react specific: send ...
 
 
-sealed abstract class Handler(body: Stmnt, dest: Option[Id]) extends Positional {
-  def env: Map[Id,Type] = Map[Id,Type]() //patterns binds some variables
-  //TODO what are the common features of Handlers ?
-  //some action to be performed
-  //a optional target state (where to go after executing the action)
+//what are the common features of Handlers ?
+//some action to be performed (body)
+//an optional target state, None means stay in the current state
+sealed abstract class Handler(val body: Stmnt, val dest: Option[Id]) extends Positional {
+  def env: Map[Id,Type] = Map[Id,Type]() //pattern may bind variables
+  def hasDest = dest.isDefined
 }
-case class EventHandler(pat: Pattern, body: Stmnt, dst: Id) extends Handler(body, Some(dst)) {
+case class EventHandler(pat: Pattern, override val body: Stmnt, dst: Id) extends Handler(body, Some(dst)) {
   override def env = Logger.logAndThrow("AST", LogError, "TODO: EventHandler.env")
 }
-case class TimeOutHandler(ms: Int, body: Stmnt, dst: Id) extends Handler(body, Some(dst))
-case class PeriodicHandler(ms: Int, body: Stmnt) extends Handler(body, None) //every
-case class ConditionHandler(cond: Expr, body: Stmnt) extends Handler(body, None) //whenever
+case class TimeOutHandler(ms: Int, override val body: Stmnt, dst: Id) extends Handler(body, Some(dst))
+case class PeriodicHandler(ms: Int, override val body: Stmnt) extends Handler(body, None) //every
+case class ConditionHandler(cond: Expr, override val body: Stmnt) extends Handler(body, None) //whenever
 
 class State(id: Id, locals: List[Let], handlers: List[Handler]) extends Positional {
   //a state is a list of handler with some extra: id, local vars, ...
 }
 
-class Context(id: Id, locals: List[Let], states: List[State], init: Id, default: List[Handler]) extends Positional {
+class Context(id: Id, locals: List[Let], states: List[State], default: List[Handler]) extends Positional {
   //a context is a list of state, an initial state, local vars, default handlers, ...
 }
 
