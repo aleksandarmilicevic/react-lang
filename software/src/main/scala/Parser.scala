@@ -15,24 +15,35 @@ object Parser extends StandardTokenParsers {
                           "+", "-", "*", "/", "%",
                           "&&", "||", "¬", "∧", "∨",
                           "|", "_",
-                          "<-", "←")
+                          "<-", "←",
+                          "->", "→")
   lexical.reserved += ("package", "import", "context", "state", "initial",
                        "whenever", "every", "on",
                        "event", "TimeOut", "action", "invariant",
                        "new", "true", "false", "not", "as",
-                       "return", "if", "then", "else", "do", "while", "send", "let", "var")
+                       "return", "if", "then", "else", "do", "while", "send", "to", "let", "var")
 
   
   def literal: Parser[Literal] = positioned(
-      "true"                                        ^^^ Literal(true).setType(TBool)
-    | "false"                                       ^^^ Literal(false).setType(TBool)
-    | numericLit ~ opt("." ~> numericLit)           ^^ { case int ~ None => Literal(int.toInt).setType(TInt)
-                                                         case n1 ~ Some(n2) => Literal((n1+"."+n2).toDouble).setType(TFloat) }
-    | stringLit                                     ^^ ( str => Literal(str).setType(TString) )
+      "true"                                ^^^ Literal(true).setType(TBool)
+    | "false"                               ^^^ Literal(false).setType(TBool)
+    | numericLit ~ opt("." ~> numericLit)   ^^ { case int ~ None => Literal(int.toInt).setType(TInt)
+                                                 case n1 ~ Some(n2) => Literal((n1+"."+n2).toDouble).setType(TFloat) }
+    | stringLit                             ^^ (x => Literal(x).setType(TString) )
     )
 
   def path: Parser[Id] = ident ~ opt("." ~> path) ^^ { case id ~ None => Id(id)
                                                        case id ~ Some(p) => p.addPrefix(id) }
+
+  def lhsSuffix: Parser[(LHS => LHS)] = (
+      "[" ~> expr ~ ("]" ~> opt(lhsSuffix)) ^^ { case idx ~ suf => ((x: LHS) => suf.getOrElse((x: LHS) => x)(ArrayAccess(x, idx))) }
+    |  ("->"|"→") ~> path ~ opt(lhsSuffix)  ^^ { case fld ~ suf => ((x: LHS) => suf.getOrElse((x: LHS) => x)(FieldAccess(x, fld))) }
+    )
+
+  //empty is sucess(())
+  def lhs: Parser[LHS] = positioned(
+      path ~ opt(lhsSuffix)         ^^ { case id ~ suf => suf.getOrElse((x: LHS) => x)(Ident(id)) }
+    )
 
   private def mkAnd(e1: Expr, e2: Expr) = App(And, List(e1, e2))
   private def mkOr(e1: Expr, e2: Expr) = App(Or, List(e1, e2))
@@ -72,7 +83,7 @@ object Parser extends StandardTokenParsers {
   //highest priority
   def exprBottom: Parser[Expr] = positioned(
       literal
-    | path                                              ^^ ( id => Ident(id) )
+    | lhs
     | "not" ~> expr                                     ^^ ( expr => App(Not, List(expr)) )
     |   "¬" ~> expr                                     ^^ ( expr => App(Not, List(expr)) )
     | "-" ~> expr                                       ^^ ( expr => App(UMinus, List(expr)) )
@@ -96,10 +107,11 @@ object Parser extends StandardTokenParsers {
     | "while" ~> expr ~ ("do" ~> stmnt)                         ^^ { case c ~ b => While(c, b) }
     | "do" ~> stmnt ~ ("while" ~> expr)                         ^^ { case b ~ c => Block(List(b, While(c,b))) }
     | "return" ~> expr                                          ^^ ( e => Return(e) )
-    | path ~ (("<-" | "←") ~> expr)                             ^^ { case id ~ e => Affect(id, e) }
+    | "send" ~> expr ~ ("to" ~> expr)                           ^^ { case msg ~ dest => Send(dest, msg) }
+    | lhs  ~ (("<-" | "←") ~> expr)                             ^^ { case id ~ e => Affect(id, e) }
     | let
     | block
-    //TODO send, for loop (syntacic sugar for while), ... ??
+    //TODO for loop (syntacic sugar for while), ... ??
     )
 
 

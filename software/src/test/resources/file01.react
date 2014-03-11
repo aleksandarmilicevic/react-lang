@@ -12,7 +12,9 @@ context Robot {
 
     state S0 {
 
-        on Evt( payload) { } S0
+        on Evt( payload) {
+            send "a message" to some_robot
+        } S0
 
         on TimeOut 1000 {} S0
 

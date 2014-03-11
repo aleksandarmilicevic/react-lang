@@ -38,8 +38,8 @@ sealed abstract class Symbol
 case object Call extends Symbol
 case object Tuple extends Symbol
 //case object New extends Symbol
-case object Send extends Symbol
-case object Receive extends Symbol
+//case object Send extends Symbol
+//TODO flush and other mailbox operation ?
 //field ref/updates
 case object Read extends Symbol
 case object Write extends Symbol
@@ -80,9 +80,12 @@ trait Typed {
 
 sealed abstract class Expr extends Positional with Typed 
 case class Literal(l: Any) extends Expr //TODO specialize to primitive types ?
-case class Ident(id: Id) extends Expr
 case class App(fct: Symbol, args: List[Expr]) extends Expr
 case class New(ctor: Id, args: List[Expr]) extends Expr
+abstract class LHS extends Expr
+case class Ident(id: Id) extends LHS
+case class ArrayAccess(lhs: LHS, idx: Expr) extends LHS
+case class FieldAccess(lhs: LHS, fld: Id) extends LHS
 
 sealed abstract class Pattern extends Positional with Typed
 case class UnApply(id: Id, args: List[Pattern]) extends Pattern
@@ -97,7 +100,8 @@ case class ITE(cond: Expr, caseTrue: Stmnt, caseFalse: Stmnt) extends Stmnt
 case class While(cond: Expr, body: Stmnt) extends Stmnt
 case class Block(body: List[Stmnt]) extends Stmnt
 case class Return(e: Expr) extends Stmnt
-case class Affect(lhs: Id, e: Expr) extends Stmnt
+case class Affect(lhs: LHS, e: Expr) extends Stmnt
+case class Send(dest: Expr, msg: Expr) extends Stmnt
 case class Let(lhs: Id, e: Expr, mutable: Boolean) extends Stmnt //let bindings are declarations
 //TODO react specific: send ...
 
