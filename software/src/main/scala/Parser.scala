@@ -5,13 +5,14 @@ import scala.util.parsing.combinator.lexical._
 import scala.util.parsing.combinator.token._
 import scala.util.parsing.combinator.syntactical._
 
+import react.ast._
 import react.utils.{LogCritical, LogError, LogWarning, LogNotice, LogInfo, LogDebug, Logger}
 
 object Parser extends StandardTokenParsers {
 
   lexical.delimiters += ( ",", ".", ":", ";",
                           "(", ")", "[", "]", "{", "}",
-                          "=", "<", ">", ">=", "<=", "≤", "≥",
+                          "=", "≠", "<", ">", ">=", "<=", "≤", "≥",
                           "+", "-", "*", "/", "%",
                           "&&", "||", "¬", "∧", "∨",
                           "|", "_",
@@ -54,8 +55,11 @@ object Parser extends StandardTokenParsers {
       path ~ opt(lhsSuffix)         ^^ { case id ~ suf => suf.getOrElse((x: LHS) => x)(Ident(id)) }
     )
 
-  private def mkAnd(e1: Expr, e2: Expr) = App(And, List(e1, e2))
-  private def mkOr(e1: Expr, e2: Expr) = App(Or, List(e1, e2))
+  private def mkApp(sym: Symbol, args: Expr*) = App(sym, args.toList)
+  private def mkAnd(e1: Expr, e2: Expr) = mkApp(And, e1, e2)
+  private def mkOr(e1: Expr, e2: Expr) = mkApp(Or, e1, e2)
+  private def mkLt(e1: Expr, e2: Expr) = mkApp(Lt, e1, e2)
+  private def mkEq(e1: Expr, e2: Expr) = mkApp(Equal, e1, e2)
 
   //lowest priority
   def expr: Parser[Expr] = positioned(
@@ -63,12 +67,10 @@ object Parser extends StandardTokenParsers {
     | expr1 ~ (("||" | "∨") ~> expr)       ^^ { case e1 ~ e2 => mkOr(e1, e2) }
     | expr1
     )
-
-  private def mkLt(e1: Expr, e2: Expr) = App(Lt, List(e1, e2))
-  private def mkEq(e1: Expr, e2: Expr) = App(Equal, List(e1, e2))
   
   def expr1: Parser[Expr] = positioned(
       expr2 ~ ("=" ~> expr1)               ^^ { case e1 ~ e2 => mkEq(e1, e2) }
+    | expr2 ~ ("≠" ~> expr1)               ^^ { case e1 ~ e2 => mkApp(Not, mkEq(e1, e2)) }
     | expr2 ~ ("<" ~> expr1)               ^^ { case e1 ~ e2 => mkLt(e1, e2) }
     | expr2 ~ (">" ~> expr1)               ^^ { case e1 ~ e2 => mkLt(e2, e1) }
     | expr2 ~ (("<=" | "≤") ~> expr1)      ^^ { case e1 ~ e2 => mkOr(mkEq(e1, e2), mkLt(e1,e2)) }
@@ -77,15 +79,15 @@ object Parser extends StandardTokenParsers {
     )
   
   def expr2: Parser[Expr] = positioned(
-      expr3 ~ ("+" ~> expr2)               ^^ { case e1 ~ e2 => App( Plus, List(e1, e2)) }
-    | expr3 ~ ("-" ~> expr2)               ^^ { case e1 ~ e2 => App(Minus, List(e1, e2)) }
+      expr3 ~ ("+" ~> expr2)               ^^ { case e1 ~ e2 => mkApp( Plus, e1, e2) }
+    | expr3 ~ ("-" ~> expr2)               ^^ { case e1 ~ e2 => mkApp(Minus, e1, e2) }
     | expr3
     )
 
   def expr3: Parser[Expr] = positioned(
-      exprBottom ~ ("*" ~> expr3)          ^^ { case e1 ~ e2 => App(  Times, List(e1, e2)) }
-    | exprBottom ~ ("/" ~> expr3)          ^^ { case e1 ~ e2 => App(Divides, List(e1, e2)) }
-    | exprBottom ~ ("%" ~> expr3)          ^^ { case e1 ~ e2 => App( Modulo, List(e1, e2)) }
+      exprBottom ~ ("*" ~> expr3)          ^^ { case e1 ~ e2 => mkApp(  Times, e1, e2) }
+    | exprBottom ~ ("/" ~> expr3)          ^^ { case e1 ~ e2 => mkApp(Divides, e1, e2) }
+    | exprBottom ~ ("%" ~> expr3)          ^^ { case e1 ~ e2 => mkApp( Modulo, e1, e2) }
     | exprBottom
     )
 
@@ -93,10 +95,9 @@ object Parser extends StandardTokenParsers {
   def exprBottom: Parser[Expr] = positioned(
       literal
     | lhs
-    | "not" ~> expr                                     ^^ ( expr => App(Not, List(expr)) )
-    |   "¬" ~> expr                                     ^^ ( expr => App(Not, List(expr)) )
-    | "-" ~> expr                                       ^^ ( expr => App(UMinus, List(expr)) )
-    | "(" ~> rep1sep(expr, ",") <~ ")"                  ^^ ( lst => if (lst.length > 1) App(Tuple, lst) else lst.head )
+    | ("not"| "¬") ~> expr                              ^^ ( expr => mkApp(Not, expr) )
+    | "-" ~> expr                                       ^^ ( expr => mkApp(UMinus, expr) )
+    | "(" ~> rep1sep(expr, ",") <~ ")"                  ^^ ( lst => if (lst.length > 1) mkApp(Tuple, lst:_*) else lst.head )
     | path ~ opt("(" ~> repsep(expr, ",") <~ ")")       ^^ { case id ~ Some(args) => App(Call, Ident(id) :: args)
                                                              case id ~ None => Ident(id) }
     | "new" ~> path ~ ("(" ~> repsep(expr, ",") <~ ")") ^^ { case id ~ args => New(id, args) }

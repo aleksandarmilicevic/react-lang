@@ -1,0 +1,27 @@
+# Frontend
+
+## Parser
+
+first version is done. still a bit awkward ...
+
+need to add the specs
+
+## Typer
+
+nothing done yet
+
+
+# Backend
+
+Python code generation re-using what was previously done.
+
+For the moment, let us start with the case of a single robot.
+
+ROS publish subscribe are many-to-many communication.
+By careful with the buffer semantics are dropped messages.
+seems there are both publish and subscribe queue.
+what about message declaration
+
+# Analysis and Transformation
+
+
