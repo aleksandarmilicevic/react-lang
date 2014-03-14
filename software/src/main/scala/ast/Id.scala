@@ -1,8 +1,8 @@
 package react.ast
 
 //package.class.fun encoded by List(fun, class, package)
-class Id(path: List[String]) {
-  def addPrefix(prefix: String) = Id(prefix :: path)
+class Id(val path: List[String]) {
+  def addPrefix(prefix: String) = Id(path ::: List(prefix))
 }
 
 object Id {

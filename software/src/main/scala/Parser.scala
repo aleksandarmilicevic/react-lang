@@ -37,11 +37,11 @@ object Parser extends StandardTokenParsers {
     )
   
   def literal: Parser[Literal] = positioned(
-      "true"                                ^^^ Literal(true).setType(TBool)
-    | "false"                               ^^^ Literal(false).setType(TBool)
-    | numericLit ~ opt("." ~> numericLit)   ^^ { case int ~ None => Literal(int.toInt).setType(TInt)
-                                                 case n1 ~ Some(n2) => Literal((n1+"."+n2).toDouble).setType(TFloat) }
-    | stringLit                             ^^ (x => Literal(x).setType(TString) )
+      "true"                                ^^^ BoolLit(true)
+    | "false"                               ^^^ BoolLit(false)
+    | numericLit ~ opt("." ~> numericLit)   ^^ { case int ~ None => IntLit(int.toLong)
+                                                 case n1 ~ Some(n2) => FloatLit((n1+"."+n2).toDouble) }
+    | stringLit                             ^^ (x => StringLit(x) )
     )
 
 
@@ -55,39 +55,34 @@ object Parser extends StandardTokenParsers {
       path ~ opt(lhsSuffix)         ^^ { case id ~ suf => suf.getOrElse((x: LHS) => x)(Ident(id)) }
     )
 
-  private def mkApp(sym: Symbol, args: Expr*) = App(sym, args.toList)
-  private def mkAnd(e1: Expr, e2: Expr) = mkApp(And, e1, e2)
-  private def mkOr(e1: Expr, e2: Expr) = mkApp(Or, e1, e2)
-  private def mkLt(e1: Expr, e2: Expr) = mkApp(Lt, e1, e2)
-  private def mkEq(e1: Expr, e2: Expr) = mkApp(Equal, e1, e2)
 
   //lowest priority
   def expr: Parser[Expr] = positioned(
-      expr1 ~ (("&&" | "∧") ~> expr)       ^^ { case e1 ~ e2 => mkAnd(e1, e2) }
-    | expr1 ~ (("||" | "∨") ~> expr)       ^^ { case e1 ~ e2 => mkOr(e1, e2) }
+      expr1 ~ (("&&" | "∧") ~> expr)       ^^ { case e1 ~ e2 => Mk.and(e1, e2) }
+    | expr1 ~ (("||" | "∨") ~> expr)       ^^ { case e1 ~ e2 => Mk.or(e1, e2) }
     | expr1
     )
   
   def expr1: Parser[Expr] = positioned(
-      expr2 ~ ("=" ~> expr1)               ^^ { case e1 ~ e2 => mkEq(e1, e2) }
-    | expr2 ~ ("≠" ~> expr1)               ^^ { case e1 ~ e2 => mkApp(Not, mkEq(e1, e2)) }
-    | expr2 ~ ("<" ~> expr1)               ^^ { case e1 ~ e2 => mkLt(e1, e2) }
-    | expr2 ~ (">" ~> expr1)               ^^ { case e1 ~ e2 => mkLt(e2, e1) }
-    | expr2 ~ (("<=" | "≤") ~> expr1)      ^^ { case e1 ~ e2 => mkOr(mkEq(e1, e2), mkLt(e1,e2)) }
-    | expr2 ~ ((">=" | "≥") ~> expr1)      ^^ { case e1 ~ e2 => mkOr(mkEq(e1, e2), mkLt(e2,e1)) }
+      expr2 ~ ("=" ~> expr1)               ^^ { case e1 ~ e2 => Mk.eq(e1, e2) }
+    | expr2 ~ ("≠" ~> expr1)               ^^ { case e1 ~ e2 => Mk.not(Mk.eq(e1, e2)) }
+    | expr2 ~ ("<" ~> expr1)               ^^ { case e1 ~ e2 => Mk.lt(e1, e2) }
+    | expr2 ~ (">" ~> expr1)               ^^ { case e1 ~ e2 => Mk.lt(e2, e1) }
+    | expr2 ~ (("<=" | "≤") ~> expr1)      ^^ { case e1 ~ e2 => Mk.or(Mk.eq(e1, e2), Mk.lt(e1,e2)) }
+    | expr2 ~ ((">=" | "≥") ~> expr1)      ^^ { case e1 ~ e2 => Mk.or(Mk.eq(e1, e2), Mk.lt(e2,e1)) }
     | expr2
     )
   
   def expr2: Parser[Expr] = positioned(
-      expr3 ~ ("+" ~> expr2)               ^^ { case e1 ~ e2 => mkApp( Plus, e1, e2) }
-    | expr3 ~ ("-" ~> expr2)               ^^ { case e1 ~ e2 => mkApp(Minus, e1, e2) }
+      expr3 ~ ("+" ~> expr2)               ^^ { case e1 ~ e2 => Mk.app( Plus, e1, e2) }
+    | expr3 ~ ("-" ~> expr2)               ^^ { case e1 ~ e2 => Mk.app(Minus, e1, e2) }
     | expr3
     )
 
   def expr3: Parser[Expr] = positioned(
-      exprBottom ~ ("*" ~> expr3)          ^^ { case e1 ~ e2 => mkApp(  Times, e1, e2) }
-    | exprBottom ~ ("/" ~> expr3)          ^^ { case e1 ~ e2 => mkApp(Divides, e1, e2) }
-    | exprBottom ~ ("%" ~> expr3)          ^^ { case e1 ~ e2 => mkApp( Modulo, e1, e2) }
+      exprBottom ~ ("*" ~> expr3)          ^^ { case e1 ~ e2 => Mk.app(  Times, e1, e2) }
+    | exprBottom ~ ("/" ~> expr3)          ^^ { case e1 ~ e2 => Mk.app(Divides, e1, e2) }
+    | exprBottom ~ ("%" ~> expr3)          ^^ { case e1 ~ e2 => Mk.app( Modulo, e1, e2) }
     | exprBottom
     )
 
@@ -95,10 +90,10 @@ object Parser extends StandardTokenParsers {
   def exprBottom: Parser[Expr] = positioned(
       literal
     | lhs
-    | ("not"| "¬") ~> expr                              ^^ ( expr => mkApp(Not, expr) )
-    | "-" ~> expr                                       ^^ ( expr => mkApp(UMinus, expr) )
-    | "(" ~> rep1sep(expr, ",") <~ ")"                  ^^ ( lst => if (lst.length > 1) mkApp(Tuple, lst:_*) else lst.head )
-    | path ~ opt("(" ~> repsep(expr, ",") <~ ")")       ^^ { case id ~ Some(args) => App(Call, Ident(id) :: args)
+    | ("not"| "¬") ~> expr                              ^^ ( expr => Mk.not(expr) )
+    | "-" ~> expr                                       ^^ ( expr => Mk.app(UMinus, expr) )
+    | "(" ~> rep1sep(expr, ",") <~ ")"                  ^^ ( lst => if (lst.length > 1) Mk.app(Tuple, lst:_*) else lst.head )
+    | path ~ opt("(" ~> repsep(expr, ",") <~ ")")       ^^ { case id ~ Some(args) => App(Call(id), args)
                                                              case id ~ None => Ident(id) }
     | "new" ~> path ~ ("(" ~> repsep(expr, ",") <~ ")") ^^ { case id ~ args => New(id, args) }
     )

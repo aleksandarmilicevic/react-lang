@@ -4,14 +4,8 @@ import scala.util.parsing.input.Positional
 
 sealed abstract class Symbol
 //basic language feature
-case object Call extends Symbol
+case class Call(id: Id) extends Symbol // user-defined + non-primitive operations
 case object Tuple extends Symbol
-//case object New extends Symbol
-//case object Send extends Symbol
-//TODO flush and other mailbox operation ?
-//field ref/updates
-case object Read extends Symbol
-case object Write extends Symbol
 //arithmetic
 case object UMinus extends Symbol
 case object Plus extends Symbol
@@ -27,7 +21,7 @@ case object Equal extends Symbol
 case object Lt extends Symbol
 
 sealed abstract class Expr extends Positional with Typed 
-case class Literal(l: Any) extends Expr //specialize to primitive types ?
+case class Literal(l: Any) extends Expr
 case class App(fct: Symbol, args: List[Expr]) extends Expr
 case class New(ctor: Id, args: List[Expr]) extends Expr
 abstract class LHS extends Expr

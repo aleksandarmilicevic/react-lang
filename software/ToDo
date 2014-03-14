@@ -1,3 +1,8 @@
+# Language
+
+the semantics of whenever: should be only once when the predicate changes from false to true. (or force the pred to be false after the body execute)
+
+
 # Frontend
 
 ## Parser
@@ -21,6 +26,36 @@ ROS publish subscribe are many-to-many communication.
 By careful with the buffer semantics are dropped messages.
 seems there are both publish and subscribe queue.
 what about message declaration
+
+also generate a script to boot the system: run the ROS master + the main context (source the config scripts, etc.)
+
+## context data-structure, methods
+-event queue
+-resolving handler of a given event
+-register + testing `whenever` clauses
+-...
+
+## initializing a context
+-allocating the memory/thread/etc.
+-registering with master?, ros init?, creating the ROS topics
+-executing the `onCreate` handler
+-enter the big-while-loop
+-init the timer if needed
+
+## the big-while-loop
+-find an handler to execute:
+  -pull from event queue (whenever/every/...)
+  -rosspin (+ timeout) to get a message
+-resolve and execute handler (what if no handler ?)
+-move to another state
+-test `whenever` clauses
+
+## moving to another state
+-flushing the queue from timed events related to previous state
+-deregister `whenever` clauses of old state
+-register `whenever` clauses of new state
+-set up timer for every events
+
 
 # Analysis and Transformation
 
