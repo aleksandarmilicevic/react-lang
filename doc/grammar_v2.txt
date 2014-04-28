@@ -1,0 +1,76 @@
+keywords = robot, state, initial
+           every, on, event, 
+           in, out,
+           new, true, false, return, if, else, while
+
+separators = , . : ; ( ) [ ] { }
+            = ≠ < > >= <= ≤ ≥
+            + - * / && || 
+            ← ¬
+
+type ::= bool | integer | nat | string (UTF8) | float | real
+       | array[type]
+       | bitvectors?
+       | robot type?
+       | port type?
+
+literal ::= int_literal
+          | float_literal
+          | string_literal
+          | true | false
+
+unop ::= - | ¬
+
+binop ::= * | / | %
+        | + | -
+        | = | ≠ | > | < | ≤ | ≥
+        | ∨ | ∧ 
+
+lhs := ident
+     | lhs.ident
+     | lhs[expr]
+
+expr ::= lhs
+       | unop expr
+       | expr binop expr
+       | ( expr )
+       | new ident ( args )
+       | lhs( args )
+       | literal
+
+stmnt_lst ::= stmnt
+            | stmnt; stmnt_lst
+
+stmnt ::= nop
+        | { stmnt_lst }
+        | if (expr) stmnt else stmnt
+        | while (expr) stmnt
+        | return expr
+        | decl
+        | lhs ← expr
+        | expr
+
+io_modifiers ::= in | out
+
+phys ::= ?physical description, sensors, actuators?
+
+rbt ::= robot ident ( phys ) { rbt_body }
+
+rbt_body ::=
+           | decl rbt_body
+           | state rbt_body
+
+decl ::= var ident: type ← expr
+       | val ident: type ← expr
+
+init_mod ::=
+           | initial
+
+dyn ::= ?dynamic of the system? -> ground, air, ?
+
+state ::= init_mod state ident { dynamic dyn
+                                 period int_literal
+                                 io 
+                                 XXX controler, event handler ?
+                               }
+

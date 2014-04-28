@@ -1,7 +1,12 @@
 Related work
 ------------
 
-Some references, some of them are things we should avoid rather than copy.
+Some references:
+    Some of them are things we should avoid rather than copy.
+    Others are insightful.
+
+PL
+--
 
 Language for robotics:
     RoboForth,
@@ -24,3 +29,26 @@ State-based language:
 Real-time Language:
     Giotto (Labview),
     ... 
+
+Connecting with the physical world
+----------------------------------
+look at gazebo format for the sensors
+look at ROS URDF format for the robot description
+...
+
+Verification of hybrid systems
+------------------------------
+-algorithmic verification of continuous and hybrid systems. intro/survey by Oded Maler, 2013.
+-work on Taylor Models by Martin Berz and Kyoko Makino
+-Flow*: An Analyzer for Non-linear Hybrid Systems. by Xin Chen, Erika Ábrahám, Sriram Sankaranarayanan, CAV 2013
+-Taylor Model Flowpipe Construction for Non-linear Hybrid Systems. by Xin Chen, Erika Ábrahám, Sriram Sankaranarayanan, RTSS 2012.
+
+Verification tools for hybrid systems
+-------------------------------------
+Sahvy: http://formula.codeplex.com/
+iSat3: https://projects.informatik.uni-freiburg.de/projects/isat3
+SpaceEx: http://spaceex.imag.fr/
+Flow*: http://systems.cs.colorado.edu/research/cyberphysical/taylormodels/
+Breach: http://www.eecs.berkeley.edu/~donze/breach_page.html
+HyCreate: http://stanleybak.com/projects/hycreate/hycreate.html
+HSolver: http://hsolver.sourceforge.net/

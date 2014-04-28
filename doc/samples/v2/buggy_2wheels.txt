@@ -1,0 +1,42 @@
+two wheeled robot:
+
+state:
+-translational:
+  -position: p = (x, y)
+  -speed: v = (vx, vy)
+-rotational:
+  -position: Φ
+  -angular speed: vΦ
+
+the controllable parts are the (speed of the) wheels:
+    c = (l, r)
+    (for controllable, left, and right)
+    c ≈ v (modulo size of wheels)
+
+kinematic model for the two wheeled robot:
+  vx tan(Φ) - vy = 0
+
+----------------------------------------
+
+description of the physical robot:
+-parts:
+  -body: cube([-5,-10,1], [5,10,4])
+  -left wheel:  translate([0, 10,2.5]) rotate([ 90,0,0]) cylinder(r = 5, h = 1)
+  -right wheel: translate([0,-10,2.5]) rotate([-90,0,0]) cylinder(r = 5, h = 1)
+-connections:
+  -body to left wheel via left motor
+  -body to right wheel via right motor 
+-actuators:
+  -left motor at [0,10,2.5] controlled via l (counter clockwise)
+  -right motor at [0,-10,2.5] controlled via r (clockwise)
+-sensor:
+  -distance sensor at [5,0,3] facing [1,0,0] produced input d
+   (assumes that the sensing area is [5,-10] to [5,100])
+
+========================================
+
+Let's examine different dynamics of the systems:
+(1) controller set the speed of the wheels (no slipping, infinite torque)
+(2) controller set the torque of the motor (no slipping)
+(3-4) repeat (1)-(2) with slipping and skidding
+(5) on level of indirection: add a PID controller (https://en.wikipedia.org/wiki/PID_controller) for the stopping distance, etc..

@@ -12,3 +12,14 @@ Use case
 --------
 3 quadcopters flying around without colliding (and we can prove it)
 
+Steps (intermediate goals)
+--------------------------
+-figure out what is possible about hybrid systems verification
+-build in the language a clean interface between hybrid verif tools (adapt the programming model accordingly)
+-a way of specifying the physical properties of the robot in the language:
+    -geometry
+    -actuators
+    -sensors
+    - ? kinematics / dynamics
+-use reasoning techniques to hide the complexity of robot's interaction with the environment
+-...
