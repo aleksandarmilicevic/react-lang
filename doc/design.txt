@@ -10,51 +10,86 @@ Identifying the important concepts around which we organize the language:
     ...
 
 Language constructs can be nested to get some abstraction/modularity/reuse. This raises some interesting questions when we get to the boundary between a single robot and a group of robot (especially on the timing/implementation side)
+    ->  for some reason using the same abstraction for a single robot or a group of robots seems ludicrous ...
+        we don't even understand the problem for a single robot ...
+        design is about taking away choices, I would gladly make the language non-turing complete (wrt the hybrid behavior) if I knew how to do it in a meaningful way.
+
+
+Programming model: sample-hold-controller
+-----------------------------------------
+
+for a period given by the programmer:
+    the sensor are sampled (input)
+    the controller produce some value (output) for all controlled elements
+    the output is sent to the actuators and held until the next round
+
+modeling choices for computation time:
+    0 time computation: the input and new output are in the same round (good for long sample period)
+    WCET computation: the output occurs withing the same round but delayed by the WCET
+    1 round delay: we assume the computation takes the whole period and the output is effective during the next round (good for short sample period)
+
+WCET:
+    the control function must quiesce
+    hopefully we should be able to prove that the computation takes less than the period
+
+why this choice:
+    cleaner separation of the hybrid and discrete semantics
+    avoiding zeno behaviors (occurs when the guards on discrete changes instantaneously read from the sensor)
+    limitation: when the sampling period is much smaller than the discrete changes, it might make sense to revert to a classical hybrid behaviour
+
+linking the controller to the real world:
+    how to get the kinematics and dynamics of the robot ?
+
+Combining that with discrete event communication:
+    event are only allowed to change the local variables, not the output values.
+    can we bound the communication in a period ? show that communication quiesce
 
 
 Time
 ----
-A robot define its own clock zone (more or less real time).
-Between robots we have only logical time (Lamport clock).
+To make things simple: assume real time at one robot level.
+For multiple robots, we will see later.
 
 
 Communication
 -------------
-Asynchronous message passing between the robots.
-To make it simpler we can assume the best case: reliable FIFO channels.
-
-Do we provide primitive for group communication ? (consensus, broadcast, ...)
-
-How to mix internal (every/whenever) and external (messages) communication in a clean way ? (priority, interruption, ...)
-
-
-Resource management
--------------------
-
-We are likely to run on hardware with very limited resources: memory, energy, ...
+...
 
 
 Interactions with other languages
 ---------------------------------
 name and type declaration, optionally method contract.
 
+
 Backend
 -------
-Python or C code for ROS
+Python or C++ code for ROS
 
 
 Verification
 ------------
 
 Properties, specification, and fault model
-    How much contracts/invariants should the user give ?
-    safety properties: no collision 
-    liveness properties: progress toward some task (probably very hard to prove) 
-    fault model: benign/byzantine, transient/permanent, at the communication level/at the controller level ?
+    safety properties: no collision, systems becomes stable within some amount of time
+    liveness properties: progress toward some task (probably too hard to prove) 
+    fault model: noise on the sensor and actuators (as interval, not distribution)
 
 Methods
-    Explicit sate model checking: finite number of robots, discretization of space. Not the best performance but it is predictable.
-
-Parametric verification
-    if the user must give us an inductive invariant we can just generate verification conditions and discharge them with an SMT solver (need the appropriate logic).
-
+    Explicit state model checking:
+        finite number of robots, discretization of space
+        - to represent the state of a single quadcopter we are likely to look at at least 10^10 states (-> cannot do more than one).
+        - a sound interpretation of the discretization of the space wrt an hybrid semantics will give way too many false positive.
+        + it fails predictably.
+    Hybrid systems (and timed hybrid systems):
+        + sound interpretation that relates to the real world
+        ~ pretty much everything is undecidable (TODO look at those proofs to know what is bad)
+        ~ there are some tools around, we just need to figure out the limits and use the language to make user write programs that those tools like
+          if the properties are eventually stable (or periodic), there is chances we can prove them for unbounded horizon (works only on robust controller)
+    Sample-hold-controller (special kind of timed hybrid system):
+        use an SMT solver to take care of the control logic
+        use verified numerical integration (e.g. Taylor models) for the continuous part
+        see Simko & Jackson's paper for more details
+    
+Questions/Steps:
+    What are the kinds of continuous dynamics that current tools can handle effectively and accurately with a bounded time horizon ?
+    What are the kinds of properties that current tools can prove with an unbounded time horizon ?

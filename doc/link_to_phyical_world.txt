@@ -1,12 +1,13 @@
 physical description:
-    some merge of
+    some form of bond graph from which we can extract some informations
+
+    existing format that we can look at are:
         http://wiki.ros.org/urdf/XML
         http://wiki.ros.org/srdf/review
         gazebo extensions
             http://gazebosim.org/wiki/Tutorials/1.9/Using_A_URDF_In_Gazebo
             http://gazebosim.org/wiki/Tutorials/1.9/ROS_Motor_and_Sensor_Plugins
             http://gazebosim.org/wiki/Tutorials/1.9/ROS_Control_with_Gazebo
-    basically some form of bond graph
 
     there is http://wiki.ros.org/xacro to write macro (functions)
 
@@ -15,4 +16,5 @@ physical description:
 example:
     2 wheeled buggy: https://github.com/allenh1/p2os
     4 wheeled buggy: https://github.com/husky/husky_description
+
 
