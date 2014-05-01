@@ -30,11 +30,15 @@ Real-time Language:
     Giotto (Labview),
     ... 
 
+Dynamic systems / Model based:
+    Simulink,
+    ...
+
 Connecting with the physical world
 ----------------------------------
-look at gazebo format for the sensors
-look at ROS URDF format for the robot description
-...
+-ROS URDF format for the robot description and gazebo extensions for the sensors and actuators
+-A framework for unambiguous and extensible specification of DSMLs for cyber-physical systems. Simko et al. 2013
+-Structural properties and classification of kinematic and dynamic models of wheeled mobile robots, Campion, Bastin, D'Andrea-Novel, 1996.
 
 Verification of hybrid systems
 ------------------------------
@@ -46,9 +50,9 @@ Verification of hybrid systems
 Verification tools for hybrid systems
 -------------------------------------
 Sahvy: http://formula.codeplex.com/
+Flow*: http://systems.cs.colorado.edu/research/cyberphysical/taylormodels/
 iSat3: https://projects.informatik.uni-freiburg.de/projects/isat3
 SpaceEx: http://spaceex.imag.fr/
-Flow*: http://systems.cs.colorado.edu/research/cyberphysical/taylormodels/
 Breach: http://www.eecs.berkeley.edu/~donze/breach_page.html
 HyCreate: http://stanleybak.com/projects/hycreate/hycreate.html
 HSolver: http://hsolver.sourceforge.net/

@@ -9,12 +9,10 @@ state:
   -angular speed: vΦ
 
 the controllable parts are the (speed of the) wheels:
-    c = (l, r)
-    (for controllable, left, and right)
-    c ≈ v (modulo size of wheels)
+    c = (l, r) (for controllable, left, and right)
 
 kinematic model for the two wheeled robot:
-  vx tan(Φ) - vy = 0
+  vx∙tan(Φ) - vy = 0
 
 ----------------------------------------
 
@@ -29,7 +27,10 @@ description of the physical robot:
 -actuators:
   -left motor at [0,10,2.5] controlled via l (counter clockwise)
   -right motor at [0,-10,2.5] controlled via r (clockwise)
-    more details: power/torque/rpm limits
+    torque: τ = K_t∙I (K_t is a torque propotionality constant)
+    voltage: V = K_v∙ω (K_v is a constant for back electromotive force, assume no motor resistance)
+    power: P ≈ (K_v/K_t)∙τ∙ω
+    speed: v = 2∙π∙r_w∙ω (r_w is the radius of the wheel)
 -sensor:
   -distance sensor at [5,0,3] facing [1,0,0] produced input d
    assumes that the sensing area is [5,-10] to [5,100] and the return distance is the closest object
@@ -54,10 +55,10 @@ controller:
 
   every 100ms:
     read from distance sensor d
-    if mode = F ∧ d > ... then l←10; r←10
-    if mode = L ∧ d > 12  then l←-5; r←5
-    if mode = R ∧ d > 12  then l←5; r←-5
-    if mode = S           then l←0; r←0
+    if mode = F ∧ d > 24  then l←10; r←10
+    if mode = L ∧ d > 12  then l←-5; r← 5
+    if mode = R ∧ d > 12  then l← 5; r←-5
+    if mode = S           then l← 0; r← 0
 
 ----------------------------------------
 environment:
@@ -76,9 +77,14 @@ Let's examine different dynamics
 (3-4) repeat (1)-(2) with slipping and skidding
 (5) on level of indirection: add a PID controller (https://en.wikipedia.org/wiki/PID_controller) for the stopping distance, etc..
 
+let use ′ for derivative:
+x′ = cos(Φ)∙(v_l + v_r)/2
+y′ = sin(Φ)∙(v_l + v_r)/2
+Φ′ = atan((-v_l + v_r) / L)
+v = 2π∙r∙ω [for both l/r]
 
-(1) controller set v
+(1) controller set ω of each wheel
 
-(2) controller set some force, then using f = m dv/dt we get the dynamic
+(2) controller set the power: v′ = (2π∙P)/(K∙m∙v) [for both l/r]
 
 

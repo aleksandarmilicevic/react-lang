@@ -4,15 +4,26 @@ keywords = robot, state, initial
            new, true, false, return, if, else, while
 
 separators = , . : ; ( ) [ ] { }
-            = ≠ < > >= <= ≤ ≥
-            + - * / && || 
+            = ≠ < > ≤ ≥
+            + - * / ∧ ∨ 
             ← ¬
 
 type ::= bool | integer | nat | string (UTF8) | float | real
        | array[type]
-       | bitvectors?
-       | robot type?
-       | port type?
+       | ?bitvectors?
+       | ?robot type?
+       | ?port type?
+
+int_literal ::= regex: -?(?:0|[1-9]\d*)(?:[eE][+]?\d+)?
+
+float_literal ::= regex: -?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?
+
+string_literal ::= "chars"
+chars ::=
+        | char chars
+char ::= regex: [^\"\\]
+       | \" | \\ | \/ | \b | \f | \n | \r | \t
+       | \u regex: [0-9a-fA-F]{4}
 
 literal ::= int_literal
           | float_literal

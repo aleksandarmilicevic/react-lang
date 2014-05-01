@@ -1,5 +1,18 @@
 physical description:
     some form of bond graph from which we can extract some informations
+    https://en.wikipedia.org/wiki/Bond-graph    
+        bonds connects parts and conserve energy: power = effort ∙ flow
+        nodes are parts of the robots:
+            R: resistance, one port (dissipate power)
+            C: capacitance
+            I: Inertia
+            Se: source of effort
+            Sf: source of flow
+            TF: transformer, f₁∙r = f₂ ∧ e₁/r = e₂
+            GY: gyrator, e₂ = μ∙f₁ ∧ e₁ = μ∙f₂
+        links or junctions:
+            0 junction: the flow sums to zero and the efforts are equal, ∀a,b. e_a = e_b ∧ ∑f = 0
+            1 junction: the efforts sum to zero and the flows are equal, ∀a,b. f_a = f_b ∧ ∑e = 0
 
     existing format that we can look at are:
         http://wiki.ros.org/urdf/XML
