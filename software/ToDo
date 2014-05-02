@@ -1,15 +1,14 @@
 # Language
-
-the semantics of whenever: should be only once when the predicate changes from false to true. (or force the pred to be false after the body execute)
-
+-syntax of the robot description
+-write down a formal semantics
 
 # Frontend
 
 ## Parser
 
-first version is done. still a bit awkward ...
+still awkward ...
 
-need to add the specs
+need to add the physical part and specs
 
 ## Typer
 
@@ -32,7 +31,7 @@ also generate a script to boot the system: run the ROS master + the main context
 ## context data-structure, methods
 -event queue
 -resolving handler of a given event
--register + testing `whenever` clauses
+-register controller and timeouts clauses
 -...
 
 ## initializing a context
@@ -44,19 +43,15 @@ also generate a script to boot the system: run the ROS master + the main context
 
 ## the big-while-loop
 -find an handler to execute:
-  -pull from event queue (whenever/every/...)
   -rosspin (+ timeout) to get a message
 -resolve and execute handler (what if no handler ?)
--move to another state
--test `whenever` clauses
+-set new timeout or move to another state
 
 ## moving to another state
--flushing the queue from timed events related to previous state
--deregister `whenever` clauses of old state
--register `whenever` clauses of new state
--set up timer for every events
-
+-move to new state
+-register new controller function
 
 # Analysis and Transformation
 
-
+# Misc
+scala.text is getting deprecated. need to replace it. at the same time we can make sure we are python friendly wrt the indentation.

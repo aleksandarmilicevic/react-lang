@@ -25,7 +25,7 @@ class Printer {
   def addParen(doc: Document) = "(" :: doc :: text(")")
   def separate(sep: Document, elts: List[Document]) = {
     if (elts.length > 1)
-      elts.dropRight(1).foldRight(elst.last)(_ :: sep :/: _)
+      elts.dropRight(1).foldRight(elts.last)(_ :: sep :/: _)
     else if (elts.length == 1)
       elts.head
     else
@@ -70,14 +70,14 @@ class Printer {
   
   def apply(x: LHS): Document = x match {
     case Ident(id) => apply(id)
-    case ArrayAccess(lhs, idx) => apply(lhs) :: "[" :: apply(idx) :: "]"
+    case ArrayAccess(lhs, idx) => apply(lhs) :: "[" :: apply(idx) :: text("]")
     case FieldAccess(lhs, fld) => apply(lhs) :: "->" :: apply(fld) 
   }
 
   def apply(x: Expr, parentPriority: Int = -1): Document = x match {
     case Literal(l) => text(l.toString)
     case App(sym, args) => sys.error("TODO don't forget paren") //need paren if priority and infix
-    case New(ctorId, args) => "new" :/: apply(ctorId) :: "(" :: ... :: ")"
+    case New(ctorId, args) => "new" :/: apply(ctorId) :: "(" :: "TODO" :: text(")") //TODO
     case lhs: LHS => apply(lhs)
   }
   

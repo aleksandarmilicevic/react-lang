@@ -11,11 +11,12 @@ sealed abstract class Handler(val body: Stmnt, val dest: Option[Id]) extends Pos
   def hasDest = dest.isDefined
 }
 case class EventHandler(pat: Pattern, override val body: Stmnt, dst: Id) extends Handler(body, Some(dst)) {
-  override def env = Logger.logAndThrow("AST", LogError, "TODO: EventHandler.env")
+  override def env = Logger.logAndThrow("AST", LogError, "TODO: EventHandler.env, event payload may bind some variables")
+}
+case class PeriodicHandler(ms: Int, override val body: Stmnt) extends Handler(body, None) {
+  override def env = Logger.logAndThrow("AST", LogError, "TODO: PeriodicHandler.env, reading from the sensor binds variables")
 }
 case class TimeOutHandler(ms: Int, override val body: Stmnt, dst: Id) extends Handler(body, Some(dst))
-case class PeriodicHandler(ms: Int, override val body: Stmnt) extends Handler(body, None) //every
-case class ConditionHandler(cond: Expr, override val body: Stmnt) extends Handler(body, None) //whenever
 
 class State(id: Id, locals: List[Let], handlers: List[Handler]) extends Positional with SpecSt {
   //a state is a list of handler with some extra: id, local vars, ...
@@ -25,7 +26,7 @@ class Context(id: Id, locals: List[Let], states: List[State], default: List[Hand
   //a context is a list of state, an initial state, local vars, default handlers, ...
 }
 
-class CompilationUnit(fileName: String, pck: Id, imports: List[Id], contexts: List[Context])
+class CompilationUnit(fileName: String, pkg: Id, imports: List[Id], contexts: List[Context])
 
 class Program(cu: List[CompilationUnit])
 

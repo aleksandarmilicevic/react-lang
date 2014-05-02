@@ -1,0 +1,65 @@
+# model of a PID controller
+
+continuous reachability
+{
+    # declare the state variables
+    state var x,vx,Kp,Ki,Kd,e,t
+    # x: position
+    # vx: speed
+    # Kp: proportional gain, a tuning parameter
+    # Ki: integral gain, a tuning parameter
+    # Kd: derivative gain, a tuning parameter
+    # e: accumulated error (internal state of the controller) 
+    # t: time
+    # assume the target is 0.
+
+    setting
+    {
+        fixed steps 0.05            # time step size
+        time 5                      # time horizon
+        remainder estimation {
+            x: [-1e-3,1e-3],
+            vx:[-1e-3,1e-3],
+            e: [-1e-3,1e-3],
+            Kp:[-1e-5,1e-5],
+            Ki:[-1e-5,1e-5],
+            Kd:[-1e-5,1e-5],
+            t: [-1e-5,1e-5]
+        }
+        identity precondition       # the preconditioning technique
+        gnuplot interval t,x        # plotting file is in Gnuplot format
+        adaptive orders {
+            min{x:2, vx:2, Kp:1, Ki:1, Kd:1, e:2, t:1},
+            max{x:6, vx:6, Kp:1, Ki:1, Kd:1, e:6, t:1}
+        }  # TM orders
+        cutoff 1e-15                # cutoff threshold
+        precision 53                # precision in the computation
+        output pid_ctrl             # name for the output files
+        print on                    # display the computation steps
+    }
+
+    # integration scheme
+    # poly ode 2 
+    # nonpoly ode 
+    poly ode 1
+    {
+        e' = (0 - x)
+        x' = vx
+        vx' = Kp*(0 - x) + Ki * e + Kd*(0 - vx)
+        Kp' = 0
+        Ki' = 0
+        Kd' = 0
+        t' = 1
+    }
+
+    init        # specify the initial set
+    {
+        x in [2, 2]
+        vx in [0, 0]
+        Kp in [1, 1]
+        Ki in [1, 1]
+        Kd in [1, 1]
+        e in [0, 0]
+        t in [0, 0]
+    }
+}

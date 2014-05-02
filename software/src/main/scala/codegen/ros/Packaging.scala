@@ -6,7 +6,7 @@ catkin compliant package.xml
 
 */
 
-class PkgDescr(name: String) {
+class PkgDescr(val name: String) {
   var version = ""
   var description = ""
   var author_email = "you@yourdomain.tld"
