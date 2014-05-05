@@ -1,0 +1,116 @@
+# moving in straight line: brake in time
+
+hybrid reachability
+{
+    state var x, vx, t
+    # x: position
+    # vx: speed
+    # t: time
+    
+    setting
+    {
+        fixed steps 0.05
+        time 10
+        remainder estimation {
+            x: [-1e-3,1e-3],
+            vx:[-1e-3,1e-3],
+            t: [-1e-5,1e-5]
+        }
+        QR precondition
+        gnuplot octagon t,x
+        adaptive orders {
+            min{x:2, vx:2, t:1},
+            max{x:6, vx:6, t:1}
+        }  # TM orders
+        cutoff 1e-5
+        precision 53
+        output buggy_01
+        max jumps 5
+        print on
+    }
+
+    modes {
+        accelerating {
+            poly ode 1 {
+                x' = vx
+                vx' = 5
+                t' = 1
+            }
+            inv {
+              vx in [0, 20]
+            }
+        }
+
+        cruising {
+            poly ode 1 {
+                x' = vx
+                vx' = 0
+                t' = 1
+            }
+            inv {
+                vx = 20
+            }
+        }
+
+        braking {
+            poly ode 1 {
+                x' = vx
+                vx' = -10
+                t' = 1
+            }
+            inv {
+                vx in [0, 20]
+            }
+        }
+        
+        stopped {
+            poly ode 1 {
+                x' = vx
+                vx' = 0
+                t' = 1
+            }
+            inv {
+                vx = 0
+            }
+        }
+    }
+
+    jumps {
+        accelerating -> cruising
+        guard { vx >= 20 }
+        reset { vx' := 20 }
+        parallelotope aggregation {}
+        
+        cruising -> braking
+        guard { x >= 70 }
+        reset { x' := 70 }
+        interval aggregation
+        
+        accelerating -> braking
+        guard { x >= 70 }
+        reset { x' := 70 }
+        interval aggregation
+ 
+        braking -> stopped
+        guard { vx <= 0 }
+        reset { vx' := 0 }
+        interval aggregation
+        
+    }
+
+    init {
+        accelerating {
+            x in [0, 0]
+            vx in [0, 0]
+            t in [0, 0]
+        }
+    }
+
+#   # assume the wall is at 100.
+#   unsafe set {
+#       accelerating  { x >= 100 }
+#       cruising      { x >= 100 }
+#       braking       { x >= 100 }
+#       stopped       { x >= 100 }
+#   }
+}
