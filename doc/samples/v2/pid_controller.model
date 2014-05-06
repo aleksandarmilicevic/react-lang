@@ -16,6 +16,7 @@ continuous reachability
     setting
     {
         fixed steps 0.05            # time step size
+        #time 10                     # time horizon
         time 5                      # time horizon
         remainder estimation {
             x: [-1e-3,1e-3],
@@ -29,8 +30,8 @@ continuous reachability
         identity precondition       # the preconditioning technique
         gnuplot interval t,x        # plotting file is in Gnuplot format
         adaptive orders {
-            min{x:2, vx:2, Kp:1, Ki:1, Kd:1, e:2, t:1},
-            max{x:6, vx:6, Kp:1, Ki:1, Kd:1, e:6, t:1}
+            min{x:4, vx:4, Kp:1, Ki:1, Kd:1, e:4, t:1},
+            max{x:8, vx:8, Kp:1, Ki:1, Kd:1, e:8, t:1}
         }  # TM orders
         cutoff 1e-15                # cutoff threshold
         precision 53                # precision in the computation
@@ -54,11 +55,11 @@ continuous reachability
 
     init        # specify the initial set
     {
-        x in [2, 2]
+        x in [2, 5]
         vx in [0, 0]
-        Kp in [1, 1]
+        Kp in [3, 3]
         Ki in [1, 1]
-        Kd in [1, 1]
+        Kd in [2, 2]
         e in [0, 0]
         t in [0, 0]
     }

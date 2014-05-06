@@ -26,8 +26,52 @@ physical description:
 
     for controller interface: http://wiki.ros.org/ros_control
                                                                                     
-example:
+URDF example:
     2 wheeled buggy: https://github.com/allenh1/p2os
     4 wheeled buggy: https://github.com/husky/husky_description
 
+elements to support:
+    parts(dimension, weight from which we can derive momentum/energy):
+        box
+        cylinder
+        sphere
+    wheels(cylinder-like properties):
+        fixed wheel (one actuators)
+        centered orientable wheel (two actuators)
+        off-centered orientable wheel (no motor, just for stability)
+    actuators:
+        simple motors
+        stepper motors
+    sensor:
+        rpm (feedback from the motor)
+        distance
+        position
 
+geometry:
+    operation on geometry:
+        translate([x,y,z])
+        rotate([x,y,z])
+        scale([x,y,z])
+    boolean op:
+        union()
+        difference()
+        intersection()
+
+physical elements for each geometry:
+    mass
+    angular inertia (predefined shape comes with a default inertia assuming homogeneous mass, can be overridden by the user)
+    frame (local coordinate system)
+
+motor spec:
+    K_t: torque propotionality constant
+    K_v: constant for back electromotive force
+    V_max: max input voltage
+    P_max: max output power (assume 100% efficiency)
+    motor described by the followin equations
+        torque:  τ ≈ K_t∙I
+        voltage: V ≈ K_v∙ω  (assume no resistance)
+        power:   P = I∙V ≈ (K_v/K_t)∙τ∙ω
+
+sensor spec:
+    must somehow connect to a physical element
+    noise: an inverval

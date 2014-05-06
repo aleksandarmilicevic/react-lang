@@ -45,6 +45,10 @@ Combining that with discrete event communication:
     event are only allowed to change the local variables, not the output values.
     can we bound the communication in a period ? show that communication quiesce
 
+Types
+-----
+types with physical units ?
+
 
 Time
 ----
@@ -54,7 +58,10 @@ For multiple robots, we will see later.
 
 Communication
 -------------
-...
+The communication interleaves with the controller.
+It is not allowed to touch the output variables. However, it can change the local variables (which are then read by the controller).
+We also what that the communication quiesce (assuming a limited number of user input) between two execution of the controller (it should be easy to prove so).
+That way we can have a "run to completion" and consider only those states when interleaving the communication and the controller.
 
 
 Interactions with other languages

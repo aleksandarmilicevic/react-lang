@@ -1,0 +1,40 @@
+part about hybrid systems' verification
+---------------------------------------
+-discrete controller + continuous dynamics = hybrid system (also fancier names like cyber-physical system)
+    some example
+-the goal: an hybrid language
+-the challenges, how to overcome them
+    if we want to say something like collision, we have to say connect the code to to the environment through a model of the robot
+        usually those two parts are separated
+        eventually: code from continuous steps
+    a bit of history:
+        previously: putting time in the language (giotto)
+        now: putting geometry/dynamics in the language (hardware/software split)
+-background:
+    verification vs simulation:
+        one trace vs exhaustive search (pushing intervals instead of points)
+    verification of hybrid systems
+        *model*-checking,
+            complexity -> fragile by nature
+            works only on models: make the model be the code
+        basic intro into the methods: (Maler 13 intro paper)
+            continuous flows and discrete transitions
+            example on the robot as a point travelling along a line:
+                first without the uncertainty
+                then with uncertainty
+            limits of those methods: PID example
+-use the language to close the gap between the verification and the program:
+    sample-hold controller
+    make simpler the interleaving semantics
+        easier to explore the discrete and continuous separately
+        no zeno behavior (kills verifier, not implementable anyway)
+        discrete: run to completion semantics
+        continuous: hopefully extracted from robot description
+-extracting kinematic and dynamic from description
+    5 classes of wheeled robots (without slipping) [Campion et al 96]
+        any more reference ?
+    bond graphs:
+        generates DAEs (differential algebraic equations: F(x'(t), x(t), t) = 0)
+        verification tools mostly work on ODEs (ordinary differential equations: x'(t) = F(x(t), t))
+        ? DAEs to ODEs ? (fortunately, it seems there is no difference when using TM)
+

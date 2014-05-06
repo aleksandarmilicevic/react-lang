@@ -1,7 +1,7 @@
 package react.ast
 
-import scala.text.Document
-import scala.text.Document._
+import react.utils.text.Document
+import react.utils.text.Document._
 
 //TODO pretty printing utils
 //formats:
@@ -25,7 +25,7 @@ class Printer {
   def addParen(doc: Document) = "(" :: doc :: text(")")
   def separate(sep: Document, elts: List[Document]) = {
     if (elts.length > 1)
-      elts.dropRight(1).foldRight(elts.last)(_ :: sep :/: _)
+      elts.dropRight(1).foldRight(elts.last)(_ :: sep :: _)
     else if (elts.length == 1)
       elts.head
     else
@@ -77,33 +77,32 @@ class Printer {
   def apply(x: Expr, parentPriority: Int = -1): Document = x match {
     case Literal(l) => text(l.toString)
     case App(sym, args) => sys.error("TODO don't forget paren") //need paren if priority and infix
-    case New(ctorId, args) => "new" :/: apply(ctorId) :: "(" :: "TODO" :: text(")") //TODO
+    case New(ctorId, args) => "new" ::: apply(ctorId) :: "(" :: "TODO" :: text(")") //TODO
     case lhs: LHS => apply(lhs)
   }
   
   def apply(x: Stmnt): Document = x match {
     case ITE(cond, caseTrue, caseFalse) =>
-      group("if" :/: "(" :/: apply(cond) :/: text(")")) :/:
+      "if" ::: "(" ::: apply(cond) ::: text(")") :/:
       nest(4, apply(caseTrue)) :/:
       "else" :/:
       nest(4, apply(caseFalse))
     case While(cond, body) =>
-      "while" :/: "(" :/: apply(cond) :/: text(")") :/:
+      "while" ::: "(" ::: apply(cond) ::: text(")") :/:
       nest(4, apply(body))
     case Block(body) =>
-      group(
       "{" :/: 
-      nest(4, separate(text(";"), body map (apply(_)))) :/:
-      text("}"))
+      nest(4, separate(";" :: break, body map (apply(_)))) :/:
+      text("}")
     case Return(e) =>
-      group("return" :/: apply(e))
+      "return" ::: apply(e)
     case Affect(lhs, e) =>
-      group(apply(lhs) :/: "←" :/: apply(e))
-    case Send(dest, msg) =>
-      group("send" :/: apply(msg) :/: "to" :/: apply(dest))
+      apply(lhs) ::: "←" ::: apply(e)
+    case Eval(e) =>
+      apply(e)
     case Let(lhs, e, mutable) =>
       val kw = if (mutable) "var" else "let"
-      group(kw :/: apply(lhs) :/: "←" :/: apply(e))
+      kw ::: apply(lhs) ::: "←" ::: apply(e)
   }
 
   def apply(x: Handler): Document = x match {
@@ -112,8 +111,6 @@ class Printer {
     case TimeOutHandler(ms, body, dst) =>
       sys.error("TODO")
     case PeriodicHandler(ms, body) =>
-      sys.error("TODO")
-    case ConditionHandler(cond, body) =>
       sys.error("TODO")
   }
 

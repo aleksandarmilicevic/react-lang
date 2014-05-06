@@ -1,0 +1,19 @@
+-define the goal
+    a simple language that makes it easier to program robots *and* reason about them (e.g. no collision)
+-status
+    previously shown: simple language structured around model-based / event-driven programming
+    now: trying to add verification
+-two parts:
+    planning and functionality -> coordination language
+    controller, sensor, and actuator -> hybrid language
+    in the middle: API/IR
+-coordination:
+    the REACT you know
+    high-level / global view of the system
+    discrete time step and actions
+    program the robot with high-level primitives, e.g., move to here (rather that set voltage on the motor)
+    somewhere between a verification and planning/synthesis problem (AI/PL)
+    ...
+-but is that one language ?
+    more a collection of DSL
+    a framework to program, verify (, and design ?) robots

@@ -20,10 +20,10 @@ object Parser extends StandardTokenParsers {
                           "->", "→")
   lexical.reserved += ("int", "float", "string", "bool",
                        "package", "import", "context", "state",
-                       "whenever", "every", "on",
-                       "event", "TimeOut", "action", "invariant",
+                       "every", "on",
+                       "event", "TimeOut", "invariant",
                        "new", "true", "false", "not", "as",
-                       "return", "if", "then", "else", "do", "while", "send", "to", "let", "var")
+                       "return", "if", "then", "else", "do", "while", "let", "var")
   
   def path: Parser[Id] = ident ~ opt("." ~> path) ^^ { case id ~ None => Id(id)
                                                        case id ~ Some(p) => p.addPrefix(id) }
@@ -112,7 +112,6 @@ object Parser extends StandardTokenParsers {
     | "while" ~> expr ~ ("do" ~> stmnt)                         ^^ { case c ~ b => While(c, b) }
     | "do" ~> stmnt ~ ("while" ~> expr)                         ^^ { case b ~ c => Block(List(b, While(c,b))) }
     | "return" ~> expr                                          ^^ ( e => Return(e) )
-    | "send" ~> expr ~ ("to" ~> expr)                           ^^ { case msg ~ dest => Send(dest, msg) }
     | lhs  ~ (("<-" | "←") ~> expr)                             ^^ { case id ~ e => Affect(id, e) }
     | let
     | block
@@ -148,7 +147,6 @@ object Parser extends StandardTokenParsers {
   def handler: Parser[Handler] = positioned(
       "on" ~> "TimeOut" ~> numericLit ~ block ~ moveTo  ^^ { case to ~ body ~ dst => TimeOutHandler(to.toInt, body, dst) }
     | "on" ~> pattern ~ block ~ moveTo                  ^^ { case evt ~ body ~ dst => EventHandler(evt, body, dst) }
-    | "whenever" ~> expr ~ block                        ^^ { case cond ~ body => ConditionHandler(cond, body) }
     | "every" ~> numericLit ~ block                     ^^ { case period ~ body => PeriodicHandler(period.toInt, body) }
     )
 

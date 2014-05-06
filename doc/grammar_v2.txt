@@ -61,27 +61,46 @@ stmnt ::= nop
         | lhs ← expr
         | expr
 
-io_modifiers ::= in | out
-
-phys ::= ?physical description, sensors, actuators?
+phys ::= ?physical description, sensors, actuators? ToDo see link_to_physical_world.txt
 
 rbt ::= robot ident ( phys ) { rbt_body }
 
 rbt_body ::=
            | decl rbt_body
            | state rbt_body
+           | event_handler rbt_body
 
 decl ::= var ident: type ← expr
        | val ident: type ← expr
 
+io_modifiers ::= in | out
+
+io ::= io_modifiers ident ( formals )
+
+io_spec ::=
+          | io io_spec
+
+controller ::= controller {
+                period int_literal
+                io_spec
+                stmnt
+               }
+
+event_handler ::= on ident ( formals ) { stmnt }
+
 init_mod ::=
            | initial
 
-dyn ::= ?dynamic of the system? -> ground, air, ?
+dyn ::= wheeled no-slipping 
+      | wheeled slipping
+      | air
+      | ???
 
 state ::= init_mod state ident { dynamic dyn
-                                 period int_literal
-                                 io 
-                                 XXX controler, event handler ?
+                                 state_body
                                }
 
+state_body ::=
+             | decl state_body
+             | event_handler state_body
+             | controler state_body

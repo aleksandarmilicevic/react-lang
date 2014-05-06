@@ -52,6 +52,4 @@ also generate a script to boot the system: run the ROS master + the main context
 -register new controller function
 
 # Analysis and Transformation
-
-# Misc
-scala.text is getting deprecated. need to replace it. at the same time we can make sure we are python friendly wrt the indentation.
+...
