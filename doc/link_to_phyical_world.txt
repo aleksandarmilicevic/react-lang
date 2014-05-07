@@ -1,34 +1,24 @@
-physical description:
-    some form of bond graph from which we can extract some informations
-    https://en.wikipedia.org/wiki/Bond-graph    
-        bonds connects parts and conserve energy: power = effort ∙ flow
-        nodes are parts of the robots:
-            R: resistance, one port (dissipate power)
-            C: capacitance
-            I: Inertia
-            Se: source of effort
-            Sf: source of flow
-            TF: transformer, f₁∙r = f₂ ∧ e₁/r = e₂
-            GY: gyrator, e₂ = μ∙f₁ ∧ e₁ = μ∙f₂
-        links or junctions:
-            0 junction: the flow sums to zero and the efforts are equal, ∀a,b. e_a = e_b ∧ ∑f = 0
-            1 junction: the efforts sum to zero and the flows are equal, ∀a,b. f_a = f_b ∧ ∑e = 0
+existing format that we can look at are:
+    http://wiki.ros.org/urdf/XML
+    http://wiki.ros.org/srdf/review
+    gazebo extensions
+        http://gazebosim.org/wiki/Tutorials/1.9/Using_A_URDF_In_Gazebo
+        http://gazebosim.org/wiki/Tutorials/1.9/ROS_Motor_and_Sensor_Plugins
+        http://gazebosim.org/wiki/Tutorials/1.9/ROS_Control_with_Gazebo
 
-    existing format that we can look at are:
-        http://wiki.ros.org/urdf/XML
-        http://wiki.ros.org/srdf/review
-        gazebo extensions
-            http://gazebosim.org/wiki/Tutorials/1.9/Using_A_URDF_In_Gazebo
-            http://gazebosim.org/wiki/Tutorials/1.9/ROS_Motor_and_Sensor_Plugins
-            http://gazebosim.org/wiki/Tutorials/1.9/ROS_Control_with_Gazebo
+there is http://wiki.ros.org/xacro to write macro (functions)
 
-    there is http://wiki.ros.org/xacro to write macro (functions)
-
-    for controller interface: http://wiki.ros.org/ros_control
+for controller interface: http://wiki.ros.org/ros_control
                                                                                     
 URDF example:
     2 wheeled buggy: https://github.com/allenh1/p2os
     4 wheeled buggy: https://github.com/husky/husky_description
+
+constraints to make it easier at start:
+    only wheeled robot
+    robot has no moving part (except wheels)
+    no slipping/skidding
+    rigid-body physics
 
 elements to support:
     parts(dimension, weight from which we can derive momentum/energy):
@@ -57,15 +47,20 @@ geometry:
         difference()
         intersection()
 
-physical elements for each geometry:
+physical elements for each robot part:
+    geometry
+    dimension
     mass
-    angular inertia (predefined shape comes with a default inertia assuming homogeneous mass, can be overridden by the user)
+    center of gravity (by default assumes homogeneous mass, can be overridden by the user)
+    moment of intertia (predefined shape comes with a default moment of inertia)
     frame (local coordinate system)
 
 motor spec:
     K_t: torque propotionality constant
     K_v: constant for back electromotive force
-    V_max: max input voltage
+    2 out of 3:
+    V_max: max input voltage 
+    I_max: max input current
     P_max: max output power (assume 100% efficiency)
     motor described by the followin equations
         torque:  τ ≈ K_t∙I
@@ -75,3 +70,28 @@ motor spec:
 sensor spec:
     must somehow connect to a physical element
     noise: an inverval
+
+linking the elements:
+    some form of bond graph from which we can extract some informations
+    https://en.wikipedia.org/wiki/Bond-graph    
+        bonds connects parts and conserve energy: power = effort ∙ flow
+        nodes are parts of the robots:
+            R: resistance, one port (dissipate power): e = R∙f
+            C: capacitance: e' = f/C
+            I: Inertia: f' = e/I
+            Se: source of effort: e = Se
+            Sf: source of flow: f = Sf
+            TF: transformer, f₁∙r = f₂ ∧ e₁/r = e₂
+            GY: gyrator, e₂ = μ∙f₁ ∧ e₁ = μ∙f₂
+        links or junctions:
+            0 junction: the flow sums to zero and the efforts are equal, ∀a,b. e_a = e_b ∧ ∑f = 0
+            1 junction: the efforts sum to zero and the flows are equal, ∀a,b. f_a = f_b ∧ ∑e = 0
+    Energy Domain            effort              e symbol    e unit  flow              f symbol    f unit
+    Mechanical, translation  Force               F           N       Linear velocity   v           m/s
+    Mechanical, rotation     Torque              τ           N·m     Angular velocity  ω           rad/s
+    Electrical               Electromotive force V or u      V       Current           I or i      A 
+
+    examples:
+        C: devices like springs, torsion bars, electrical capacitors, gravity tanks, and accumulators, etc.
+        I: inductance effects in electrical systems and mass or inertia effects in mechanical systems.
+        GY: a DC motor is a gyrator, where the output torque is proportional to the input current and the back emf is proportional to the motor angular speed.

@@ -32,6 +32,7 @@ Real-time Language:
 
 Dynamic systems / Model based:
     Simulink,
+    Modelica (OpenModelica, JModelica)
     ...
 
 Connecting with the physical world

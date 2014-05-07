@@ -43,7 +43,7 @@ also generate a script to boot the system: run the ROS master + the main context
 
 ## the big-while-loop
 -find an handler to execute:
-  -rosspin (+ timeout) to get a message
+    -rosspin (+ timeout) to get a message
 -resolve and execute handler (what if no handler ?)
 -set new timeout or move to another state
 
@@ -51,5 +51,15 @@ also generate a script to boot the system: run the ROS master + the main context
 -move to new state
 -register new controller function
 
-# Analysis and Transformation
+# Verification
+if we go toward TM,
+-existing tool:
+    flow*: http://systems.cs.colorado.edu/research/cyberphysical/taylormodels/
+-for symbolic manipulation (extracting equations from a bond graph), maybe we can interface with maxima:
+    http://maxima.sourceforge.net/docs/manual/en/maxima_14.html#SEC74 (polynomial)
+    http://maxima.sourceforge.net/docs/manual/en/maxima_21.html#SEC104 (diff eq)
+    http://maxima.sourceforge.net/docs/manual/en/maxima_28.html#taylor
+-for CAS library:
+    java: http://krum.rz.uni-mannheim.de/jas/
+    C++: http://issc.uj.ac.za/symbolic/symbolic.html, http://www.ginac.de/
 ...

@@ -6,7 +6,7 @@ state:
   -speed: v = (vx, vy)
 -rotational:
   -position: Φ
-  -angular speed: vΦ
+  -angular speed: ω
 
 the controllable parts are the (speed of the) wheels:
     c = (l, r) (for controllable, left, and right)
@@ -34,13 +34,12 @@ description of the physical robot:
 -sensor:
   -distance sensor at [5,0,3] facing [1,0,0] produced input d
    assumes that the sensing area is [5,-10] to [5,100] and the return distance is the closest object
--mass: m (uniformly spread)
 
 ----------------------------------------
 dynamics:
-  center of mass is the middle of the robot
-  angular momentum (rod with rotation at center): inertia = L ^ m^2 / 12 where L = 12 (width of body + wheels)
-  do we consider some kind of drag ?
+  center of mass is the middle of the robot: [0,0,2.5]
+  moment of intertia (rod with rotation at center): L ^ m^2 / 12 where L = 12 (width of body + wheels)
+  do we consider some kind of drag ? (proportional to speed, opposite direction)
 
 ----------------------------------------
 controller:
@@ -87,4 +86,9 @@ v = 2π∙r∙ω [for both l/r]
 
 (2) controller set the power: v′ = (2π∙P)/(K∙m∙v) [for both l/r]
 
+--------------------------------
+bond graph:
+
+Sf(l) -V/I-> GY motor -τ/ω-> GY wheel -F/v-> ... I:mass, R: friction
+Sf(r) -V/I-> GY motor -τ/ω-> GY wheel -F/v-> ... I:angular momentum (or ignore that for the moment)
 

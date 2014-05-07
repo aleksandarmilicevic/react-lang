@@ -31,10 +31,14 @@ part about hybrid systems' verification
         discrete: run to completion semantics
         continuous: hopefully extracted from robot description
 -extracting kinematic and dynamic from description
+    when building the robot:
+        build both the geometry (kinematic) and connect the elt (dynamic, using bond graph)
+    bond graphs:
+        connect physical (energy/flow) units and give meaning to elts
+        generates ODEs/DAEs
+            ordinary differential equations: x'(t) = F(x(t), t)
+            differential algebraic equations: F(x'(t), x(t), t) = 0 (comes from conservation laws)
+            ? ODEs are special case of DAEs. fortunately, it seems there is no difference when using TM.
     5 classes of wheeled robots (without slipping) [Campion et al 96]
         any more reference ?
-    bond graphs:
-        generates DAEs (differential algebraic equations: F(x'(t), x(t), t) = 0)
-        verification tools mostly work on ODEs (ordinary differential equations: x'(t) = F(x(t), t))
-        ? DAEs to ODEs ? (fortunately, it seems there is no difference when using TM)
 
