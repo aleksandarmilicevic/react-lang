@@ -89,6 +89,18 @@ v = 2π∙r∙ω [for both l/r]
 --------------------------------
 bond graph:
 
-Sf(l) -V/I-> GY motor -τ/ω-> GY wheel -F/v-> ... I:mass, R: friction
-Sf(r) -V/I-> GY motor -τ/ω-> GY wheel -F/v-> ... I:angular momentum (or ignore that for the moment)
+Sf(l) -V/I-> GY motor -τ/ω-> GY wheel -F/v-> 1 -> I:mass
+Sf(r) -V/I-> GY motor -τ/ω-> GY wheel -F/v--↑ ↓-> R:drag
 
+ignore for the moment:
+I:angular momentum
+R:rolling friction
+
+TODO the two speed do not sum due to rotations.
+speed and rotation are not in the same referential
+
+-transfering a vector from the interial frame to the body frame and back
+given a vector v in the body frame, R∙v is a vector in the interial frame where
+
+R = ⌈cos Φ⌉
+    ⌊sin Φ⌋

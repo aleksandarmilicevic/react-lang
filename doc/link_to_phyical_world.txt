@@ -95,3 +95,6 @@ linking the elements:
         C: devices like springs, torsion bars, electrical capacitors, gravity tanks, and accumulators, etc.
         I: inductance effects in electrical systems and mass or inertia effects in mechanical systems.
         GY: a DC motor is a gyrator, where the output torque is proportional to the input current and the back emf is proportional to the motor angular speed.
+
+extracting the dynamic of a rigid body system:
+http://sbel.wisc.edu/Courses/ME751/2010/ (feb 25 +)
