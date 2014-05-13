@@ -1,6 +1,11 @@
-/* runspin: %spin -a        %gcc -o pan -DSAFETY -DBFS -DMEMLIM=4000 -DCOLLAPSE pan.c       %./pan        % */
+/* runspin: %spin -a        %gcc -o pan -DSAFETY -DBFS -DMEMLIM=4096 -DMA=24 pan.c       %./pan        % */
 
-#define N       1
+/* with N=1, DIM=2, STEPS=4, SMAX=1: we can explore the full space depth:2030, mem: 522M, t: 255s */
+/* with N=1, DIM=2, STEPS=5, SMAX=2: we can explore the full space depth:2020, mem: 815M, t: 460s */
+/* with N=2, DIM=2, STEPS=4, SMAX=1, and 4G memory: we can explore up to depth 82 in 211s */
+/* with N=3, DIM=3, STEPS=10, SMAX=5, and 4G memory: we can explore up to depth 21 (compiles with -DMA-28)*/
+
+#define N       2
 #define DIM     2
 #define STEPS   4
 #define SMAX    1
@@ -29,29 +34,33 @@ init {
             byte robot, axis;
             bit action;
 
-            //pick a robot
+            //pick a robot, an axis, and an action
             if
-            :: N <= N -> robot = 255; //nothing
-            :: N >= 1 -> robot = 0;
-            :: N >= 2 -> robot = 1;
-            :: N >= 3 -> robot = 2;
-            :: N >= 4 -> robot = 3;
-            :: N >= 5 -> robot = 4;
-            fi;
-
-            //pick an axis
-            if
-            :: robot < 255 && DIM > X -> axis = X;
-            :: robot < 255 && DIM > Y -> axis = Y;
-            :: robot < 255 && DIM > Z -> axis = Z;
-            :: else -> axis = 0;
-            fi;
-
-            //pick an action
-            if
-            :: robot < 255 -> action = LESS;
-            :: robot < 255 -> action = MORE;
-            :: else -> action = 0;
+            :: N >= 1 && DIM > X -> d_step { robot = 0; axis = X; action = LESS; } 
+            :: N >= 1 && DIM > X -> d_step { robot = 0; axis = X; action = MORE; } 
+            :: N >= 1 && DIM > Y -> d_step { robot = 0; axis = Y; action = LESS; } 
+            :: N >= 1 && DIM > Y -> d_step { robot = 0; axis = Y; action = MORE; } 
+            :: N >= 1 && DIM > Z -> d_step { robot = 0; axis = Z; action = LESS; } 
+            :: N >= 1 && DIM > Z -> d_step { robot = 0; axis = Z; action = MORE; } 
+            :: N >= 2 && DIM > X -> d_step { robot = 1; axis = X; action = LESS; } 
+            :: N >= 2 && DIM > X -> d_step { robot = 1; axis = X; action = MORE; } 
+            :: N >= 2 && DIM > Y -> d_step { robot = 1; axis = Y; action = LESS; } 
+            :: N >= 2 && DIM > Y -> d_step { robot = 1; axis = Y; action = MORE; } 
+            :: N >= 2 && DIM > Z -> d_step { robot = 1; axis = Z; action = LESS; } 
+            :: N >= 2 && DIM > Z -> d_step { robot = 1; axis = Z; action = MORE; } 
+            :: N >= 3 && DIM > X -> d_step { robot = 2; axis = X; action = LESS; } 
+            :: N >= 3 && DIM > X -> d_step { robot = 2; axis = X; action = MORE; } 
+            :: N >= 3 && DIM > Y -> d_step { robot = 2; axis = Y; action = LESS; } 
+            :: N >= 3 && DIM > Y -> d_step { robot = 2; axis = Y; action = MORE; } 
+            :: N >= 3 && DIM > Z -> d_step { robot = 2; axis = Z; action = LESS; } 
+            :: N >= 3 && DIM > Z -> d_step { robot = 2; axis = Z; action = MORE; } 
+            :: N >= 4 && DIM > X -> d_step { robot = 3; axis = X; action = LESS; } 
+            :: N >= 4 && DIM > X -> d_step { robot = 3; axis = X; action = MORE; } 
+            :: N >= 4 && DIM > Y -> d_step { robot = 3; axis = Y; action = LESS; } 
+            :: N >= 4 && DIM > Y -> d_step { robot = 3; axis = Y; action = MORE; } 
+            :: N >= 4 && DIM > Z -> d_step { robot = 3; axis = Z; action = LESS; } 
+            :: N >= 4 && DIM > Z -> d_step { robot = 3; axis = Z; action = MORE; } 
+            :: else -> skip;
             fi;
 
             d_step {
@@ -78,6 +87,10 @@ init {
                     i++;
                 :: else -> break;
                 od;
+                //reset vars
+                robot = 0;
+                axis = 0;
+                action = 0;
             }
         }
     od;
