@@ -1,0 +1,84 @@
+/* runspin: %spin -a        %gcc -o pan -DSAFETY -DBFS -DMEMLIM=4000 -DCOLLAPSE pan.c       %./pan        % */
+
+#define N       1
+#define DIM     2
+#define STEPS   4
+#define SMAX    1
+
+#define X       0
+#define Y       1
+#define Z       2
+
+#define LESS 0
+#define MORE 1
+
+typedef Robot
+{
+    byte position[DIM];
+    byte speed[DIM];
+};
+
+Robot robots[N];
+
+init {
+    do
+    ::  atomic {
+
+            //TODO initialize the robots
+
+            byte robot, axis;
+            bit action;
+
+            //pick a robot
+            if
+            :: N <= N -> robot = 255; //nothing
+            :: N >= 1 -> robot = 0;
+            :: N >= 2 -> robot = 1;
+            :: N >= 3 -> robot = 2;
+            :: N >= 4 -> robot = 3;
+            :: N >= 5 -> robot = 4;
+            fi;
+
+            //pick an axis
+            if
+            :: robot < 255 && DIM > X -> axis = X;
+            :: robot < 255 && DIM > Y -> axis = Y;
+            :: robot < 255 && DIM > Z -> axis = Z;
+            :: else -> axis = 0;
+            fi;
+
+            //pick an action
+            if
+            :: robot < 255 -> action = LESS;
+            :: robot < 255 -> action = MORE;
+            :: else -> action = 0;
+            fi;
+
+            d_step {
+                
+                //exectute the update
+                if
+                :: robot < N && action == LESS && robots[robot].speed[axis] > -SMAX -> robots[robot].speed[axis] = robots[robot].speed[axis] -1;
+                :: robot < N && action == MORE && robots[robot].speed[axis] <  SMAX -> robots[robot].speed[axis] = robots[robot].speed[axis] +1;
+                :: else -> skip;
+                fi;
+
+                //one time step
+                byte i,j;
+                i = 0;
+                do
+                :: i < N ->
+                    j = 0;
+                    do
+                    :: j < DIM -> 
+                        robots[i].position[j] = (robots[i].position[j] + robots[i].speed[j]) % STEPS;
+                        j++;
+                    :: else -> break;
+                    od;
+                    i++;
+                :: else -> break;
+                od;
+            }
+        }
+    od;
+}
