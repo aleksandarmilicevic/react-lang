@@ -13,6 +13,10 @@ for controller interface: http://wiki.ros.org/ros_control
 URDF example:
     2 wheeled buggy: https://github.com/allenh1/p2os
     4 wheeled buggy: https://github.com/husky/husky_description
+    2 fixed wheels + 2 castor wheels:
+        http://wiki.ros.org/Robots/TurtleBot
+        https://github.com/turtlebot/turtlebot_create/tree/hydro/create_description/urdf
+        https://github.com/yujinrobot/kobuki/tree/hydro-devel/kobuki_description/urdf
 
 constraints to make it easier at start:
     only wheeled robot
@@ -95,6 +99,12 @@ linking the elements:
         C: devices like springs, torsion bars, electrical capacitors, gravity tanks, and accumulators, etc.
         I: inductance effects in electrical systems and mass or inertia effects in mechanical systems.
         GY: a DC motor is a gyrator, where the output torque is proportional to the input current and the back emf is proportional to the motor angular speed.
+
+URDF:
+    coordinate: <origin xyz="-2 5 0" rpy="0 0 1.57" /> xyz is position, rpy is a rotation (here, 90 deg along z-axis)
+    axis of rotation for joint: <axis xyz="0 1 0" /> in the local frame
+    intertial is given as 3D tensor: http://en.wikipedia.org/wiki/List_of_moment_of_inertia_tensors#List_of_3D_inertia_tensors
+    joint type are (among others): fixed, continous/revolute (rotation), prismatic (translation)
 
 extracting the dynamic of a rigid body system:
 http://sbel.wisc.edu/Courses/ME751/2010/ (feb 25 +)
