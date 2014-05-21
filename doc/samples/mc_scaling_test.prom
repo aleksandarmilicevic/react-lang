@@ -3,7 +3,7 @@
 /* with N=1, DIM=2, STEPS=4, SMAX=1: we can explore the full space depth:2030, mem: 522M, t: 255s */
 /* with N=1, DIM=2, STEPS=5, SMAX=2: we can explore the full space depth:2020, mem: 815M, t: 460s */
 /* with N=2, DIM=2, STEPS=4, SMAX=1, and 4G memory: we can explore up to depth 82 in 211s */
-/* with N=3, DIM=3, STEPS=10, SMAX=5, and 4G memory: we can explore up to depth 21 (compiles with -DMA-28)*/
+/* with N=3, DIM=3, STEPS=10, SMAX=5, and 4G memory: we can explore up to depth 21 (compiles with -DMA=28)*/
 
 #define N       2
 #define DIM     2
