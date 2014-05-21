@@ -1,0 +1,59 @@
+\section{Introduction}
+\label{sec:intro}
+
+\paragraph{Domain of application.}
+`Simple' robots which can easily be manufactured using DYI tools and off-the-shelf electronic.
+
+\paragraph{Target audience.}
+Students or prosumer hobbyists wanting to learn robotic.
+We assume some basic technical/programming knowledge.
+The user has control over the whole process: design, implementation, production, and test/deployment.
+The language should simplify and unify those tasks.
+
+If a program crashes hundreds of time on your computer it is just annoying.
+On the other hand, if you crash hundreds of quadcopters you need a generous disposable income.
+
+\paragraph{Use case / success scenario.}
+Implementing/modeling a quadcopter such that:
+\begin{itemize}
+\item From the source we can generate (1) the code for the controller (ROS/Arduino) and (2) models for the parts that can be manufactured.
+Vitamins (actuators, sensors, battery, and electronic) should be part of the description but are added by the user.
+\item We can extract a kinetic+dynamic model from the source and simulate the robot (generating the required files for a simulator like gazebo).
+\item Prove some safety properties about the robot, e.g., assuming it has distance sensors, it will not let the user smash it into a wall.
+\end{itemize}
+Obviously a quadcopter is pretty challenging, so we are going to start with a simple 3 wheeled robot.
+Two fixed wheels (left/right) with the same axis of rotation and each connected to a motor and a castor wheel (tail) for stabilisation.
+
+The success is more killer app, rather than a killer technique.
+Most of the elements exist on in one form or another.
+However, to the best of my knowledge, they have not been put together is such a way.
+
+\paragraph{Contributions.}
+\begin{itemize}
+\item Rethinking the stack for designing robots.
+\item Bringing the physical world in the control logic.
+\item Simulation / verification of the robot before it reaches production. (later synthesis...)
+\end{itemize}
+
+There are CAD tools to design the robot.
+There are analysis tools for dynamic systems.
+However, the two are separated and one ends up building twice the same robot into two different systems.
+Furthermore, programming is a separated task and ones build a (third) logical representation of the robot.
+This separation might make sense for large teams working on complex robots.
+However, for our target user there is a lot of repetition and overlap.
+
+\paragraph{Possible collaborations.}
+There is a lot to do and we want to reuse as much as possible (especially about the case study) from what the other teams in the PPR projects are doing.
+\begin{itemize}
+\item A team at MIT+UPenn is trying to extract dynamic models from physical description (proving that a design performs as expected). This is very related to what we are trying to do. Good chances of collaboration.
+\item A team at UPenn is trying to print a quadcopter (including part that usually considered as vitamin such as the wires). No direct collaboration but can be a valuable example/inspiration for the case study.
+\end{itemize}
+
+\paragraph{Related work.}
+\begin{description}
+\item[Programming language for robots and embedded systems] many dialect of C, Giotto (Labview), Lustre/Esterelle, Stateflow, ROS, etc.
+\item[Hybrid systems] Tom's work, Taylor models [Berz \& Makino], Flow*, group doing formal specification of CPS at Vanderbild etc.
+\item[Modeling of dynamic systems] Bond graphs, modelica, simulink, etc.
+\item[Languages for constructive solid geometry] openscad, coffeescad, pretty much any 3D CAD program (usually hidden by the GUI).
+\item[Kinetic and dynamic of wheeled robots] [Campion et. al.]
+\end{description}

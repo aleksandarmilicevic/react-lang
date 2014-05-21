@@ -1,0 +1,4 @@
+Robots are becoming easier to build thank to affordable 3D printers and
+controllers.  However, there lack tools to program them easily and correctly.
+We are investigation a language where code both controls the robot and
+describes it physically.

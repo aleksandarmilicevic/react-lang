@@ -1,0 +1,11 @@
+At a time when affordable 3D printer and microcontrollers give hobbyist the capability of building robots, we want to rethink these robots are build and programed.
+Like open systems, controllers are hard to test or verify on their own since they only are complete when operating on a robot.
+To know the effect of setting an output signal we need to know the actuator connected to it and how that affects the robot.
+Therefore, we are investigating how to blend together code that both controls the robot and describes it as a physical object.
+The code should not only easily link the inputs and outputs of the controller to the sensors and actuator, but it should also give use the kinetic and dynamic of the robot.
+The goal is to unify within the same framework ideas which now exists in different communities.
+Physical shapes are easily described by constructive solid geometry which have been implemented in languages such as OpenSCAD for procedural generation of 3D models.
+From such description we can extract a kinetic model for the robot.
+To get a dynamic model, we need to enrich the language of connections with a richer semantics like bond graphs.
+Bond graphs give an equational meaning to connections, i.e. how an electric motor transforms voltage and current into torque and angular speed.
+Blending those ideas into an unified framework promise to simplify the development of robots and opens new possibilities for testing and verifying them.
