@@ -3,7 +3,18 @@
 
 \subsection{Constructive Solid Geometry}
 
-Constructive solid geometry (CSG) 
+Constructive solid geometry (CSG) is a branch of geometry dedicated to building complex solid objects from a simple set of basic shapes and operators to modify and combine them.
+%TODO some reference ?
+As basic shapes we will use: Boxes, Cylinders, and Spheres.
+%\item[Polytope]
+The transformations that can be applied to objects are: rotations, translations, and scaling.
+%TODO what about those other usefull stuff like moving the face perpendicular to the normal ?
+Finally, shapes can be combined using the following boolean operators: union, intersection, difference.
+%\item[Minowsky sum]
+%\item[Convex hull]
+
+%\paragraph{Joints.} In order to make our robots move, we add set of joint connectives 
+%joints can be modelled in CSG, however it is good to have a library of them.
 
 \subsection{Bond Graphs}
 A bond graph~\cite{Paynter} is a graphical model for dynamic systems.
@@ -13,23 +24,23 @@ Energy flows along the edges and nodes impose constraint on energy and flows.
 
 There are 5 types of on port nodes:
 \begin{description}
-\item[R]  Resistance: $e = R \cdot f$
-\item[C]  Capacitance: $\dot{e} = f/C$
-\item[I]  Inertia: $\dot{f} = e/I$
-\item[Se] Source of effort: $e = Se$
-\item[Sf] Source of flow: $f = Sf$
+\item[\bgR]  Resistance: $e = \bgR \cdot f$
+\item[\bgC]  Capacitance: $\dot{e} = f/\bgC$
+\item[\bgI]  Inertia: $\dot{f} = e/\bgI$
+\item[\bgSe] Source of effort: $e = \bgSe$
+\item[\bgSf] Source of flow: $f = \bgSf$
 \end{description}
 
 Devices like springs, torsion bars, and electrical capacitors are nodes of type C.
-I nodes represenst inductance in electrical systems and mass or inertia effects in mechanical systems.
+I nodes represent inductance in electrical systems and mass or inertia effects in mechanical systems.
 
 There are 5 types of on port nodes:
 \begin{description}
-\item[TF] Transformer: $f_1 \cdot r = f_2 \land e_1/r = e_2$
-\item[GY] Gyrator: $e_2 = \mu \cdot f_1 \land e_1 = \mu \cdot f_2$
+\item[\bgTF] Transformer: $f_1 \cdot r = f_2 \land e_1/r = e_2$
+\item[\bgGY] Gyrator: $e_2 = \mu \cdot f_1 \land e_1 = \mu \cdot f_2$
 \end{description}
     
-An electric motor is such formalism is a gyrator.
+An electric motor, in a bond graph, is a gyrator.
 The output torque is proportional to the input current and the back electromotive force to the angular speed.
 
 
@@ -41,15 +52,22 @@ Finally, there are two kinds of junctions, or multiport nodes:
 
 Nodes and junctions are connected by edges which corresponds to equality of efforts and flows.
 
-Graphs are multi-domains, i.e., eletrical and mechanical energy can occur in the same graph.
+Graphs are multi-domains, i.e., electrical and mechanical energy can occur in the same graph.
 Transformer nodes convert elements between domains.
-For instance, an eletric motor convert voltage and current int torque and angular speed.
+For instance, an electric motor convert voltage and current int torque and angular speed.
     
 In our context, we need the following energy domain:
 \begin{description}
-\item[Translation] where the effort is a force (F) expressed in newton (N) and the flow is velocity (v) expressed in m/s.
-\item[Rotation] where the effort is a torque ($\tau$) expressed in newton (Nm) and the flow is angular velocity ($\omega$) expressed in rad/s.
-\item[Electric] where the effort is a electromotive force (V) expressed in volt (V) and the flow is current (I) expressed in A.
+\item[Translation] where the effort is a force (\force) expressed in \unit{N} and the flow is velocity (\velocity) expressed in \unit{m \cdot s^{-1}}.
+\item[Rotation] where the effort is a torque (\torque) expressed in \unit{N \cdot m} and the flow is angular velocity (\angularVelocity) expressed in \unit{rad \cdot s^{-1}}.
+\item[Electric] where the effort is a electromotive force (\voltage) expressed in \unit{V} and the flow is current (\current) expressed in \unit{A}.
 \end{description}
 
+\subsection{Physics of solid objects}
+
+\paragraph{Kinematic.}
+The study of movement.
+
+\paragraph{Dynamic.}
+The study of how forces applied to the object generate movement.
 
