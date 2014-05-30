@@ -1,0 +1,110 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath,amsfonts}
+\usepackage{url}
+\usepackage{mathpartir}
+
+\title{Interface for ROSlab and REACT}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\newcommand{\tr}[1]{\stackrel{#1}{\longrightarrow}}
+
+For the segway robot: so we give a 2 dimensional model.
+%assume the center of the robot's frame is the geometric center of the robot.\\
+This model is obviously (too simple) and idealized but it gives us a starting point.
+
+REACT will provide a global controller that sends commands to the robots.
+The robots store the commands in a local FIFO buffer until they executed.
+The commands tells the robot how to move.
+In this version, the controller tells the robot at which speed to move and rotate.
+Furthermore, we assume the robots have a clock (assumed perfect), the message receptions (and similar computations) take no time.
+
+If everybody agrees with the semantics, we can proceed to specify a set of ROS messages for the integration of the REACT controller in a system of robots programmed with ROSlab.
+We can also discuss other types of commands, e.g., trajectory/path to follow, gripping.
+
+\paragraph{Robot description.}~\\
+
+A robot is described by the tuple $(id, \vec p, \theta, \mathit{cmds})$ where
+\begin{itemize}
+\item $id$ is a unique identifier.
+\item $\vec p$ is the position. In the 2D case, $\vec p = \begin{pmatrix} x \\ y \end{pmatrix}$.
+\item $\theta$ is the angle between the robot frame and the global frame. In the 2D case, it is a single angle.
+\item $\mathit{cmds}$ is a queue of commands. We use $c::C$ to match command $c$ at the head of the queue $C$ and $C::c$ for the tail. $[]$ is the empty queue.
+\end{itemize}
+
+Each command has the form ``$\text{move}(v, \omega, t)$'' where
+$v$ is the speed (along the $x$ axis of the robot frame),
+$\omega$ is an angular speed (rotation center is $(0,0)^T$ in the robot frame),
+$t$ is the time for witch this command should be executed.
+
+\paragraph{Semantic for a single robot.}~\\
+
+A transition from state $R$ to $R'$ taking time $t$ and with action $a$ is written as $R \tr{a,t} R'$.
+The action $a$ is used to synchronize messages.
+$\tau$ is the silent action.
+$id?c$ means robot with identifier $id$ receive a message.
+$id!c$ means a message is sent to robot with identifier $id$.
+
+\[
+\inferrule[idle]
+          { R = (id, \vec p, \theta, []) \\ dt \geq 0}
+          { R \tr{\tau,dt} R }
+\]
+
+\[
+\inferrule[recv]
+          { R = (id, \vec p, \theta, C) \\
+            R' = (id, \vec p, \theta, C :: c) }
+          { R \tr{id?c,0} R' }
+\]
+
+\[
+\inferrule[cmd done]
+          { R = (id, \vec p, \theta, \text{move}(v, \omega, 0) :: C) \\
+            R' = (id, \vec p, \theta, C) }
+          { R \tr{\tau,0} R' }
+\]
+
+\[
+\inferrule[exec]
+    { R = (id, \vec p, \theta, \text{move}(v, \omega, t) :: C) \\
+      R' = (id, \vec p', \theta', \text{move}(v, \omega, t - dt) :: C ) \\\\
+      t \geq dt \geq 0 \\
+      \theta' = \theta + \omega \cdot dt \\
+      \vec p' = \vec p + \left({\begin{tabular}{cc} $\cos(\theta)$ & $\sin(\theta)$ \\ $\sin(\theta)$ & $\cos(\theta)$ \end{tabular}}\right) \vec q \\\\
+      \text{where } \vec q = \left\{ {\begin{tabular}{lr} $(v \cdot dt, 0)$ & if $\omega = 0$ \\
+                                     $(v/\omega \cdot \sin(\omega \cdot dt), v/\omega \cdot (1- \cos(\omega \cdot dt)))$ & otherwise \end{tabular}} \right.\\
+    }
+    { R \tr{\tau,dt} R' }
+\]
+
+\paragraph{Multiple robots.}
+
+We have transitions of the individual robots are labeled with time.
+When synchronising the transitions of multiple robots we simply requires that the time on the transition of every robot agree:
+
+\[
+\inferrule[time]
+          { \forall i \in I. R_i \tr{\tau,t} R_i' }
+          { \prod_{i \in I} R_i \tr{\tau,t} R_i' }
+\]
+
+\noindent
+$||$ denotes the parallel composition, $\prod$ the index parallel composition.
+
+For messages, we require:
+\[
+\inferrule[msg]
+          { R_a \tr{id!c,0} R_a' \\ R_b \tr{id?c,0} R_b' \\
+            \forall i \in I \setminus \{a,b\}. R_i \tr{\tau,0} R_i' }
+          { R_a || R_b ~|| \prod_{i \in I \setminus \{a,b\}} R_i ~~\tr{\tau,0}~~ R_a' || R_b' ~|| \prod_{i \in I \setminus \{a,b\}} R_i' }
+\]
+
+In this formulation the controller is a special robot with the ability to send messages.
+
+\end{document}

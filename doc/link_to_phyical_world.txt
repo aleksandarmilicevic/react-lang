@@ -96,7 +96,7 @@ linking the elements:
     Electrical               Electromotive force V or u      V       Current           I or i      A 
 
     examples:
-        C: devices like springs, torsion bars, electrical capacitors, gravity tanks, and accumulators, etc.
+        C: devices like springs, torsion bars, electrical capacitors, and accumulators, etc.
         I: inductance effects in electrical systems and mass or inertia effects in mechanical systems.
         GY: a DC motor is a gyrator, where the output torque is proportional to the input current and the back emf is proportional to the motor angular speed.
 
