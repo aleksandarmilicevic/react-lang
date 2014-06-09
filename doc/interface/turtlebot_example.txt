@@ -1,0 +1,29 @@
+how to generate the appropriate commands for the turtle bot example ?
+
+At the beginning of the sampling period, the robot has speed v₁ and is at position 0.
+At the end, the robot should have speed v₂ and should be at position v₂.
+the sampling period is t.
+
+given a speed as (x, y) with get
+    v = ∥(x,y)∥ = √(x² + y²)
+    θ = atan(y/x)
+
+the total rotation is dθ = θ₂ - θ₁.
+
+the maneuver will be done as 3 move command:
+    move(v₁, ω₁, t₁)
+    move(v₂, ω₂, t₂)
+    move(v₃, ω₃, t₃)
+we also have a parameter f ∈ (0,1) to control how tight is the maneuver.
+
+t₁ = 3/4∙f∙t
+t₂ = 1/4∙f∙t
+t₃ = (1-f)∙t
+
+v₁ = ∥v∥∙2∙dθ / (sin(dΘ) + 2∙sin(dΘ/2))
+v₂ = v₁
+v₃ = ∥v∥
+
+ω₁ = 2∙dθ/(f∙t)
+ω₂ = ω₁
+ω₃ = 0
