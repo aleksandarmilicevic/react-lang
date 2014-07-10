@@ -1,0 +1,22 @@
+/* This plugin is necessary for creating installApp tasks (i.e. executables) */
+apply plugin: 'application'
+apply plugin: 'scala'
+mainClassName = 'react.Main'
+
+dependencies {
+  /* ROS dependencies */
+  compile 'org.ros.rosjava_core:rosjava:[0.1,)'
+  compile 'org.ros.rosjava_messages:std_msgs:0.5.+-SNAPSHOT'
+  compile 'org.ros.rosjava_bootstrap:message_generation:0.1.+-SNAPSHOT'
+
+  /* Scala dependencies */
+  compile 'org.scala-lang:scala-compiler:2.11.1'
+  compile 'org.scala-lang:scala-library:2.11.1'
+  compile 'org.scala-lang:scala-reflect:2.11.1'
+  compile 'org.scala-lang.modules:scala-parser-combinators_2.11:1.0.1'
+  compile 'org.scalatest:scalatest_2.11:2.2.0'
+
+  /* Other dependencies*/
+  compile 'org.apache.commons:commons-lang3:3.2.1'
+}
+

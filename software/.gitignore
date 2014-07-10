@@ -1,3 +1,5 @@
-project/
-target/
-
+src/
+build/
+devel/
+react_compiler/build/
+react_examples/build/
