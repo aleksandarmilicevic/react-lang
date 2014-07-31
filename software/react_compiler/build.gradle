@@ -1,11 +1,22 @@
 /* This plugin is necessary for creating installApp tasks (i.e. executables) */
 apply plugin: 'application'
 apply plugin: 'scala'
-mainClassName = 'react.Main'
+//mainClassName = 'react.Main'
+
+repositories {
+  ivy {
+    // http://forums.gradle.org/gradle/topics/add_ivylocal_repository_configuration
+    url "${System.properties['user.home']}/.ivy2/local"
+    layout 'pattern', {
+        artifact "[organisation]/[module]/[revision]/[type]s/[artifact].[ext]"
+        ivy "[organisation]/[module]/[revision]/[type]s/[artifact].[ext]"
+    }
+  }
+}
 
 dependencies {
   /* ROS dependencies */
-  compile 'org.ros.rosjava_core:rosjava:[0.1,)'
+  compile 'org.ros.rosjava_core:rosjava:[0.2,)'
   compile 'org.ros.rosjava_messages:std_msgs:0.5.+-SNAPSHOT'
   compile 'org.ros.rosjava_bootstrap:message_generation:0.1.+-SNAPSHOT'
 
@@ -18,5 +29,11 @@ dependencies {
 
   /* Other dependencies*/
   compile 'org.apache.commons:commons-lang3:3.2.1'
+
+// sbt does not generate a default config which is declared by gradlew
+// for the moment keep everything in the project
+//  compile 'io.github.dzufferey:scala-arg_2.11:0.1-SNAPSHOT'
+//  compile 'io.github.dzufferey:report_2.11:0.1-SNAPSHOT'
+//  compile 'io.github.dzufferey:misc-scala-utils_2.11:0.1-SNAPSHOT'
 }
 

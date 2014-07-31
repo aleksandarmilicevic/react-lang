@@ -1,5 +1,4 @@
-src/
+/src/
 build/
 devel/
-react_compiler/build/
-react_examples/build/
+.catkin_workspace
