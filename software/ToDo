@@ -4,6 +4,7 @@ Language
 To make things a bit simpler, we will aim for a shallow embedding into Scala and pimp it wth a few macros to make it less rough around the edges.
 The macro can be used to generate a shadow state and process the changes in variable into the mouvement commands we discussed.
 
+
 Backend
 =======
 

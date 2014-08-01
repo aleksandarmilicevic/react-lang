@@ -2,8 +2,6 @@ package react
 
 abstract class Robot {
 
-  //var position: Vector3D
-  //var speed: Vector3D
   //TODO what about the orientation ?
 
   def on[T](handler: PartialFunction[T, Unit]) = {
@@ -16,14 +14,19 @@ abstract class Robot {
 
   //TODO the runtime stuff and the messages ...
   //connections
-  //generation of ....
+  //discovery of robot by react ?
 
 }
 
 //abstract class GroundRobot extends Robot {
-//  //we can make sure that z stays 0.
+//  //ROS Pose2D
+//  var x: Double
+//  var y: Double
+//  var theta: Double
 //}
 
 //abstract class FlyingRobot extends Robot {
-//
+//  ROS Pose
+//  var position: Vector3D
+//  var orientation: Vector3D //actually should be a quaternion
 //}

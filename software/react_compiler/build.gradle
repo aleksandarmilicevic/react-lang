@@ -1,7 +1,7 @@
 /* This plugin is necessary for creating installApp tasks (i.e. executables) */
 apply plugin: 'application'
 apply plugin: 'scala'
-//mainClassName = 'react.Main'
+mainClassName = 'react.Main'
 
 repositories {
   ivy {
