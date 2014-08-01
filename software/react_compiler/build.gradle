@@ -21,10 +21,9 @@ dependencies {
   compile 'org.ros.rosjava_bootstrap:message_generation:0.1.+-SNAPSHOT'
 
   /* Scala dependencies */
-  compile 'org.scala-lang:scala-compiler:2.11.1'
-  compile 'org.scala-lang:scala-library:2.11.1'
-  compile 'org.scala-lang:scala-reflect:2.11.1'
-  compile 'org.scala-lang.modules:scala-parser-combinators_2.11:1.0.1'
+  compile 'org.scala-lang:scala-compiler:2.11.2'
+  compile 'org.scala-lang:scala-library:2.11.2'
+  compile 'org.scala-lang:scala-reflect:2.11.2'
   compile 'org.scalatest:scalatest_2.11:2.2.0'
 
   /* Other dependencies*/

@@ -2,21 +2,17 @@ package react.examples.sg
 
 import react._
 
-/* a segway-like robot */
+/* a segway-like robot (i.e. enough degree of freedom to move anywhere) */
 
-class SW extends Robot {
-
-  var x = 0
-  var y = 0
-  var orientation = 0.0
+class SW extends GroundRobot {
 
   var vx = 0
   var vy = 0
 
-  every(1000){ case () =>
+  every(1000){ () =>
     x += vx
     y += vy
-    orientation = math.atan2(vx, vy)
+    theta = math.atan2(vx, vy)
   }
 
   on[Key.Value]{

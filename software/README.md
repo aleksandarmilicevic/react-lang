@@ -31,7 +31,7 @@ the two sub projects are links that points to the two folder at the root.
 Compiling
 ---------
 - `catkin_make` to build the entire wrokspace.
-- `cd src/react_lang; ./gradlew` to rebuild the java/scala subprojects.
+- `cd src/react_lang; ./gradlew build` to rebuild only the java/scala subprojects.
 
 Running
 -------

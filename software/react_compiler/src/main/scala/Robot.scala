@@ -2,13 +2,11 @@ package react
 
 abstract class Robot {
 
-  //TODO what about the orientation ?
-
   def on[T](handler: PartialFunction[T, Unit]) = {
     sys.error("TODO")
   }
 
-  def every(period: Int)(body: PartialFunction[Unit, Unit]) = {
+  def every(period: Int)(body: () => Unit) = {
     sys.error("TODO")
   }
 
@@ -18,12 +16,14 @@ abstract class Robot {
 
 }
 
-//abstract class GroundRobot extends Robot {
-//  //ROS Pose2D
-//  var x: Double
-//  var y: Double
-//  var theta: Double
-//}
+abstract class GroundRobot extends Robot {
+
+  //ROS Pose2D
+  var x = 0.0
+  var y = 0.0
+  var theta = 0.0
+
+}
 
 //abstract class FlyingRobot extends Robot {
 //  ROS Pose
