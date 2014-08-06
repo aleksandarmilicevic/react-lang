@@ -12,9 +12,9 @@ class RobotMacros(val c: Context) {
 
   /** check whether this is a supported type
    * TODO extends to <:< AnyVal */
-  private def isSupported(m: Symbol) = {
+  private def isSupported(m: TermSymbol) = {
     import definitions._
-    val t = m.tpe
+    val t = m.typeSignature
     t =:= DoubleTpe ||
     t =:= FloatTpe ||
     t =:= CharTpe ||
@@ -39,7 +39,7 @@ class RobotMacros(val c: Context) {
     else if (t =:= UnitTpe)     0
     else sys.error("does not know the size of: " + showRaw(t))
   }
-  private def length(s: Symbol): Int = length(s.tpe)
+  private def length(s: TermSymbol): Int = length(s.typeSignature)
   
   private def write(t: Type): TermName = {
     import definitions._
@@ -54,7 +54,7 @@ class RobotMacros(val c: Context) {
     //UnitTpe disappeared ...
     else sys.error("does not know how to store: " + showRaw(t))
   }
-  private def write(s: Symbol): TermName = write(s.tpe)
+  private def write(s: TermSymbol): TermName = write(s.typeSignature)
   
   private def read(t: Type): TermName = {
     import definitions._
@@ -69,7 +69,7 @@ class RobotMacros(val c: Context) {
     //UnitTpe disappeared ...
     else sys.error("does not know how to restore: " + showRaw(t))
   }
-  private def read(s: Symbol): TermName = write(s.tpe)
+  private def read(s: TermSymbol): TermName = read(s.typeSignature)
 
   private def havoc(t: Type): Tree = {
     import definitions._
@@ -84,15 +84,15 @@ class RobotMacros(val c: Context) {
     //UnitTpe disappeared ...
     else sys.error("does not know how to havoc: " + showRaw(t))
   }
-  private def havoc(s: Symbol): Tree = write(s.tpe)
+  private def havoc(s: TermSymbol): Tree = havoc(s.typeSignature)
 
   /** check if a symbol is transient:
    *  transient annotation might be a good idea to minimize the verification state space.
    */
-  private def isTransient(m: Symbol) = {
+  private def isTransient(m: TermSymbol) = {
     // http://stackoverflow.com/questions/17236066/scala-macros-checking-for-a-certain-annotation
     //m.accessed.annotations.exists( _.tpe =:= typeOf[scala.transient] )
-    m.annotations.exists( _.tpe =:= typeOf[scala.transient] )
+    m.annotations.exists( _.tree.tpe =:= typeOf[scala.transient] )
   }
 
   private def isShadow(m: Symbol) = {
@@ -100,41 +100,28 @@ class RobotMacros(val c: Context) {
   }
 
   /** collect every declared variables (mutable field) */
-  private def collectFields[T: c.TypeTag]: List[Symbol] = {
+  private def collectFields(t: Type): List[TermSymbol] = {
     //  http://docs.scala-lang.org/overviews/reflection/symbols-trees-types.html
-    weakTypeOf[T].members.filter( m => m.isVar && !isShadow(m) )
-
-//  // http://stackoverflow.com/questions/17223213/scala-macros-making-a-map-out-of-fields-of-a-class-in-scala
-//  // http://meta.plasm.us/posts/2013/08/30/horrible-code/
-//  val getters = weakTypeOf[T].declarations.collect {
-//    case m: MethodSymbol if m.isAccessor => m
-//  }
-//  val setters =  weakTypeOf[T].declarations.collect {
-//    case sym: MethodSymbol if sym.isSetter => m
-//  }
-//  val mutable = setters.map( set => {
-//    val name = set.name.decodedName.toString
-//    name dropRight 2 //remove '_='
-//  })
-//  getters.filter( get => {
-//    val n = get.name.decodedName.toString
-//    mutable contains n
-//  })
+    t.members.collect{
+      case m: TermSymbol if m.isVar && !isShadow(m) => m
+    }.toList
+    // http://stackoverflow.com/questions/17223213/scala-macros-making-a-map-out-of-fields-of-a-class-in-scala
+    // http://meta.plasm.us/posts/2013/08/30/horrible-code/
   }
   
-  private def fieldGetter(m: Symbol) = {
-    val robot = Select(c.prefix.tree, newTermName("robot"))
+  private def fieldGetter(m: TermSymbol) = {
+    val robot = Select(c.prefix.tree, TermName("robot"))
     c.Expr(Select(robot, m.getter.name))
   }
   
-  private def fieldSetter(m: Symbol) = {
-    val robot = Select(c.prefix.tree, newTermName("robot"))
+  private def fieldSetter(m: TermSymbol) = {
+    val robot = Select(c.prefix.tree, TermName("robot"))
     c.Expr(Select(robot, m.setter.name))
   }
 
-  private def supportedFields[T: c.WeakTypeTag] = collectFields[T].filter(isSupported)
-  private def unsupportedFields[T: c.WeakTypeTag] = collectFields[T].filter(!isSupported)
-  private def permanentFields[T: c.WeakTypeTag] = supportedFields[T].filter(!isTransient)
+  private def supportedFields[T: c.WeakTypeTag] = collectFields(weakTypeOf[T]).filter(isSupported)
+  private def unsupportedFields[T: c.WeakTypeTag] = collectFields(weakTypeOf[T]).filter(!isSupported(_))
+  private def permanentFields[T: c.WeakTypeTag] = supportedFields[T].filter(!isTransient(_))
   private def transientFields[T: c.WeakTypeTag] = supportedFields[T].filter( isTransient)
 
   def toWord[T: c.WeakTypeTag](world: c.Expr[World]): c.Expr[Array[Byte]] = {
@@ -165,8 +152,8 @@ class RobotMacros(val c: Context) {
 
     val havoced = for (f <- transientFields) yield {
       val setter = fieldSetter(f)
-      val havoc = havoc(f)
-      q"$setter($havoc)"
+      val hvc = havoc(f)
+      q"$setter($hvc)"
     }
 
     val tree = q"""
