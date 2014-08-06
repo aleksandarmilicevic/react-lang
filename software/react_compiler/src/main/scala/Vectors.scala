@@ -19,6 +19,17 @@ class Vector3D(
   def fromComponents(c: Array[Double]): Vector3D = new Vector3D(c(0), c(1), c(2))
 }
 
+class Quaternion(
+    var x: Double,
+    var y: Double,
+    var z: Double,
+    var w: Double
+  ) extends VectorLike[Quaternion]
+{
+  def components: Array[Double] = Array(x, y, z, w)
+  def fromComponents(c: Array[Double]): Quaternion = new Quaternion(c(0), c(1), c(2), c(3))
+}
+
 trait VectorLike[T <: VectorLike[T]] {
   def +(rhs: T): T = fromComponents(components.zip(rhs.components).map{ case (a,b) => a + b })
   def -(rhs: T): T = fromComponents(components.zip(rhs.components).map{ case (a,b) => a - b })

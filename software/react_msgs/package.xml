@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>react_msgs</name>
-  <version>0.1.0</version>
+  <version>0.1.0-SNAPSHOT</version>
   <description>The react_msgs package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

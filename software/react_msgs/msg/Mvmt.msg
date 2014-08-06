@@ -1,5 +1,4 @@
 Header header
-#actually the derivative of a pose
-geometry_msgs/Pose2D change
-#how long
+float64 speed
+float64 angular_speed
 duration d

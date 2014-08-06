@@ -17,8 +17,11 @@ repositories {
 dependencies {
   /* ROS dependencies */
   compile 'org.ros.rosjava_core:rosjava:[0.2,)'
-  compile 'org.ros.rosjava_messages:std_msgs:0.5.+-SNAPSHOT'
+  compile 'org.ros.rosjava_messages:std_msgs:0.5.+'
+  compile 'org.ros.rosjava_messages:geometry_msgs:1.11.+'
   compile 'org.ros.rosjava_bootstrap:message_generation:0.1.+-SNAPSHOT'
+  //compile 'org.ros.rosjava_messages:react_msgs:0.1.+-SNAPSHOT'
+  compile 'com.github.rosjava.react_lang:react_msgs:0.1.0-SNAPSHOT'
 
   /* Scala dependencies */
   compile 'org.scala-lang:scala-compiler:2.11.2'
@@ -28,6 +31,15 @@ dependencies {
 
   /* Other dependencies*/
   compile 'org.apache.commons:commons-lang3:3.2.1'
+  compile 'net.automatalib:automata-parent:0.4.1'
+  compile 'net.automatalib.archetypes:automata-archetypes-parent:0.4.1'
+  compile 'net.automatalib.distribution:automata-distribution:0.4.1'
+  compile 'net.automatalib:automata-adapters-parent:0.4.1'
+  compile 'net.automatalib:automata-api:0.4.1'
+  compile 'net.automatalib:automata-commons-parent:0.4.1'
+  compile 'net.automatalib:automata-core:0.4.1'
+  compile 'net.automatalib:automata-misc-parent:0.4.1'
+  compile 'net.automatalib:automata-util:0.4.1'
 
 // sbt does not generate a default config which is declared by gradlew
 // for the moment keep everything in the project
