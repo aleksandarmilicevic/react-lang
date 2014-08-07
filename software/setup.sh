@@ -42,6 +42,10 @@ echo  compiler
 catkin_create_rosjava_project react_compiler
 rm -rf react_compiler
 ln -s ../../react_compiler react_compiler
+echo  compiler
+catkin_create_rosjava_project react_verifier
+rm -rf react_verifier
+ln -s ../../react_verifier react_verifier
 echo  examples
 catkin_create_rosjava_project react_examples
 rm -rf react_examples

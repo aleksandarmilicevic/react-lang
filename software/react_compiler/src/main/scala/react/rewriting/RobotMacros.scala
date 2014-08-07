@@ -1,10 +1,12 @@
 package react.rewriting
 
+import react.World
+
 import scala.language.experimental.macros
 //import scala.reflect.macros.whitebox.Context
 import scala.reflect.macros.blackbox.Context
 
-import react.verification.World
+import java.nio.ByteBuffer
 
 class RobotMacros(val c: Context) {
 
@@ -101,12 +103,15 @@ class RobotMacros(val c: Context) {
 
   /** collect every declared variables (mutable field) */
   private def collectFields(t: Type): List[TermSymbol] = {
-    //  http://docs.scala-lang.org/overviews/reflection/symbols-trees-types.html
-    t.members.collect{
-      case m: TermSymbol if m.isVar && !isShadow(m) => m
-    }.toList
+    // http://docs.scala-lang.org/overviews/reflection/symbols-trees-types.html
     // http://stackoverflow.com/questions/17223213/scala-macros-making-a-map-out-of-fields-of-a-class-in-scala
     // http://meta.plasm.us/posts/2013/08/30/horrible-code/
+    val flds = t.members.collect{
+      case m: TermSymbol if m.isVar && !isShadow(m) && !m.isPrivate => m
+    }.toList
+    //Console.err.println("collectFields:")
+    //for (f <- flds) Console.err.println("  " + f)
+    flds
   }
   
   private def fieldGetter(m: TermSymbol) = {
@@ -123,31 +128,39 @@ class RobotMacros(val c: Context) {
   private def unsupportedFields[T: c.WeakTypeTag] = collectFields(weakTypeOf[T]).filter(!isSupported(_))
   private def permanentFields[T: c.WeakTypeTag] = supportedFields[T].filter(!isTransient(_))
   private def transientFields[T: c.WeakTypeTag] = supportedFields[T].filter( isTransient)
+  
+  private def size[T: c.WeakTypeTag](world: c.Expr[World]): Int = {
+    val toStore = permanentFields
+    toStore.map(length).foldLeft(0)( _ + _ )
+  }
 
-  def toWord[T: c.WeakTypeTag](world: c.Expr[World]): c.Expr[Array[Byte]] = {
+  def wordLength[T: c.WeakTypeTag](world: c.Expr[World]): c.Expr[Int] = {
+    val s = size(world)
+    c.Expr[Int](q"$s")
+  }
+
+  def toWord[T: c.WeakTypeTag](world: c.Expr[World], out: c.Expr[ByteBuffer]): c.Expr[Unit] = {
     val toStore = permanentFields
     val size = toStore.map(length).foldLeft(0)( _ + _ )
     val storing = for (f <- toStore) yield {
       val getter = fieldGetter(f)
       val writer = write(f)
-      q"buffer.$writer($getter)"
+      q"$out.$writer($getter)"
     }
     val tree = q"""
     {
-      val buffer = java.nio.ByteBuffer.allocate($size)
       ..$storing
-      buffer.array()
     }
     """
-    c.Expr[Array[Byte]](tree)
+    c.Expr[Unit](tree)
   }
 
-  def fromWord[T: c.WeakTypeTag](world: c.Expr[World], state: c.Expr[Array[Byte]]): c.Expr[Unit] = {
+  def fromWord[T: c.WeakTypeTag](world: c.Expr[World], in: c.Expr[ByteBuffer]): c.Expr[Unit] = {
 
     val restored = for (f <- permanentFields) yield {
       val setter = fieldSetter(f)
       val reader = read(f)
-      q"$setter($reader(buffer))"
+      q"$setter($reader($in))"
     }
 
     val havoced = for (f <- transientFields) yield {
@@ -158,12 +171,10 @@ class RobotMacros(val c: Context) {
 
     val tree = q"""
     {
-      val buffer = java.nio.ByteBuffer.wrap($state)
       ..$restored
       ..$havoced
     }
     """
-
     c.Expr[Unit](tree)
   }
 

@@ -1,4 +1,4 @@
-package react.verification
+package react
 
 //for verification purpose, we need to provide a model of the environement (dimensions, etc.)
 

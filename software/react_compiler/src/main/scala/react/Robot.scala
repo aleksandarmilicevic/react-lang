@@ -1,6 +1,5 @@
 package react
 
-import react.verification.World
 import react.message._
 
 import scala.language.experimental.macros
@@ -38,11 +37,12 @@ abstract class Robot {
 object Robot {
 
   import react.rewriting.RobotMacros
-  import react.verification.World
+  import java.nio.ByteBuffer
 
   implicit class Explorable[M <: Robot](val robot: M) extends AnyVal {
-    def serialize(world: World): Array[Byte] = macro RobotMacros.toWord[M]
-    def deserilize(world: World, state: Array[Byte]): Unit = macro RobotMacros.fromWord[M]
+    def length(world: World): Int = macro RobotMacros.wordLength[M] //in byte!
+    def serialize(world: World, out: ByteBuffer): Unit = macro RobotMacros.toWord[M]
+    def deserilize(world: World, in: ByteBuffer): Unit = macro RobotMacros.fromWord[M]
   }
 
 }
