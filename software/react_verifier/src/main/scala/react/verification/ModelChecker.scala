@@ -8,6 +8,7 @@ import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.words.impl.Alphabets
 import net.automatalib.words.{Word, WordBuilder}
 import scala.collection.mutable.HashSet
+import scala.collection.GenSeq
 import java.nio.ByteBuffer
 //import java.util.concurrent.ConcurrentHashMap
 //import java.util.Collections
@@ -37,45 +38,90 @@ class ModelChecker[R <: Robot](
     buffer.array
   }
 
-  def restoreSate(s: State) {
+  def restoreState(s: State) {
     val buffer = ByteBuffer.wrap(s) 
     for(r <- robots) r.deserilize(world, buffer)
     for(g <- ghosts) g.deserilize(world, buffer)
   }
 
   //most compact representation of the state: automaton
-  var permanentStates = new StateStore()
+  protected var permanentStates = new StateStore()
 
-  def addToPermanent(s: Seq[State]) {
+  def addToPermanent(s: GenSeq[Word[Integer]]) {
     if (!s.isEmpty) {
       def union(a: CompactDFA[Integer], b: CompactDFA[Integer]) = {
         DFAs.or(a, b, permanentStates.alphabet)
       }
-      val s2 = s.par.map(permanentStates.stateToDFA)
+      val s2 = s.map(permanentStates.dfaFromWord)
       val dfa = s2.reduce( union )
       permanentStates.addDFA(dfa)
       permanentStates.minimize()
     }
   }
 
+  protected val frontier = new java.util.ArrayDeque[State]()
+  protected def put(s: State) = frontier.addFirst(s)
+  protected def get: State = frontier.removeLast() //TODO last/first for BFS or DFS
+
   //to represent the transient states between the round
-  val transientStates = HashSet[State]()
+  protected val transientStates = HashSet[State]()
+
   //val transientStates = Collections.newSetFromMap(new ConcurrentHashMap<State, Boolean>())
+  protected val frontierT = new java.util.ArrayDeque[State]()
+  protected def putT(s: State) = frontierT.addFirst(s)
+  protected def getT: State = frontierT.removeLast() //TODO last/first for BFS or DFS
 
-  val frontier = new java.util.ArrayDeque[State]()
+  def controllerStep(s: State): State = {
+    restoreState(s)
+    sys.error("TODO") //TODO
+  }
+  def ghostStep(s: State): Seq[State] = {
+    restoreState(s)
+    sys.error("TODO") //TODO
+  }
 
+  //the inner loop proceeds into two steps.
+  //first, it generates all the reachable states by ghost perturbations (simulates user inputs, etc...)
+  //then, we do the periodic controller update
   def innerLoop(s: State): Seq[State] = {
-    //...
-    sys.error("TODO")
+    //the ghost step ...
+    transientStates.clear()
+    putT(s)
+    while(!frontierT.isEmpty) {
+      val s = getT
+      val s2 = ghostStep(s)
+      val s3 = s2.filterNot(transientStates)
+      transientStates ++= s3
+      s3 foreach putT
+    }
+    //the update step ...
+    val afterGhost = transientStates.toArray
+    transientStates.clear()
+    for (idx <- afterGhost.indices) {
+      val s = afterGhost(idx)
+      val p = controllerStep(s)
+      afterGhost(idx) = p
+    }
+    afterGhost
   }
   
   def outerLoop = {
-    //...
-    sys.error("TODO")
+    if (!frontier.isEmpty) {
+      val s = get
+      val post = innerLoop(s).par
+      val asState = post.map( s => (s -> StateStore.stateToWord(s)) )
+      val news = asState.filterNot{ case (s, w) => permanentStates.contains(w) }
+      val (newStates, newWords) = news.unzip
+      addToPermanent(newWords)
+      newStates.seq foreach put
+    }
   }
 
   def verify = {
-
+    val initState = getCurrentState
+    permanentStates.addState(initState)
+    put(initState)
+    outerLoop
   }
 
 }

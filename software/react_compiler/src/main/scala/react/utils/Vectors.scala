@@ -1,4 +1,4 @@
-package react
+package react.utils
 
 class Vector2D(
     var x: Double,

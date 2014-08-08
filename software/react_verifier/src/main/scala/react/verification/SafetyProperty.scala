@@ -2,6 +2,6 @@ package react.verification
 
 abstract class SafetyProperty {
 
-  //TODA a way to test
+  //TODO a way to test
 
 }

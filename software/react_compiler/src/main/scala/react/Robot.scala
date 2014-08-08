@@ -4,9 +4,14 @@ import react.message._
 
 import scala.language.experimental.macros
 
-abstract class Robot {
+abstract class Robot(val id: String) {
 
-  def on[T](handler: PartialFunction[T, Unit]) = {
+  def on[T <: Message](handler: PartialFunction[T, Unit]) = {
+    sys.error("TODO")
+    //TODO how to dispatch event in a typesafe way ?
+  }
+  
+  def on[T <: Message](source: String)(handler: PartialFunction[T, Unit]) = {
     sys.error("TODO")
     //TODO how to dispatch event in a typesafe way ?
   }
@@ -19,9 +24,9 @@ abstract class Robot {
   //connections
   //discovery of robot by react ?
 
+  //for the runtime
   def shadow: Unit
   def generateMvmt(period: Int): Seq[Mvmt]
-
 
   //helper to simplify message generation
   private var seq = 0
@@ -32,6 +37,8 @@ abstract class Robot {
     val frame = "1"
     Header(s, t, frame)
   }
+
+  val lock = new java.util.concurrent.locks.ReentrantLock
 }
 
 object Robot {
@@ -47,7 +54,7 @@ object Robot {
 
 }
 
-abstract class GroundRobot extends Robot {
+abstract class GroundRobot(_id: String) extends Robot(_id) {
 
   //ROS Pose2D
   var x = 0.0

@@ -45,9 +45,22 @@ class StateStore {
 
         return builder.toWord();
     }
+    
+    public boolean contains(Word<Integer> w) {
+        return states.computeOutput(w);
+    }
+
+    public boolean contains(byte[] state) {
+        Word<Integer> w = stateToWord(state);
+        return contains(w);
+    }
 
     public void addDFA(CompactDFA<Integer> set) {
         states = DFAs.or(states, set, alpha);
+    }
+
+    public void addState(byte[] state) {
+        addDFA(stateToDFA(state));
     }
 
     public CompactDFA<Integer> dfaFromWord(Word<Integer> w) {
