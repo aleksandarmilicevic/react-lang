@@ -4,29 +4,57 @@ import react.message._
 
 import scala.language.experimental.macros
 
+import react.rewriting.{RobotMacros, ExplorableMacros}
+
 abstract class Robot(val id: String) {
 
-  def on[T <: Message](handler: PartialFunction[T, Unit]) = {
-    sys.error("TODO")
-    //TODO how to dispatch event in a typesafe way ?
+  //TODO how to dispatch event in a typesafe way ?
+  //def on[T](handler: PartialFunction[T, Unit]) = {
+  def on(handler: PartialFunction[Any, Unit]) = {
+    handlers = handler :: handlers
   }
   
-  def on[T <: Message](source: String)(handler: PartialFunction[T, Unit]) = {
-    sys.error("TODO")
-    //TODO how to dispatch event in a typesafe way ?
-  }
+  //subscribe to a topic
+  def sensor[T <: Message](source: String)(handler: PartialFunction[T, Unit]): Unit = macro RobotMacros.registerHandler[T]
 
   def every(period: Int)(body: () => Unit) = {
-    sys.error("TODO")
+    _tasks = (period -> body) :: _tasks
   }
 
   //TODO the runtime stuff and the messages ...
   //connections
   //discovery of robot by react ?
 
-  //for the runtime
+  /////////////////////
+  // for the runtime //
+  /////////////////////
+
+  /** create a copy of the physical state of the robot, used later by generateMvmt (to compute pre/post difference) */
   def shadow: Unit
-  def generateMvmt(period: Int): Seq[Mvmt]
+
+  /** generate a sequence of messages for the robot to execute (match the physical state to the model state) */
+  def generateMvmt(period: Int): Seq[Message]
+
+  protected var _tasks: List[(Int, (() => Unit))] = Nil
+  protected var handlers: List[PartialFunction[Any, Unit]] = Nil
+  protected var sensors: List[(org.ros.node.ConnectedNode => Unit)] = Nil
+
+  def tasks = _tasks
+
+  def send(any: Any) {
+    val defined = handlers.filter(_.isDefinedAt(any))
+    lock.lock
+    try {
+      defined.foreach(_.apply(any))
+    } finally {
+      lock.unlock
+    }
+  }
+
+  //TODO keep some ref for graceful shutdown
+  def registerListener(node: org.ros.node.ConnectedNode) {
+    for(s <- sensors) s(node)
+  }
 
   //helper to simplify message generation
   private var seq = 0
@@ -39,17 +67,17 @@ abstract class Robot(val id: String) {
   }
 
   val lock = new java.util.concurrent.locks.ReentrantLock
+
 }
 
 object Robot {
 
-  import react.rewriting.RobotMacros
   import java.nio.ByteBuffer
 
   implicit class Explorable[M <: Robot](val robot: M) extends AnyVal {
-    def length(world: World): Int = macro RobotMacros.wordLength[M] //in byte!
-    def serialize(world: World, out: ByteBuffer): Unit = macro RobotMacros.toWord[M]
-    def deserilize(world: World, in: ByteBuffer): Unit = macro RobotMacros.fromWord[M]
+    def length(world: World): Int = macro ExplorableMacros.wordLength[M] //in byte
+    def serialize(world: World, out: ByteBuffer): Unit = macro ExplorableMacros.toWord[M]
+    def deserilize(world: World, in: ByteBuffer): Unit = macro ExplorableMacros.fromWord[M]
   }
 
 }

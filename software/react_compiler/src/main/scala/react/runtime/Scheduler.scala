@@ -5,7 +5,7 @@ import scala.math.Ordering.Implicits
 
 class ScheduledTask(var expires: Long,
                     val period: Long,
-                    val fct: Unit => Unit
+                    val fct: () => Unit
                    ) extends java.lang.Comparable[ScheduledTask] {
   def compareTo(other: ScheduledTask) = other.expires.compareTo(expires)
 }
@@ -17,13 +17,13 @@ class Scheduler {
 
   private def now = java.lang.System.currentTimeMillis()
 
-  def addTask(period: Long, fct: Unit => Unit) {
+  def addTask(period: Long, fct: () => Unit) {
     assert(period >= 1, "period needs to be at least 1ms")
     val task = new ScheduledTask(now + period, period, fct)
     queue.enqueue(task)
   }
 
-  protected def waitUntilNextTask: Option[ScheduledTask] = {
+  def waitUntilNextTask: Option[ScheduledTask] = {
     if (queue.isEmpty) {
       None
     } else {
@@ -34,7 +34,7 @@ class Scheduler {
     }
   }
 
-  protected def reschedule(t: ScheduledTask) = {
+  def reschedule(t: ScheduledTask) = {
     t.expires += t.period
     queue.enqueue(t)
   }
