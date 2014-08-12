@@ -13,11 +13,16 @@ import java.nio.ByteBuffer
 //import java.util.concurrent.ConcurrentHashMap
 //import java.util.Collections
 
+//TODO robots and ghosts should be part of the language (compiler project)
+//     robots and ghosts should be embedded into the world
+
+//TODO compute the overall period of the system (boundary between the inner and outer loop)
+
 class ModelChecker[R <: Robot](
     world: World,
     robots: Array[R],
-    ghosts: Array[GhostAgent],
-    safety: Array[SafetyProperty]) {
+    ghosts: Array[GhostAgent]
+ ) {
 
   type State = Array[Byte]
 

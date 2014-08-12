@@ -1,4 +1,4 @@
-package react.examples.sg
+package react.examples
 
 
 object Key extends Enumeration {

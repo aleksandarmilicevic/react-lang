@@ -9,34 +9,12 @@ Backend
 =======
 
 The code we write should directly be executable using a minimal runtime + wrapper around ROS java.
+...
 
-
-context data-structure, methods
--------------------------------
--event queue
--resolving handler of a given event
--register controller and timeouts clauses
--...
-
-initializing a context
-----------------------
--allocating the memory/thread/etc.
--registering with master?, ros init?, creating the ROS topics
--executing the `onCreate` handler
--enter the big-while-loop
--init the timer if needed
-
-the big-while-loop
-------------------
--find an handler to execute:
-    -rosspin (+ timeout) to get a message
--resolve and execute handler (what if no handler ?)
--set new timeout or move to another state
-
-moving to another state
------------------------
--move to new state
--register new controller function
+Example
+=======
+try gazebo with http://wiki.ros.org/kobuki_desktop?distro=indigo
+when the indigo packages are available
 
 
 Verification

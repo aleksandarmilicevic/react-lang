@@ -13,27 +13,52 @@ abstract class Robot(val id: String) {
   def on(handler: PartialFunction[Any, Unit]) = {
     handlers = handler :: handlers
   }
-  
-  //subscribe to a topic
-  def sensor[T <: Message](source: String)(handler: PartialFunction[T, Unit]): Unit = macro RobotMacros.registerHandler[T]
 
   def every(period: Int)(body: () => Unit) = {
     _tasks = (period -> body) :: _tasks
   }
+  
+  /** subscribe to a topic using the REACT messages that mirror ROS messages */
+  def sensor[T <: Message](source: String)(handler: PartialFunction[T, Unit]): Unit = macro RobotMacros.registerHandler[T]
 
-  //TODO the runtime stuff and the messages ...
-  //connections
-  //discovery of robot by react ?
+  /** subscribe to a topic directly using ROS messages */
+  def subscribe[T](source: String, msgType: String)(handler: T => Unit) = {
+    val registerFct = ( (node: org.ros.node.ConnectedNode) => {
+      val listener = new org.ros.message.MessageListener[T]{
+        def onNewMessage(message: T) {
+          lock.lock()
+          try {
+            handler(message)
+          } finally {
+            lock.unlock
+          }
+        }
+      }
+      val sub = node.newSubscriber[T](react.utils.RosUtils.mayAddPrefix(id, source), msgType)
+      sub.addMessageListener(listener)
+    } )
+    sensors = registerFct :: sensors
+  }
+
+  def publish[T <: Message](topic: String, message: T): Unit = macro RobotMacros.publish[T]
+  //TODO the ROS native message type version
 
   /////////////////////
   // for the runtime //
   /////////////////////
+  
+  protected var node: org.ros.node.ConnectedNode = null
+  def setNode(n: org.ros.node.ConnectedNode) {
+    assert(node == null, "setNode should be used only be the REACT runtime, thanks")
+    node = n
+    registerListener
+  }
 
   /** create a copy of the physical state of the robot, used later by generateMvmt (to compute pre/post difference) */
-  def shadow: Unit
+  def shadow: Unit = { }
 
   /** generate a sequence of messages for the robot to execute (match the physical state to the model state) */
-  def generateMvmt(period: Int): Seq[Message]
+  def generateMvmt(period: Int): Seq[Message] = Seq()
 
   protected var _tasks: List[(Int, (() => Unit))] = Nil
   protected var handlers: List[PartialFunction[Any, Unit]] = Nil
@@ -52,7 +77,7 @@ abstract class Robot(val id: String) {
   }
 
   //TODO keep some ref for graceful shutdown
-  def registerListener(node: org.ros.node.ConnectedNode) {
+  private def registerListener {
     for(s <- sensors) s(node)
   }
 
@@ -93,13 +118,14 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
   private var shadow_y = 0.0
   private var shadow_theta = 0.0
 
-  def shadow = {
+  override def shadow = {
     shadow_x = x
     shadow_y = y
     shadow_theta = theta
   }
 
-  def generateMvmt(period: Int) = {
+  //TODO allows for delayed actions (Twist do not have a duration)
+  override def generateMvmt(period: Int) = {
     val f = 0.5 //parameter f ∈ (0,1) to control how tight is the maneuver
 
     val t = period / 1000.0

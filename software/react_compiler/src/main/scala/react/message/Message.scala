@@ -60,16 +60,13 @@ object Message {
     else sys.error("TODO: message type " + rosType + " not yet supported")
   }
 
-}
-
-class MessageConverter(node: org.ros.node.Node) {
-
   def toDuration(d: Duration) = new org.ros.message.Duration(d.secs, d.nsecs)
   def toTime(t: Time) = new org.ros.message.Time(t.secs, t.nsecs)
   
   import org.ros.message._
+  import org.ros.node.Node
 
-  def toHeader(h: Header) = {
+  def toHeader(node: Node, h: Header) = {
     val h2 = node.getTopicMessageFactory().newFromType[std_msgs.Header](h.rosType)
     h2.setSeq(h.seq)
     h2.setStamp(toTime(h.stamp))
@@ -77,7 +74,7 @@ class MessageConverter(node: org.ros.node.Node) {
     h2
   }
 
-  def toPose2D(p: Pose2D) = {
+  def toPose2D(node: Node, p: Pose2D) = {
     val p2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Pose2D](p.rosType)
     p2.setX(p.x)
     p2.setY(p.y)
@@ -85,7 +82,7 @@ class MessageConverter(node: org.ros.node.Node) {
     p2
   }
   
-  def toVector3(v: Vector3) = {
+  def toVector3(node: Node, v: Vector3) = {
     val v2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Vector3](v.rosType)
     v2.setX(v.x)
     v2.setY(v.y)
@@ -93,36 +90,47 @@ class MessageConverter(node: org.ros.node.Node) {
     v2
   }
   
-  def toTwist(t: Twist) = {
+  def toTwist(node: Node, t: Twist) = {
     val t2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Twist](t.rosType)
-    t2.setLinear(toVector3(t.linear))
-    t2.setAngular(toVector3(t.angular))
+    t2.setLinear(toVector3(node, t.linear))
+    t2.setAngular(toVector3(node, t.angular))
     t2
   }
   
-  def toTwistStamped(ts: TwistStamped) = {
+  def toTwistStamped(node: Node, ts: TwistStamped) = {
     val ts2 = node.getTopicMessageFactory().newFromType[geometry_msgs.TwistStamped](ts.rosType)
-    ts2.setHeader(toHeader(ts.header))
-    ts2.setTwist(toTwist(ts.twist))
+    ts2.setHeader(toHeader(node, ts.header))
+    ts2.setTwist(toTwist(node, ts.twist))
     ts2
   }
 
-  def toRange(r: Range) = {
+  def toRange(node: Node, r: Range) = {
     val r2 = node.getTopicMessageFactory().newFromType[sensor_msgs.Range](r.rosType)
-    r2.setHeader(toHeader(r.header))
+    r2.setHeader(toHeader(node, r.header))
     r2.setRadiationType(r.kind)
     r2.setMinRange(r.min)
     r2.setMaxRange(r.max)
     r2.setRange(r.range)
   }
 
-  def toMvmt(m: Mvmt) = {
+  def toMvmt(node: Node, m: Mvmt) = {
     val m2 = node.getTopicMessageFactory().newFromType[react_msgs.Mvmt](m.rosType)
-    m2.setHeader(toHeader(m.header))
+    m2.setHeader(toHeader(node, m.header))
     m2.setSpeed(m.speed)
     m2.setAngularSpeed(m.angular_speed)
     m2.setD(toDuration(m.d))
     m2
+  }
+
+  def toMessage[T <: Message](node: Node, m: T): Any = m match {
+    case h: Header => toHeader(node, h)
+    case p: Pose2D => toPose2D(node, p)
+    case v: Vector3 => toVector3(node, v)
+    case t: Twist => toTwist(node, t)
+    case ts: TwistStamped => toTwistStamped(node, ts)
+    case r: Range => toRange(node, r)
+    case m: Mvmt => toMvmt(node, m)
+    case other => sys.error("TODO: message type " + other+ " not fully supported")
   }
 
 }

@@ -21,11 +21,11 @@ class RobotMacros(val c: Context) extends Handlers
     val rosType = convertMsgType( weakTypeOf[T] )
     val reactType = weakTypeOf[T]
 
-    val sub = q"""val sub: org.ros.node.topic.Subscriber[$rosType] = node.newSubscriber(id + "/" + $source, $rosName)"""
+    val sub = q"""val sub: org.ros.node.topic.Subscriber[$rosType] = node.newSubscriber(react.utils.RosUtils.mayAddPrefix(id, $source), $rosName)"""
     val list = q"""val listener: org.ros.message.MessageListener[$rosType] = new org.ros.message.MessageListener[$rosType]{
           val h = $handler
           def onNewMessage(message: $rosType) {
-            val msg = Message.fromMessage($rosName, message).asInstanceOf[$reactType]
+            val msg = react.message.Message.fromMessage($rosName, message).asInstanceOf[$reactType]
             if (h.isDefinedAt(msg)) {
               lock.lock()
               try {
@@ -46,6 +46,23 @@ class RobotMacros(val c: Context) extends Handlers
     val tree2 = q"sensors = $tree :: sensors"
     //Console.err.println("generated handler:\n" + tree2)
     c.Expr[Unit](tree2)
+  }
+  
+  //TODO cache the publisher
+  def publish[T <: react.message.Message : c.WeakTypeTag]
+    (topic: c.Expr[String], message: c.Expr[T]): c.Expr[Unit] =
+  {
+    val rosName = convertMsgName( weakTypeOf[T] )
+    val rosType = convertMsgType( weakTypeOf[T] )
+
+    val tree = q"""
+{
+  val pub: org.ros.node.topic.Publisher[$rosType] = node.newPublisher(react.utils.RosUtils.mayAddPrefix(id, $topic), $rosName)
+  val msg = react.message.Message.toMessage(node, $message).asInstanceOf[$rosType]
+  pub.publish(msg)
+}
+"""
+    c.Expr[Unit](tree)
   }
 
 }

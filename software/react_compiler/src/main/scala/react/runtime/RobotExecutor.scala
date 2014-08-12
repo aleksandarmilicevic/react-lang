@@ -18,8 +18,8 @@ class RobotExecutor(robot: Robot) extends NodeMain {
 
       override def setup() {
         super.setup()
-        //register all the listener
-        robot.registerListener(node)
+        //for subscribing and publishing
+        robot.setNode(node)
         //register the control loop
         for ( (period, fct) <- robot.tasks )
           scheduler.addTask(period, fct)
