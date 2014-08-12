@@ -1,6 +1,7 @@
 package react.runtime
 
 import react._
+import react.message._
 import org.ros.namespace.GraphName
 import org.ros.node.{Node, NodeMain, ConnectedNode}
 import org.ros.concurrent.CancellableLoop
@@ -25,16 +26,22 @@ class RobotExecutor(robot: Robot) extends NodeMain {
       }
 
       def loop() {
-        //TODO a non-blocking version
+        //TODO
+        // non-blocking version
+        // get all the expired task at once
+        var msg: Seq[Message] = Seq()
         scheduler.waitUntilNextTask match {
           case Some(task) =>
             robot.lock.lock
             try {
+              robot.shadow
               task.fct()
-              scheduler.reschedule(task)
+              msg = robot.generateMvmt(task.period)
             } finally {
               robot.lock.unlock
             }
+            scheduler.reschedule(task)
+            //TODO send the messages
           case None => ()
         }
       }

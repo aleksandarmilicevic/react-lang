@@ -26,11 +26,13 @@ class RobotMacros(val c: Context) extends Handlers
           val h = $handler
           def onNewMessage(message: $rosType) {
             val msg = Message.fromMessage($rosName, message).asInstanceOf[$reactType]
-            lock.lock()
-            try {
-              h.applyOrElse(msg, ())
-            } finally {
-              lock.unlock
+            if (h.isDefinedAt(msg)) {
+              lock.lock()
+              try {
+                h.apply(msg)
+              } finally {
+                lock.unlock
+              }
             }
           }
         }"""
