@@ -1,16 +1,27 @@
 package react.runtime
 
 import org.ros.namespace.GraphName
+import org.ros.message.MessageListener
 import org.ros.node.{Node, NodeMain, ConnectedNode}
 
 class Runtime extends NodeMain {
 
+  val nodeId = "react"
+
   override def getDefaultNodeName: GraphName = {
-    GraphName.of("react_runtime")
+    GraphName.of(nodeId)
   }
 
   override def onStart(node: ConnectedNode) {
-    //TODO subscribe wait for new node to connect to the react_runtime node
+    val subs = node.newSubscriber[std_msgs.String](nodeId + "/register", std_msgs.String._TYPE)
+    val listener = new MessageListener[std_msgs.String]{
+      def onNewMessage(message: std_msgs.String) {
+        //TODO
+        //  wait for new node to connect to the react runtime node
+        //  then create the corresponding robot within react
+        sys.error("TODO")
+      }
+    }
   }
 
   override def onShutdown(node: Node) {
@@ -20,6 +31,8 @@ class Runtime extends NodeMain {
   }
 
   override def onError(node: Node, throwable: Throwable) {
+    Console.err.println("REACT runtime, exception thrown: " + throwable)
+    throwable.printStackTrace(Console.err)
   }
 
 }

@@ -35,7 +35,10 @@ Compiling
 
 Running
 -------
-...
+this is to start the runtime:
+- `roscore &`
+- `cd src/react_lang/react_compiler`
+- `./build/install/react_compiler/bin/react_compiler`
 
 Examples
 ========
