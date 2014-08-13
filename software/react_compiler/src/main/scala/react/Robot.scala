@@ -54,6 +54,21 @@ abstract class Robot(val id: String) {
     registerListener
   }
 
+  private val publishers = scala.collection.mutable.Map[(String, String), Any]()
+  protected def getPublisher[T](topic: String, typeName: String): org.ros.node.topic.Publisher[T] = {
+    val t = react.utils.RosUtils.mayAddPrefix(id, topic)
+    val k = t -> typeName
+    val pub: org.ros.node.topic.Publisher[T] =
+      if (publishers contains k) {
+        publishers(k).asInstanceOf[org.ros.node.topic.Publisher[T]]
+      } else {
+        val p = node.newPublisher[T](t, typeName)
+        publishers += (k -> p)
+        p
+      }
+    pub
+  }
+
   /** create a copy of the physical state of the robot, used later by generateMvmt (to compute pre/post difference) */
   def shadow: Unit = { }
 

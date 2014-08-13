@@ -6,10 +6,12 @@ import org.ros.namespace.GraphName
 import org.ros.node.{Node, NodeMain, ConnectedNode}
 import org.ros.concurrent.CancellableLoop
 
-class RobotExecutor(robot: Robot) extends NodeMain {
+abstract class RobotExecutor extends NodeMain {
+
+  val robot: Robot
 
   override def getDefaultNodeName: GraphName = {
-    GraphName.of("react_runtime/" + robot.id)
+    GraphName.of("react/" + robot.id)
   }
 
   override def onStart(node: ConnectedNode) {

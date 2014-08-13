@@ -31,18 +31,19 @@ the two sub projects are links that points to the two folder at the root.
 Compiling
 ---------
 - `catkin_make` to build the entire wrokspace.
-- `cd src/react_lang; ./gradlew build` to rebuild only the java/scala subprojects.
+- `cd src/react_lang; ./gradlew build` to rebuild only the java/scala subprojects. (to generate the artifacts, use installApp instead of build)
 
 Running
 -------
-this is to start the runtime:
-- `roscore &`
-- `cd src/react_lang/react_compiler`
-- `./build/install/react_compiler/bin/react_compiler`
+see Examples
 
 Examples
 ========
-...
+to start the turtlesim teleop example:
+- `roscore &`
+- `rosrun turtlesim turtlesim_node &`
+- `cd src/react_lang/react_examples`
+- `./build/install/react_examples/bin/react_examples /turtle1`
 
 Misc
 ====

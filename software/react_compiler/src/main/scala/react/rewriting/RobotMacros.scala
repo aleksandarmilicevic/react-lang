@@ -57,7 +57,7 @@ class RobotMacros(val c: Context) extends Handlers
 
     val tree = q"""
 {
-  val pub: org.ros.node.topic.Publisher[$rosType] = node.newPublisher(react.utils.RosUtils.mayAddPrefix(id, $topic), $rosName)
+  val pub = getPublisher[$rosType]($topic, $rosName)
   val msg = react.message.Message.toMessage(node, $message).asInstanceOf[$rosType]
   pub.publish(msg)
 }

@@ -1,4 +1,4 @@
-package react.examples.turle
+package react.examples.turtle
 
 import react._
 import react.message._
@@ -17,7 +17,7 @@ class TurtleTeleop(_id: String) extends Robot(_id) {
 
   //angular/linear scale
   val scaleA = math.Pi / 2 // 90 degree
-  val scaleL = 10.0 // 10px
+  val scaleL = 1.0
 
   //messages for the different actions
   val twistLeft  = Twist(Vector3(0,0,0), Vector3(0,0, scaleA))
