@@ -10,18 +10,77 @@ abstract class RobotExecutor extends NodeMain {
 
   val robot: Robot
 
+  protected var node: ConnectedNode = null 
+
+
+  //TODO wrap the pub/sub to avoid the type casting
+  
+  private val publishers = scala.collection.mutable.Map[String, Any]()
+  def getPublisher[T](topic: String, typeName: String): org.ros.node.topic.Publisher[T] = {
+    val t = react.utils.RosUtils.mayAddPrefix(robot.id, topic)
+    if (publishers contains t) {
+      publishers(t).asInstanceOf[org.ros.node.topic.Publisher[T]]
+    } else {
+      val p = node.newPublisher[T](t, typeName)
+      publishers += (t -> p)
+      p
+    }
+  }
+  
+  def publish[T](topic: String, typeName: String, message: T) = {
+    val pub = getPublisher[T](topic, typeName)
+    pub.publish(message)
+  }
+
+
+  private val subscribers = scala.collection.mutable.Map[String, Any]()
+  def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T] = {
+    val t = react.utils.RosUtils.mayAddPrefix(robot.id, topic)
+    if (subscribers contains t) {
+      subscribers(t).asInstanceOf[org.ros.node.topic.Subscriber[T]]
+    } else {
+      val p = node.newSubscriber[T](t, typeName)
+      subscribers += (t -> p)
+      p
+    }
+  }
+
+  def subscribe[T](topic: String, typeName: String, handler: T => Unit) = {
+    val listener = new org.ros.message.MessageListener[T]{
+      def onNewMessage(message: T) {
+          robot.lock.lock()
+          try {
+            handler(message)
+          } finally {
+            robot.lock.unlock
+          }
+        }
+    }
+    val sub = getSubscriber[T](topic, typeName)
+    sub.addMessageListener(listener)
+  }
+
+  def convertMessage[N](msg: Message): N = {
+    Message.toMessage(node, msg).asInstanceOf[N] //TODO something nicer to avoid the casting
+  }
+
+  ///////////////////
+  // The ROS stuff //
+  ///////////////////
+
   override def getDefaultNodeName: GraphName = {
     GraphName.of("react/" + robot.id)
   }
 
-  override def onStart(node: ConnectedNode) {
+  override def onStart(n: ConnectedNode) {
+    node = n
     node.executeCancellableLoop(new CancellableLoop {
       val scheduler = new Scheduler
 
       override def setup() {
         super.setup()
         //for subscribing and publishing
-        robot.setNode(node)
+        robot.setExec(RobotExecutor.this)
         //register the control loop
         for ( (period, fct) <- robot.tasks )
           scheduler.addTask(period, fct)

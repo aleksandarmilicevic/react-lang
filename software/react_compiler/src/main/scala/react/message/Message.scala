@@ -28,37 +28,37 @@ object Message {
   def time(ms: Long) = Time((ms/1000).toInt, ((ms % 1000) * 1000).toInt)
   def duration(ms: Long) = Duration((ms/1000).toInt, ((ms % 1000) * 1000).toInt)
 
-  def fromDuration(d: org.ros.message.Duration) = Duration(d.secs, d.nsecs)
+  def from(d: org.ros.message.Duration): Duration = Duration(d.secs, d.nsecs)
 
-  def fromTime(t: org.ros.message.Time) = Time(t.secs, t.nsecs)
+  def from(t: org.ros.message.Time): Time = Time(t.secs, t.nsecs)
 
-  def fromHeader(h: std_msgs.Header) = Header(h.getSeq, fromTime(h.getStamp), h.getFrameId)
+  def from(h: std_msgs.Header): Header = Header(h.getSeq, from(h.getStamp), h.getFrameId)
 
-  def fromVector3(v: geometry_msgs.Vector3) = Vector3(v.getX, v.getY, v.getZ)
+  def from(v: geometry_msgs.Vector3): Vector3 = Vector3(v.getX, v.getY, v.getZ)
 
-  def fromPose2D(p: geometry_msgs.Pose2D) = Pose2D(p.getX, p.getY, p.getTheta)
+  def from(p: geometry_msgs.Pose2D): Pose2D = Pose2D(p.getX, p.getY, p.getTheta)
 
-  def fromTwist(t: geometry_msgs.Twist) = Twist(fromVector3(t.getLinear), fromVector3(t.getAngular))
+  def from(t: geometry_msgs.Twist): Twist = Twist(from(t.getLinear), from(t.getAngular))
 
-  def fromTwistStamped(ts: geometry_msgs.TwistStamped) = TwistStamped(fromHeader(ts.getHeader), fromTwist(ts.getTwist))
+  def from(ts: geometry_msgs.TwistStamped): TwistStamped = TwistStamped(from(ts.getHeader), from(ts.getTwist))
 
-  def fromRange(r: sensor_msgs.Range) = Range(fromHeader(r.getHeader),
-                                              r.getRadiationType,
-                                              r.getFieldOfView,
-                                              r.getMinRange,
-                                              r.getMaxRange,
-                                              r.getRange)
+  def from(r: sensor_msgs.Range): Range = Range(from(r.getHeader),
+                                                r.getRadiationType,
+                                                r.getFieldOfView,
+                                                r.getMinRange,
+                                                r.getMaxRange,
+                                                r.getRange)
 
-  def fromMvmt(m: react_msgs.Mvmt) = Mvmt(fromHeader(m.getHeader), m.getSpeed, m.getAngularSpeed, fromDuration(m.getD))
+  def from(m: react_msgs.Mvmt): Mvmt = Mvmt(from(m.getHeader), m.getSpeed, m.getAngularSpeed, from(m.getD))
 
   def fromMessage(rosType: String, msg: Any): Message = {
-    if (rosType == std_msgs.Header._TYPE) fromHeader(msg.asInstanceOf[std_msgs.Header])
-    else if (rosType == geometry_msgs.Pose2D._TYPE) fromPose2D(msg.asInstanceOf[geometry_msgs.Pose2D])
-    else if (rosType == geometry_msgs.Vector3._TYPE) fromVector3(msg.asInstanceOf[geometry_msgs.Vector3])
-    else if (rosType == geometry_msgs.Twist._TYPE) fromTwist(msg.asInstanceOf[geometry_msgs.Twist])
-    else if (rosType == geometry_msgs.TwistStamped._TYPE) fromTwistStamped(msg.asInstanceOf[geometry_msgs.TwistStamped])
-    else if (rosType == sensor_msgs.Range._TYPE) fromRange(msg.asInstanceOf[sensor_msgs.Range])
-    else if (rosType == react_msgs.Mvmt._TYPE) fromMvmt(msg.asInstanceOf[react_msgs.Mvmt])
+    if (rosType == std_msgs.Header._TYPE) from(msg.asInstanceOf[std_msgs.Header])
+    else if (rosType == geometry_msgs.Pose2D._TYPE) from(msg.asInstanceOf[geometry_msgs.Pose2D])
+    else if (rosType == geometry_msgs.Vector3._TYPE) from(msg.asInstanceOf[geometry_msgs.Vector3])
+    else if (rosType == geometry_msgs.Twist._TYPE) from(msg.asInstanceOf[geometry_msgs.Twist])
+    else if (rosType == geometry_msgs.TwistStamped._TYPE) from(msg.asInstanceOf[geometry_msgs.TwistStamped])
+    else if (rosType == sensor_msgs.Range._TYPE) from(msg.asInstanceOf[sensor_msgs.Range])
+    else if (rosType == react_msgs.Mvmt._TYPE) from(msg.asInstanceOf[react_msgs.Mvmt])
     else sys.error("TODO: message type " + rosType + " not yet supported")
   }
 
@@ -124,7 +124,7 @@ object Message {
     m2
   }
 
-  def toMessage[T <: Message](node: Node, m: T): Any = m match {
+  def toMessage(node: Node, m: Message): Any = m match {
     case h: Header => toHeader(node, h)
     case p: Pose2D => toPose2D(node, p)
     case v: Vector3 => toVector3(node, v)

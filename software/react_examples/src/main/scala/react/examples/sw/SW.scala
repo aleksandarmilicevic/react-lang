@@ -11,7 +11,7 @@ class SW(_id: String) extends GroundRobot(_id) {
   var vx = 0
   var vy = 0
 
-  every(200){ () =>
+  every(200){
     x += vx
     y += vy
     theta = math.atan2(vx, vy)

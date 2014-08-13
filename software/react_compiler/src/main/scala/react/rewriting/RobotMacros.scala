@@ -21,30 +21,16 @@ class RobotMacros(val c: Context) extends Handlers
     val rosType = convertMsgType( weakTypeOf[T] )
     val reactType = weakTypeOf[T]
 
-    val sub = q"""val sub: org.ros.node.topic.Subscriber[$rosType] = node.newSubscriber(react.utils.RosUtils.mayAddPrefix(id, $source), $rosName)"""
-    val list = q"""val listener: org.ros.message.MessageListener[$rosType] = new org.ros.message.MessageListener[$rosType]{
-          val h = $handler
-          def onNewMessage(message: $rosType) {
-            val msg = react.message.Message.fromMessage($rosName, message).asInstanceOf[$reactType]
-            if (h.isDefinedAt(msg)) {
-              lock.lock()
-              try {
-                h.apply(msg)
-              } finally {
-                lock.unlock
-              }
-            }
-          }
-        }"""
+    val lifted = q"""(  (message: $rosType) => {
+          val msg = react.message.Message.from(message)
+          if (h.isDefinedAt(msg)) { h.apply(msg) }
+        } )"""
     val body = q"""{
-          $sub
-          $list
-          sub.addMessageListener(listener)
+          val h = $handler
+          exec.subscribe[$rosType]($source, $rosName, $lifted)
         }"""
-    val tree = q"( (node: org.ros.node.ConnectedNode) => $body )"
-
+    val tree = q"( (exec: react.runtime.RobotExecutor) => $body )"
     val tree2 = q"sensors = $tree :: sensors"
-    //Console.err.println("generated handler:\n" + tree2)
     c.Expr[Unit](tree2)
   }
   
@@ -54,14 +40,14 @@ class RobotMacros(val c: Context) extends Handlers
   {
     val rosName = convertMsgName( weakTypeOf[T] )
     val rosType = convertMsgType( weakTypeOf[T] )
+    val reactType = weakTypeOf[T]
 
-    val tree = q"""
-{
-  val pub = getPublisher[$rosType]($topic, $rosName)
-  val msg = react.message.Message.toMessage(node, $message).asInstanceOf[$rosType]
-  pub.publish(msg)
-}
-"""
+    val tree = q"publish[$rosType]($topic, $rosName, exec.convertMessage[$rosType]($message))"
+    c.Expr[Unit](tree)
+  }
+
+  def every(period: c.Expr[Int])(body: c.Expr[Unit]): c.Expr[Unit] = {
+    val tree = q"_tasks = ( $period -> (() => $body) ) :: _tasks"
     c.Expr[Unit](tree)
   }
 

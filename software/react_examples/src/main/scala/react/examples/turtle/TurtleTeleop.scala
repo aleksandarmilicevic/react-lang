@@ -35,7 +35,7 @@ class TurtleTeleop(_id: String) extends Robot(_id) {
   }
 
   //dispatch a message every second (that's how turtlesim works)
-  every(1000){ () =>
+  every(1000){
     nextAction match {
       case `none` =>  ()
       case `left` =>  publish("cmd_vel", twistLeft)

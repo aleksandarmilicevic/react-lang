@@ -17,7 +17,7 @@ class TurtleRandom(_id: String) extends Robot(_id) {
   val twistDown  = Twist(Vector3(-scaleL,0,0), Vector3(0,0,0))
   
   //dispatch a message every second (that's how turtlesim works)
-  every(1000){ () =>
+  every(1000){
     math.abs(scala.util.Random.nextInt() % 4) match {
       case 0 => publish("cmd_vel", twistDown)
       case 1 => publish("cmd_vel", twistLeft)

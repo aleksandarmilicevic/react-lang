@@ -14,28 +14,15 @@ abstract class Robot(val id: String) {
     handlers = handler :: handlers
   }
 
-  def every(period: Int)(body: () => Unit) = {
-    _tasks = (period -> body) :: _tasks
-  }
+  def every(period: Int)(body: Unit): Unit = macro RobotMacros.every
   
   /** subscribe to a topic using the REACT messages */
   def sensor[T <: Message](source: String)(handler: PartialFunction[T, Unit]): Unit = macro RobotMacros.registerHandler[T]
 
   /** subscribe to a topic directly using ROS messages */
   def subscribe[T](source: String, msgType: String)(handler: T => Unit) = {
-    val registerFct = ( (node: org.ros.node.ConnectedNode) => {
-      val listener = new org.ros.message.MessageListener[T]{
-        def onNewMessage(message: T) {
-          lock.lock()
-          try {
-            handler(message)
-          } finally {
-            lock.unlock
-          }
-        }
-      }
-      val sub = node.newSubscriber[T](react.utils.RosUtils.mayAddPrefix(id, source), msgType)
-      sub.addMessageListener(listener)
+    val registerFct = ( (exec: react.runtime.RobotExecutor) => {
+      exec.subscribe[T](source, msgType, handler)
     } )
     sensors = registerFct :: sensors
   }
@@ -45,34 +32,18 @@ abstract class Robot(val id: String) {
 
   /** publishing using ROS native message type */
   def publish[T](topic: String, typeName: String, message: T) = {
-    val pub = getPublisher[T](topic, typeName)
-    pub.publish(message)
+    exec.publish(topic, typeName, message)
   }
 
   /////////////////////
   // for the runtime //
   /////////////////////
   
-  protected var node: org.ros.node.ConnectedNode = null
-  def setNode(n: org.ros.node.ConnectedNode) {
-    assert(node == null, "setNode should be used only be the REACT runtime, thanks")
-    node = n
-    registerListener
-  }
-
-  private val publishers = scala.collection.mutable.Map[(String, String), Any]()
-  protected def getPublisher[T](topic: String, typeName: String): org.ros.node.topic.Publisher[T] = {
-    val t = react.utils.RosUtils.mayAddPrefix(id, topic)
-    val k = t -> typeName
-    val pub: org.ros.node.topic.Publisher[T] =
-      if (publishers contains k) {
-        publishers(k).asInstanceOf[org.ros.node.topic.Publisher[T]]
-      } else {
-        val p = node.newPublisher[T](t, typeName)
-        publishers += (k -> p)
-        p
-      }
-    pub
+  protected var exec: react.runtime.RobotExecutor = null
+  def setExec(n: react.runtime.RobotExecutor) {
+    assert(exec == null, "setNode should be used only be the REACT runtime, thanks")
+    exec = n
+    for(s <- sensors) s(exec)
   }
 
   /** create a copy of the physical state of the robot, used later by generateMvmt (to compute pre/post difference) */
@@ -83,10 +54,11 @@ abstract class Robot(val id: String) {
 
   protected var _tasks: List[(Int, (() => Unit))] = Nil
   protected var handlers: List[PartialFunction[Any, Unit]] = Nil
-  protected var sensors: List[(org.ros.node.ConnectedNode => Unit)] = Nil
+  protected var sensors: List[(react.runtime.RobotExecutor => Unit)] = Nil
 
   def tasks = _tasks
 
+  //TODO get rid of that everything should be ros message only
   def send(any: Any) {
     val defined = handlers.filter(_.isDefinedAt(any))
     lock.lock
@@ -95,11 +67,6 @@ abstract class Robot(val id: String) {
     } finally {
       lock.unlock
     }
-  }
-
-  //TODO keep some ref for graceful shutdown
-  private def registerListener {
-    for(s <- sensors) s(node)
   }
 
   //helper to simplify message generation
@@ -112,6 +79,7 @@ abstract class Robot(val id: String) {
     Header(s, t, frame)
   }
 
+  //TODO move the lock to the executor ?
   val lock = new java.util.concurrent.locks.ReentrantLock
 
 }
