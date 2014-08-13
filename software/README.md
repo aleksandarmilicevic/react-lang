@@ -43,7 +43,7 @@ to start the turtlesim teleop example:
 - `roscore &`
 - `rosrun turtlesim turtlesim_node &`
 - `cd src/react_lang/react_examples`
-- `./build/install/react_examples/bin/react_examples /turtle1`
+- `./build/install/react_examples/bin/react_examples teleop /turtle1`
 
 Misc
 ====

@@ -34,7 +34,7 @@ class TurtleTeleop(_id: String) extends Robot(_id) {
     case Key.NONE =>  nextAction = none
   }
 
-  //dispatch a message every second
+  //dispatch a message every second (that's how turtlesim works)
   every(1000){ () =>
     nextAction match {
       case `none` =>  ()

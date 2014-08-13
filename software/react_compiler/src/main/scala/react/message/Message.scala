@@ -1,6 +1,8 @@
 package react.message
 
-/* TODO generate all (most of) this using Macros */
+/* TODO automatically generate all (most of) this (using Macros)
+ * adding new messages also requires fiiling some type info in react.rewriting.Handlers
+ */
 
 case class Time(secs: Int, nsecs: Int)
 case class Duration(secs: Int, nsecs: Int)

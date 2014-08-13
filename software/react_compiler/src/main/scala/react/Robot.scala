@@ -6,10 +6,10 @@ import scala.language.experimental.macros
 
 import react.rewriting.{RobotMacros, ExplorableMacros}
 
+//TODO the contructor should be private, robot should have a factory that ensures we create node using RosRun
+
 abstract class Robot(val id: String) {
 
-  //TODO how to dispatch event in a typesafe way ?
-  //def on[T](handler: PartialFunction[T, Unit]) = {
   def on(handler: PartialFunction[Any, Unit]) = {
     handlers = handler :: handlers
   }
@@ -18,7 +18,7 @@ abstract class Robot(val id: String) {
     _tasks = (period -> body) :: _tasks
   }
   
-  /** subscribe to a topic using the REACT messages that mirror ROS messages */
+  /** subscribe to a topic using the REACT messages */
   def sensor[T <: Message](source: String)(handler: PartialFunction[T, Unit]): Unit = macro RobotMacros.registerHandler[T]
 
   /** subscribe to a topic directly using ROS messages */
@@ -40,8 +40,14 @@ abstract class Robot(val id: String) {
     sensors = registerFct :: sensors
   }
 
+  /** publishing using REACT message type */
   def publish[T <: Message](topic: String, message: T): Unit = macro RobotMacros.publish[T]
-  //TODO the ROS native message type version
+
+  /** publishing using ROS native message type */
+  def publish[T](topic: String, typeName: String, message: T) = {
+    val pub = getPublisher[T](topic, typeName)
+    pub.publish(message)
+  }
 
   /////////////////////
   // for the runtime //
