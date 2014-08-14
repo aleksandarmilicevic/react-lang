@@ -12,6 +12,7 @@ abstract class RobotExecutor extends NodeMain {
 
   protected var node: ConnectedNode = null 
 
+  val scheduler = new Scheduler
 
   //TODO wrap the pub/sub to avoid the type casting
   
@@ -32,6 +33,10 @@ abstract class RobotExecutor extends NodeMain {
     pub.publish(message)
   }
 
+  def delayedPublish[T](delay: Int, topic: String, typeName: String, message: T) = {
+    val pub = getPublisher[T](topic, typeName)
+    scheduler.addSingleTask(delay, () => pub.publish(message))
+  }
 
   private val subscribers = scala.collection.mutable.Map[String, Any]()
   def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T] = {
@@ -75,7 +80,6 @@ abstract class RobotExecutor extends NodeMain {
   override def onStart(n: ConnectedNode) {
     node = n
     node.executeCancellableLoop(new CancellableLoop {
-      val scheduler = new Scheduler
 
       override def setup() {
         super.setup()
@@ -83,7 +87,7 @@ abstract class RobotExecutor extends NodeMain {
         robot.setExec(RobotExecutor.this)
         //register the control loop
         for ( (period, fct) <- robot.tasks )
-          scheduler.addTask(period, fct)
+          scheduler.addPeriodicTask(period, fct)
       }
 
       def loop() {
@@ -101,7 +105,9 @@ abstract class RobotExecutor extends NodeMain {
             } finally {
               robot.lock.unlock
             }
-            scheduler.reschedule(task)
+            if (task.period > 0) {
+              scheduler.reschedule(task)
+            }
             //TODO send the messages
           case None => ()
         }

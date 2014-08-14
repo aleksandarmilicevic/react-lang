@@ -17,9 +17,13 @@ class Scheduler {
 
   private def now = java.lang.System.currentTimeMillis()
 
-  def addTask(period: Int, fct: () => Unit) {
+  def addPeriodicTask(period: Int, fct: () => Unit) {
     assert(period >= 1, "period needs to be at least 1ms")
     val task = new ScheduledTask(now + period, period, fct)
+    queue.enqueue(task)
+  }
+  def addSingleTask(delay: Int, fct: () => Unit) {
+    val task = new ScheduledTask(now + delay, -1, fct)
     queue.enqueue(task)
   }
 
@@ -29,7 +33,7 @@ class Scheduler {
     } else {
       val task = queue.dequeue
       val wait = task.expires - now
-      Thread.sleep(wait)
+      if (wait > 1) Thread.sleep(wait)
       Some(task)
     }
   }

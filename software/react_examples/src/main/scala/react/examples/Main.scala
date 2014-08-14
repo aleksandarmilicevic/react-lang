@@ -3,6 +3,7 @@ package react.examples
 import react._
 import react.runtime._
 import react.examples.turtle._
+import react.examples.husky._
 
 class RunTurtleTeleop extends RobotExecutor {
   //define the robot we are working on
@@ -14,6 +15,13 @@ class RunTurtleTeleop extends RobotExecutor {
 class RunTurtleRandom extends RobotExecutor {
   //define the robot we are working on
   val robot = new TurtleRandom(Main.topic)
+}
+
+class RunHuskyTeleop extends RobotExecutor {
+  //define the robot we are working on
+  val robot = new HuskyTeleop(Main.topic)
+  //start the gui to control the robot
+  new Remote(robot)
 }
 
 object Main {
@@ -30,6 +38,8 @@ object Main {
         org.ros.RosRun.main(Array(classOf[RunTurtleTeleop].getName))
       case "random" =>
         org.ros.RosRun.main(Array(classOf[RunTurtleRandom].getName))
+      case "husky" =>
+        org.ros.RosRun.main(Array(classOf[RunHuskyTeleop].getName))
       case other =>
         println("unknown controller '" + other + "', using teleop instead")
         org.ros.RosRun.main(Array(classOf[RunTurtleTeleop].getName))

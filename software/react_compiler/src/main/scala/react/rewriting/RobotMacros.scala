@@ -48,7 +48,8 @@ class RobotMacros(val c: Context) extends Handlers
 
   def every(period: c.Expr[Int])(body: c.Expr[Unit]): c.Expr[Unit] = {
     val tree = q"_tasks = ( $period -> (() => $body) ) :: _tasks"
-    c.Expr[Unit](tree)
+    val tree2 = c.untypecheck(tree)
+    c.Expr[Unit](tree2)
   }
 
 }

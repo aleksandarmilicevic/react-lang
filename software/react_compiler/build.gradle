@@ -23,6 +23,7 @@ dependencies {
   compile 'org.ros.rosjava_messages:std_msgs:0.5.9'
   compile 'org.ros.rosjava_messages:geometry_msgs:1.11.4'
   compile 'org.ros.rosjava_messages:sensor_msgs:1.11.4'
+  compile 'org.ros.rosjava_messages:nav_msgs:1.10.2'
   compile 'org.ros.rosjava_messages:react_msgs:0.1.0'
   compile 'org.ros.rosjava_bootstrap:message_generation:0.1.+-SNAPSHOT'
 
