@@ -103,6 +103,30 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
   var y = 0.0
   var theta = 0.0
 
+  object GetPose {
+    def tFromQuat(q: Quaternion) = {
+      // http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+      math.atan2(2*(q.x*q.y + q.z*q.w), 1-2*(q.y*q.y + q.z*q.z))
+      //math.asin(2*(q.x*q.z - q.y*q.w))
+      //math.atan2(2*(q.x*q.w + q.y*q.z), 1-2*(q.z*q.z + q.w*q.w))
+    }
+    def unapply(m: Message): Option[(Double,Double,Double)] = m match {
+        case Odometry(_, _, PoseWithCovariance(Pose(Point(x,y,_), q),_), _) =>
+          Some((x,y,tFromQuat(q)))
+        case Pose(Point(x,y,_), q) =>
+          Some((x,y,tFromQuat(q)))
+        case Pose2D(x, y, theta) =>
+          Some((x,y,theta))
+        case _ => None
+    }
+  }
+
+  object SetSpeeds {
+    def apply(linear: Double, angular: Double): Twist = {
+      Twist(Vector3(linear,0,0), Vector3(0,0, angular))
+    }
+  }
+
   private var shadow_x = 0.0
   private var shadow_y = 0.0
   private var shadow_theta = 0.0
