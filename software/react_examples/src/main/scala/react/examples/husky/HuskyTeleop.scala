@@ -20,17 +20,17 @@ class HuskyTeleop(_id: String) extends GroundRobot(_id) {
   }
   //TODO clamp to v_min, v_max
 
-  sensor[Odometry]("/odom"){
+  sensor[Odometry]("p3d"){
     case GetPose( pX, pY, pT) =>
       //update the position with the info from the robot
       x = pX
       y = pY
-      theta = pT
+      orientation = pT
   }
   
   //husky expect a message every 100ms
   every(100){
-    publish("cmd_vel", SetSpeeds(vx, vy/10.0))
+    publish("husky/cmd_vel", SetSpeeds(vx, vy/10.0))
   }
 
 }

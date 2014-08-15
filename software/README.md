@@ -31,11 +31,7 @@ the two sub projects are links that points to the two folder at the root.
 Compiling
 ---------
 - `catkin_make` to build the entire wrokspace.
-- `cd src/react_lang; ./gradlew build` to rebuild only the java/scala subprojects. (to generate the artifacts, use installApp instead of build)
-
-Running
--------
-see Examples
+- `cd src/react_lang; ./gradlew installApp` to rebuild only the java/scala subprojects.
 
 Examples
 ========
@@ -44,6 +40,13 @@ to start the turtlesim teleop example:
 - `rosrun turtlesim turtlesim_node &`
 - `cd src/react_lang/react_examples`
 - `./build/install/react_examples/bin/react_examples teleop /turtle1`
+
+for the husky example:
+- first, you need to install a few dependencies: follow the steps in `react_examples/src/main/resources/husky/`
+- once you have launched gazebo:
+  * `cd src/react_lang/react_examples`
+  * `./build/install/react_examples/bin/react_examples husky /husky1 &`
+  * `./build/install/react_examples/bin/react_examples husky /husky2 &`
 
 Misc
 ====

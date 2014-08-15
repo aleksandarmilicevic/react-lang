@@ -14,7 +14,7 @@ class SW(_id: String) extends GroundRobot(_id) {
   every(200){
     x += vx
     y += vy
-    theta = math.atan2(vy, vx)
+    orientation = math.atan2(vy, vx)
   }
 
   on {

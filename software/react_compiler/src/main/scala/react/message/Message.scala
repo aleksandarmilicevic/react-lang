@@ -29,6 +29,28 @@ case class TwistWithCovariance(twist: Twist, covariance: Array[Double]) extends 
 
 //sensor_msgs
 case class Range(header: Header, kind: Byte, fov: Float, min: Float, max: Float, range: Float) extends Message(sensor_msgs.Range._TYPE)
+case class LaserScan( header: Header,
+                      angleMin: Float,
+                      angleMax: Float,
+                      angleIncrement: Float,
+                      timeIncrement: Float,
+                      scanTime: Float,
+                      rangeMin: Float,
+                      rangeMax: Float,
+                      ranges: Array[Float],
+                      intensities: Array[Float]) extends Message(sensor_msgs.LaserScan._TYPE)
+case class Imu( header: Header,
+                orientation: Quaternion,
+                orientationCovariance: Array[Double], //9
+                angularVelocity: Vector3,
+                angularVelocityCovariance: Array[Double], //9
+                linearAcceleration: Vector3,
+                linearAccelerationCovariance: Array[Double] //9
+            ) extends Message(sensor_msgs.Imu._TYPE) {
+  assert(orientationCovariance.size == 9, "Imu.orientationCovariance must contain 9 elements")
+  assert(angularVelocityCovariance.size == 9, "Imu.angularVelocityCovariance must contain 9 elements")
+  assert(linearAccelerationCovariance.size == 9, "Imu.linearAccelerationCovariance must contain 9 elements")
+}
 
 //nav_msgs
 case class Odometry(header: Header, childFrameId: String, pose: PoseWithCovariance, twist: TwistWithCovariance) extends Message(nav_msgs.Odometry._TYPE)
@@ -62,6 +84,23 @@ object Message {
                                                 r.getMinRange,
                                                 r.getMaxRange,
                                                 r.getRange)
+  def from(r: sensor_msgs.LaserScan): LaserScan = LaserScan(from(r.getHeader),
+                                                            r.getAngleMin,
+                                                            r.getAngleMax,
+                                                            r.getAngleIncrement,
+                                                            r.getTimeIncrement,
+                                                            r.getScanTime,
+                                                            r.getRangeMin,
+                                                            r.getRangeMax,
+                                                            r.getRanges,
+                                                            r.getIntensities)
+  def from(r: sensor_msgs.Imu): Imu = Imu(from(r.getHeader),
+                                          from(r.getOrientation),
+                                          r.getOrientationCovariance,
+                                          from(r.getAngularVelocity),
+                                          r.getAngularVelocityCovariance,
+                                          from(r.getLinearAcceleration),
+                                          r.getLinearAccelerationCovariance)
 
   def from(o: nav_msgs.Odometry): Odometry = Odometry(from(o.getHeader),
                                                       o.getChildFrameId, 
@@ -176,6 +215,33 @@ object Message {
     r2.setMinRange(r.min)
     r2.setMaxRange(r.max)
     r2.setRange(r.range)
+    r2
+  }
+  
+  def to(node: Node, r: LaserScan): sensor_msgs.LaserScan = {
+    val r2 = node.getTopicMessageFactory().newFromType[sensor_msgs.LaserScan](r.rosType)
+    r2.setHeader(to(node, r.header))
+    r2.setAngleMin(r.angleMin)
+    r2.setAngleMax(r.angleMax)
+    r2.setAngleIncrement(r.angleIncrement)
+    r2.setTimeIncrement(r.timeIncrement)
+    r2.setScanTime(r.scanTime)
+    r2.setRangeMin(r.rangeMin)
+    r2.setRangeMax(r.rangeMax)
+    r2.setRanges(r.ranges)
+    r2.setIntensities(r.intensities)
+    r2
+  }
+  
+  def to(node: Node, r: Imu): sensor_msgs.Imu = {
+    val r2 = node.getTopicMessageFactory().newFromType[sensor_msgs.Imu](r.rosType)
+    r2.setHeader(to(node, r.header))
+    r2.setOrientation(to(node, r.orientation))
+    r2.setOrientationCovariance(r.orientationCovariance)
+    r2.setAngularVelocity(to(node, r.angularVelocity))
+    r2.setAngularVelocityCovariance(r.angularVelocityCovariance)
+    r2.setLinearAcceleration(to(node, r.linearAcceleration))
+    r2.setLinearAccelerationCovariance(r.linearAccelerationCovariance)
     r2
   }
 

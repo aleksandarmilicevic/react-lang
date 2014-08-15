@@ -27,6 +27,8 @@ trait Handlers {
     case "TwistStamped" =>          geometry_msgs.TwistStamped._TYPE
     case "TwistWithCovariance" =>   geometry_msgs.TwistWithCovariance._TYPE
     case "Range" =>                 sensor_msgs.Range._TYPE
+    case "LaserScan" =>             sensor_msgs.LaserScan._TYPE
+    case "Imu" =>                   sensor_msgs.Imu._TYPE
     case "Odometry" =>              nav_msgs.Odometry._TYPE
     case "Mvmt" =>                  react_msgs.Mvmt._TYPE
     case other => sys.error("TODO: message type " + other + " not yet supported / unkown")
@@ -44,6 +46,8 @@ trait Handlers {
     case "TwistStamped" =>          tq"geometry_msgs.TwistStamped"
     case "TwistWithCovariance" =>   tq"geometry_msgs.TwistWithCovariance"
     case "Range" =>                 tq"sensor_msgs.Range"
+    case "LaserScan" =>             tq"sensor_msgs.LaserScan"
+    case "Imu" =>                   tq"sensor_msgs.Imu"
     case "Odometry" =>              tq"nav_msgs.Odometry"
     case "Mvmt" =>                  tq"react_msgs.Mvmt"
     case other => sys.error("TODO: message type " + other + " not yet supported / unkown")

@@ -101,7 +101,7 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
   //ROS Pose2D
   var x = 0.0
   var y = 0.0
-  var theta = 0.0
+  var orientation = 0.0
 
   object GetPose {
     def tFromQuat(q: Quaternion) = {
@@ -115,8 +115,8 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
           Some((x,y,tFromQuat(q)))
         case Pose(Point(x,y,_), q) =>
           Some((x,y,tFromQuat(q)))
-        case Pose2D(x, y, theta) =>
-          Some((x,y,theta))
+        case Pose2D(x, y, orientation) =>
+          Some((x,y,orientation))
         case _ => None
     }
   }
@@ -129,12 +129,12 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
 
   private var shadow_x = 0.0
   private var shadow_y = 0.0
-  private var shadow_theta = 0.0
+  private var shadow_orientation = 0.0
 
   override def shadow = {
     shadow_x = x
     shadow_y = y
-    shadow_theta = theta
+    shadow_orientation = orientation
   }
 
   //TODO allows for delayed actions (Twist do not have a duration)
@@ -144,7 +144,7 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
     val t = period / 1000.0
     val dx = x - shadow_x
     val dy = y - shadow_y
-    val dT = theta - shadow_theta
+    val dT = orientation - shadow_orientation
     val v = math.sqrt(dx*dx + dy*dy)
 
     val t1 = 0.75 * f * t
