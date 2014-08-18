@@ -1,24 +1,35 @@
 package react.examples.husky
 
 import react._
+import react.robot._
 import react.message._
 import react.examples._
 
 
 class HuskyTeleop(_id: String) extends GroundRobot(_id) {
 
+  val period = 100
+
+  val vLinMax = 5
+  val vAngMax = 10
+  def clamp(v: Int, vMin: Int, vMax: Int) = math.min(vMax, math.max(v, vMin))
+  //0.5 is ~1/2 size of the base along the x axis
+  //0.8 is a guessed coefficient of friction
+  //takes into account the fact that the controller runs every 100ms
+  def safeDistance(v: Int) = 0.5 + v * v / (9.81 * 2.0 * 0.8) + vx * period / 1000.0
+
+  //
   var vx = 0
   var vy = 0
 
   //input from keyboard
   on {
-    case Key.UP =>    vx += 1
-    case Key.DOWN =>  vx -= 1
-    case Key.LEFT =>  vy += 1
-    case Key.RIGHT => vy -= 1
-    case Key.NONE =>
+    case Key.UP =>    vx = clamp(vx + 1, -vLinMax, vLinMax)
+    case Key.DOWN =>  vx = clamp(vx - 1, -vLinMax, vLinMax)
+    case Key.LEFT =>  vy = clamp(vy + 1, -vAngMax, vAngMax)
+    case Key.RIGHT => vy = clamp(vy - 1, -vAngMax, vAngMax)
+    case Key.NONE =>  vx = 0; vy = 0
   }
-  //TODO clamp to v_min, v_max
 
   sensor[Odometry]("p3d"){
     case GetPose( pX, pY, pT) =>
@@ -27,10 +38,18 @@ class HuskyTeleop(_id: String) extends GroundRobot(_id) {
       y = pY
       orientation = pT
   }
+
+  sensor[LaserScan]("laser"){
+    case GetRange(distance) => 
+      if (distance <= safeDistance(vx) && vx > 0) {
+        vx = 0
+        vy = 0
+      }
+  }
   
   //husky expect a message every 100ms
-  every(100){
-    publish("husky/cmd_vel", SetSpeeds(vx, vy/10.0))
+  every(period){
+    publish("husky/cmd_vel", Command.setSpeed(vx, vy/10.0))
   }
 
 }

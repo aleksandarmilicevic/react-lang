@@ -22,6 +22,7 @@ trait Handlers {
     case "Quaternion" =>            geometry_msgs.Quaternion._TYPE
     case "Pose2D" =>                geometry_msgs.Pose2D._TYPE
     case "Pose" =>                  geometry_msgs.Pose._TYPE
+    case "PoseStamped" =>           geometry_msgs.PoseStamped._TYPE
     case "PoseWithCovariance" =>    geometry_msgs.PoseWithCovariance._TYPE
     case "Twist" =>                 geometry_msgs.Twist._TYPE
     case "TwistStamped" =>          geometry_msgs.TwistStamped._TYPE
@@ -30,6 +31,7 @@ trait Handlers {
     case "LaserScan" =>             sensor_msgs.LaserScan._TYPE
     case "Imu" =>                   sensor_msgs.Imu._TYPE
     case "Odometry" =>              nav_msgs.Odometry._TYPE
+    case "Path" =>                  nav_msgs.Path._TYPE
     case "Mvmt" =>                  react_msgs.Mvmt._TYPE
     case other => sys.error("TODO: message type " + other + " not yet supported / unkown")
   }
@@ -41,6 +43,7 @@ trait Handlers {
     case "Quaternion" =>            tq"geometry_msgs.Quaternion"
     case "Pose2D" =>                tq"geometry_msgs.Pose2D"
     case "Pose" =>                  tq"geometry_msgs.Pose"
+    case "PoseStamped" =>           tq"geometry_msgs.PoseStamped"
     case "PoseWithCovariance" =>    tq"geometry_msgs.PoseWithCovariance"
     case "Twist" =>                 tq"geometry_msgs.Twist"
     case "TwistStamped" =>          tq"geometry_msgs.TwistStamped"
@@ -49,6 +52,7 @@ trait Handlers {
     case "LaserScan" =>             tq"sensor_msgs.LaserScan"
     case "Imu" =>                   tq"sensor_msgs.Imu"
     case "Odometry" =>              tq"nav_msgs.Odometry"
+    case "Path" =>                  tq"nav_msgs.Path"
     case "Mvmt" =>                  tq"react_msgs.Mvmt"
     case other => sys.error("TODO: message type " + other + " not yet supported / unkown")
   }

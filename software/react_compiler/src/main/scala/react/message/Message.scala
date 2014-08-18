@@ -18,6 +18,7 @@ case class Point(x: Double, y: Double, z: Double) extends Message(geometry_msgs.
 case class Quaternion(x: Double, y: Double, z: Double, w: Double) extends Message(geometry_msgs.Quaternion._TYPE)
 case class Pose2D(x: Double, y: Double, theta: Double) extends Message(geometry_msgs.Pose2D._TYPE)
 case class Pose(position: Point, orientation: Quaternion) extends Message(geometry_msgs.Pose._TYPE)
+case class PoseStamped(header: Header, pose: Pose) extends Message(geometry_msgs.PoseStamped._TYPE)
 case class PoseWithCovariance(pose: Pose, covariance: Array[Double]) extends Message(geometry_msgs.PoseWithCovariance._TYPE) {
   assert(covariance.size == 36, "PoseWithCovariance.covariance must contain 36 elements")
 }
@@ -54,6 +55,7 @@ case class Imu( header: Header,
 
 //nav_msgs
 case class Odometry(header: Header, childFrameId: String, pose: PoseWithCovariance, twist: TwistWithCovariance) extends Message(nav_msgs.Odometry._TYPE)
+case class Path(header: Header, poses: Array[PoseStamped]) extends Message(nav_msgs.Path._TYPE)
 
 //react_msgs
 case class Mvmt(header: Header, speed: Double, angular_speed: Double, d: Duration) extends Message(react_msgs.Mvmt._TYPE)
@@ -73,6 +75,7 @@ object Message {
   def from(v: geometry_msgs.Quaternion): Quaternion = Quaternion(v.getX, v.getY, v.getZ, v.getW)
   def from(p: geometry_msgs.Pose2D): Pose2D = Pose2D(p.getX, p.getY, p.getTheta)
   def from(p: geometry_msgs.Pose): Pose = Pose(from(p.getPosition), from(p.getOrientation))
+  def from(p: geometry_msgs.PoseStamped): PoseStamped = PoseStamped(from(p.getHeader), from(p.getPose))
   def from(p: geometry_msgs.PoseWithCovariance): PoseWithCovariance = PoseWithCovariance(from(p.getPose), p.getCovariance)
   def from(t: geometry_msgs.Twist): Twist = Twist(from(t.getLinear), from(t.getAngular))
   def from(t: geometry_msgs.TwistStamped): TwistStamped = TwistStamped(from(t.getHeader), from(t.getTwist))
@@ -106,6 +109,11 @@ object Message {
                                                       o.getChildFrameId, 
                                                       from(o.getPose),
                                                       from(o.getTwist))
+  def from(o: nav_msgs.Path): Path = {
+    val header = from(o.getHeader)
+    val poses = o.getPoses.toArray[geometry_msgs.PoseStamped](Array[geometry_msgs.PoseStamped]()).map(from)
+    Path(header, poses)
+  }
 
   def from(m: react_msgs.Mvmt): Mvmt = Mvmt(from(m.getHeader), m.getSpeed, m.getAngularSpeed, from(m.getD))
 
@@ -116,12 +124,16 @@ object Message {
     else if (rosType == geometry_msgs.Quaternion._TYPE) from(msg.asInstanceOf[geometry_msgs.Quaternion])
     else if (rosType == geometry_msgs.Pose2D._TYPE) from(msg.asInstanceOf[geometry_msgs.Pose2D])
     else if (rosType == geometry_msgs.Pose._TYPE) from(msg.asInstanceOf[geometry_msgs.Pose])
+    else if (rosType == geometry_msgs.PoseStamped._TYPE) from(msg.asInstanceOf[geometry_msgs.PoseStamped])
     else if (rosType == geometry_msgs.PoseWithCovariance._TYPE) from(msg.asInstanceOf[geometry_msgs.PoseWithCovariance])
     else if (rosType == geometry_msgs.Twist._TYPE) from(msg.asInstanceOf[geometry_msgs.Twist])
     else if (rosType == geometry_msgs.TwistStamped._TYPE) from(msg.asInstanceOf[geometry_msgs.TwistStamped])
     else if (rosType == geometry_msgs.TwistWithCovariance._TYPE) from(msg.asInstanceOf[geometry_msgs.TwistWithCovariance])
     else if (rosType == sensor_msgs.Range._TYPE) from(msg.asInstanceOf[sensor_msgs.Range])
+    else if (rosType == sensor_msgs.Imu._TYPE) from(msg.asInstanceOf[sensor_msgs.Imu])
+    else if (rosType == sensor_msgs.LaserScan._TYPE) from(msg.asInstanceOf[sensor_msgs.LaserScan])
     else if (rosType == nav_msgs.Odometry._TYPE) from(msg.asInstanceOf[nav_msgs.Odometry])
+    else if (rosType == nav_msgs.Path._TYPE) from(msg.asInstanceOf[nav_msgs.Path])
     else if (rosType == react_msgs.Mvmt._TYPE) from(msg.asInstanceOf[react_msgs.Mvmt])
     else sys.error("TODO: message type " + rosType + " not yet supported")
   }
@@ -177,6 +189,13 @@ object Message {
     val p2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Pose](p.rosType)
     p2.setPosition(to(node, p.position))
     p2.setOrientation(to(node, p.orientation))
+    p2
+  }
+  
+  def to(node: Node, p: PoseStamped): geometry_msgs.PoseStamped = {
+    val p2 = node.getTopicMessageFactory().newFromType[geometry_msgs.PoseStamped](p.rosType)
+    p2.setHeader(to(node, p.header))
+    p2.setPose(to(node, p.pose))
     p2
   }
   
@@ -251,6 +270,14 @@ object Message {
     o2.setChildFrameId(o.childFrameId)
     o2.setPose(to(node, o.pose))
     o2.setTwist(to(node, o.twist))
+    o2
+  }
+  
+  def to(node: Node, o: Path): nav_msgs.Path = {
+    val o2 = node.getTopicMessageFactory().newFromType[nav_msgs.Path](o.rosType)
+    o2.setHeader(to(node, o.header))
+    val array: Array[geometry_msgs.PoseStamped] = o.poses.map(to(node, _))
+    o2.setPoses(java.util.Arrays.asList[geometry_msgs.PoseStamped](array: _*))
     o2
   }
   

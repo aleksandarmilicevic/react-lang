@@ -47,10 +47,10 @@ abstract class Robot(val id: String) {
   }
 
   /** create a copy of the physical state of the robot, used later by generateMvmt (to compute pre/post difference) */
-  def shadow: Unit = { }
+  //def shadow: Unit = { }
 
   /** generate a sequence of messages for the robot to execute (match the physical state to the model state) */
-  def generateMvmt(period: Int): Seq[Message] = Seq()
+  //def generateMvmt(period: Int): Seq[Message] = Seq()
 
   protected var _tasks: List[(Int, (() => Unit))] = Nil
   protected var handlers: List[PartialFunction[Any, Unit]] = Nil
@@ -103,67 +103,43 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
   var y = 0.0
   var orientation = 0.0
 
-  object GetPose {
-    def tFromQuat(q: Quaternion) = {
-      // http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-      math.atan2(2*(q.x*q.y + q.z*q.w), 1-2*(q.y*q.y + q.z*q.z))
-      //math.asin(2*(q.x*q.z - q.y*q.w))
-      //math.atan2(2*(q.x*q.w + q.y*q.z), 1-2*(q.z*q.z + q.w*q.w))
-    }
-    def unapply(m: Message): Option[(Double,Double,Double)] = m match {
-        case Odometry(_, _, PoseWithCovariance(Pose(Point(x,y,_), q),_), _) =>
-          Some((x,y,tFromQuat(q)))
-        case Pose(Point(x,y,_), q) =>
-          Some((x,y,tFromQuat(q)))
-        case Pose2D(x, y, orientation) =>
-          Some((x,y,orientation))
-        case _ => None
-    }
-  }
+//private var shadow_x = 0.0
+//private var shadow_y = 0.0
+//private var shadow_orientation = 0.0
 
-  object SetSpeeds {
-    def apply(linear: Double, angular: Double): Twist = {
-      Twist(Vector3(linear,0,0), Vector3(0,0, angular))
-    }
-  }
+//override def shadow = {
+//  shadow_x = x
+//  shadow_y = y
+//  shadow_orientation = orientation
+//}
 
-  private var shadow_x = 0.0
-  private var shadow_y = 0.0
-  private var shadow_orientation = 0.0
+////TODO allows for delayed actions (Twist do not have a duration)
+//override def generateMvmt(period: Int) = {
+//  val f = 0.5 //parameter f ∈ (0,1) to control how tight is the maneuver
 
-  override def shadow = {
-    shadow_x = x
-    shadow_y = y
-    shadow_orientation = orientation
-  }
+//  val t = period / 1000.0
+//  val dx = x - shadow_x
+//  val dy = y - shadow_y
+//  val dT = orientation - shadow_orientation
+//  val v = math.sqrt(dx*dx + dy*dy)
 
-  //TODO allows for delayed actions (Twist do not have a duration)
-  override def generateMvmt(period: Int) = {
-    val f = 0.5 //parameter f ∈ (0,1) to control how tight is the maneuver
+//  val t1 = 0.75 * f * t
+//  val v1 = v * 2 * dT / (math.sin(dT) + 2*math.sin(dT/2.0))
+//  val o1 = 2 * dT / (f * t)
 
-    val t = period / 1000.0
-    val dx = x - shadow_x
-    val dy = y - shadow_y
-    val dT = orientation - shadow_orientation
-    val v = math.sqrt(dx*dx + dy*dy)
+//  val t2 = 0.25 * f * t
+//  val v2 = v1
+//  val o2 = o1
 
-    val t1 = 0.75 * f * t
-    val v1 = v * 2 * dT / (math.sin(dT) + 2*math.sin(dT/2.0))
-    val o1 = 2 * dT / (f * t)
-
-    val t2 = 0.25 * f * t
-    val v2 = v1
-    val o2 = o1
-
-    val t3 = (1-f) * t
-    val v3 = v
-    val o3 = 0
-    
-    val m1 = Mvmt(nextHeader, v1, o1, Message.duration((t1 * 1000).toLong))
-    val m2 = Mvmt(nextHeader, v2, o2, Message.duration((t2 * 1000).toLong))
-    val m3 = Mvmt(nextHeader, v3, o3, Message.duration((t3 * 1000).toLong))
-    Seq(m1, m2, m3)
-  }
+//  val t3 = (1-f) * t
+//  val v3 = v
+//  val o3 = 0
+//  
+//  val m1 = Mvmt(nextHeader, v1, o1, Message.duration((t1 * 1000).toLong))
+//  val m2 = Mvmt(nextHeader, v2, o2, Message.duration((t2 * 1000).toLong))
+//  val m3 = Mvmt(nextHeader, v3, o3, Message.duration((t3 * 1000).toLong))
+//  Seq(m1, m2, m3)
+//}
 
 }
 

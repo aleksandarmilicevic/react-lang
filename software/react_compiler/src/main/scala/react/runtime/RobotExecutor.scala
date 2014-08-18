@@ -94,14 +94,14 @@ abstract class RobotExecutor extends NodeMain {
         //TODO
         // non-blocking version
         // get all the expired task at once
-        var msg: Seq[Message] = Seq()
+        //var msg: Seq[Message] = Seq()
         scheduler.waitUntilNextTask match {
           case Some(task) =>
             robot.lock.lock
             try {
-              robot.shadow
+              //robot.shadow
               task.fct()
-              msg = robot.generateMvmt(task.period)
+              //msg = robot.generateMvmt(task.period)
             } finally {
               robot.lock.unlock
             }
