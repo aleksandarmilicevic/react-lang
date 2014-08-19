@@ -1,6 +1,8 @@
 package react
 
 import react.message._
+import react.robot._
+import react.runtime._
 
 import scala.language.experimental.macros
 
@@ -8,7 +10,7 @@ import react.rewriting.{RobotMacros, ExplorableMacros}
 
 //TODO the contructor should be private, robot should have a factory that ensures we create node using RosRun
 
-abstract class Robot(val id: String) extends robot.Controller {
+abstract class Robot(val id: String) extends Controller {
 
   /** publishing using REACT message type */
   def publish[T <: Message](topic: String, message: T): Unit = macro RobotMacros.publish[T]
@@ -21,6 +23,9 @@ abstract class Robot(val id: String) extends robot.Controller {
   /////////////////////
   // for the runtime //
   /////////////////////
+  
+  //TODO move the lock to the executor ?
+  val lock = new java.util.concurrent.locks.ReentrantLock
   
   protected var exec: react.runtime.RobotExecutor = null
   def setExec(n: react.runtime.RobotExecutor) {
@@ -35,18 +40,16 @@ abstract class Robot(val id: String) extends robot.Controller {
   /** generate a sequence of messages for the robot to execute (match the physical state to the model state) */
   //def generateMvmt(period: Int): Seq[Message] = Seq()
 
-  //helper to simplify message generation
+  //helper to simplify message generation, to report pose to react master
+  var publishPose = false
+  var posePublishPeriod = 500
   private var seq = 0
   protected def nextHeader = {
     val s = seq
     seq += 1
     val t = Message.time(System.currentTimeMillis())
-    val frame = "1"
-    Header(s, t, frame)
+    Header(s, t, id)
   }
-
-  //TODO move the lock to the executor ?
-  val lock = new java.util.concurrent.locks.ReentrantLock
 
 }
 
@@ -69,6 +72,22 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
   var y = 0.0
   var orientation = 0.0
 
+  override def setExec(n: react.runtime.RobotExecutor) {
+    super.setExec(n)
+
+    //...
+    if (publishPose) {
+      def publish() {
+        val h = nextHeader
+        val p = Pose(Point(x,y,0), Angle.quaternionFromTheta(orientation))
+        val msg = exec.convertMessage[geometry_msgs.PoseStamped](PoseStamped(h, p))
+        exec.publish[geometry_msgs.PoseStamped]("/react/pose", geometry_msgs.PoseStamped._TYPE, msg)
+      }
+      n.scheduler.schedule(new ScheduledTask(posePublishPeriod, publish))
+    }
+
+  }
+
 //private var shadow_x = 0.0
 //private var shadow_y = 0.0
 //private var shadow_orientation = 0.0
@@ -79,7 +98,6 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
 //  shadow_orientation = orientation
 //}
 
-////TODO allows for delayed actions (Twist do not have a duration)
 //override def generateMvmt(period: Int) = {
 //  val f = 0.5 //parameter f ∈ (0,1) to control how tight is the maneuver
 
@@ -106,6 +124,8 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
 //  val m3 = Mvmt(nextHeader, v3, o3, Message.duration((t3 * 1000).toLong))
 //  Seq(m1, m2, m3)
 //}
+
+  
 
 }
 

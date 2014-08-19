@@ -10,7 +10,7 @@ case class Duration(secs: Int, nsecs: Int)
 abstract class Message(val rosType: String) { }
 
 //std_msgs
-case class Header(seq: Int, stamp: Time, frame_id: String) extends Message(std_msgs.Header._TYPE)
+case class Header(seq: Int, stamp: Time, frame: String) extends Message(std_msgs.Header._TYPE)
 
 //geometry_msgs
 case class Vector3(x: Double, y: Double, z: Double) extends Message(geometry_msgs.Vector3._TYPE)
@@ -148,7 +148,7 @@ object Message {
     val h2 = node.getTopicMessageFactory().newFromType[std_msgs.Header](h.rosType)
     h2.setSeq(h.seq)
     h2.setStamp(to(h.stamp))
-    h2.setFrameId(h.frame_id)
+    h2.setFrameId(h.frame)
     h2
   }
 

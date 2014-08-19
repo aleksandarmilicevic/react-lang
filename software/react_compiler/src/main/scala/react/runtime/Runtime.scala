@@ -3,25 +3,54 @@ package react.runtime
 import org.ros.namespace.GraphName
 import org.ros.message.MessageListener
 import org.ros.node.{Node, NodeMain, ConnectedNode}
+import org.ros.concurrent.CancellableLoop
+import react.message._
 
 class Runtime extends NodeMain {
+  
+  val poses = scala.collection.mutable.HashMap[String, PoseStamped]()
 
-  val nodeId = "react"
+  val nodeId = "/react"
+
+  val publishPeriod = 500
 
   override def getDefaultNodeName: GraphName = {
     GraphName.of(nodeId)
   }
 
   override def onStart(node: ConnectedNode) {
-    val subs = node.newSubscriber[std_msgs.String](nodeId + "/register", std_msgs.String._TYPE)
-    val listener = new MessageListener[std_msgs.String]{
-      def onNewMessage(message: std_msgs.String) {
-        //TODO
-        //  wait for new node to connect to the react runtime node
-        //  then create the corresponding robot within react
-        sys.error("TODO")
+
+    //subcribe to the 'react/poses' topic
+    val sub = node.newSubscriber[geometry_msgs.PoseStamped](nodeId + "/pose", geometry_msgs.PoseStamped._TYPE)
+    val listener = new MessageListener[geometry_msgs.PoseStamped]{
+      def onNewMessage(message: geometry_msgs.PoseStamped) {
+        val id = message.getHeader.getFrameId
+        poses += (id -> Message.from(message))
       }
     }
+    sub.addMessageListener(listener)
+
+    node.executeCancellableLoop(new CancellableLoop {
+
+      private def now = java.lang.System.currentTimeMillis()
+      var last = now
+    
+      val pub = node.newPublisher[nav_msgs.Path](nodeId + "/poses", nav_msgs.Path._TYPE)
+
+      var cnt = -1
+
+      def loop() {
+        val t = now
+        if (t - last > publishPeriod) {
+          last = t
+          cnt += 1
+          val path = Path(Header(cnt, Message.time(System.currentTimeMillis()), ""), poses.values.toArray)
+          val asRos = Message.to(node, path)
+          pub.publish(asRos)
+        }
+      }
+
+    })
   }
 
   override def onShutdown(node: Node) {

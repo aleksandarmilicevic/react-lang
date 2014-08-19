@@ -113,7 +113,8 @@ abstract class RobotExecutor extends NodeMain {
   }
 
   override def onShutdown(node: Node) {
-    //todo graceful shutdown: deregister the handlers
+    //graceful shutdown
+    robot.deregister(this)
   }
 
   override def onShutdownComplete(node: Node) {
