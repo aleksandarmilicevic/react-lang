@@ -30,7 +30,7 @@ the two sub projects are links that points to the two folder at the root.
 
 Compiling
 ---------
-- `catkin_make` to build the entire wrokspace.
+- `catkin_make` to build the entire workspace.
 - `cd src/react_lang; ./gradlew installApp` to rebuild only the java/scala subprojects.
 
 Examples
@@ -47,6 +47,7 @@ for the husky example:
   * `cd src/react_lang/react_examples`
   * `./build/install/react_examples/bin/react_examples husky /husky1 &`
   * `./build/install/react_examples/bin/react_examples husky /husky2 &`
+Alternatively, instead of the `husky` controller, you can use `huskyG` which tries to move only along the grid axes.
 
 Misc
 ====

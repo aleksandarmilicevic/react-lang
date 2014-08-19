@@ -85,9 +85,6 @@ abstract class RobotExecutor extends NodeMain {
         super.setup()
         //for subscribing and publishing
         robot.setExec(RobotExecutor.this)
-        //register the control loop
-        for ( (period, fct) <- robot.tasks )
-          scheduler.addPeriodicTask(period, fct)
       }
 
       def loop() {
@@ -105,8 +102,8 @@ abstract class RobotExecutor extends NodeMain {
             } finally {
               robot.lock.unlock
             }
-            if (task.period > 0) {
-              scheduler.reschedule(task)
+            if (task.isPeriodic && !task.cancelled) {
+              scheduler.schedule(task)
             }
             //TODO send the messages
           case None => ()

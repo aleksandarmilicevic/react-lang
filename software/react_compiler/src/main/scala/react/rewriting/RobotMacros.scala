@@ -16,40 +16,46 @@ class RobotMacros(val c: Context) extends Handlers
   def registerHandler[T <: react.message.Message : c.WeakTypeTag]
     (source: c.Expr[String])
     (handler: c.Expr[PartialFunction[T, Unit]]): c.Expr[Unit] =
- {
+  {
     val rosName = convertMsgName( weakTypeOf[T] )
     val rosType = convertMsgType( weakTypeOf[T] )
-    val reactType = weakTypeOf[T]
 
-    val lifted = q"""(  (message: $rosType) => {
-          val msg = react.message.Message.from(message)
-          if (h.isDefinedAt(msg)) { h.apply(msg) }
-        } )"""
-    val body = q"""{
-          val h = $handler
-          exec.subscribe[$rosType]($source, $rosName, $lifted)
-        }"""
-    val tree = q"( (exec: react.runtime.RobotExecutor) => $body )"
-    val tree2 = q"sensors = $tree :: sensors"
-    c.Expr[Unit](tree2)
+    val tree = q"""{
+      val h = $handler
+      subscribe[$rosType]($source, $rosName)( (message: $rosType) => {
+        val msg = react.message.Message.from(message)
+        if (h.isDefinedAt(msg)) { h.apply(msg) }
+      })
+    }"""
+    c.Expr[Unit](tree)
   }
   
-  //TODO cache the publisher
   def publish[T <: react.message.Message : c.WeakTypeTag]
     (topic: c.Expr[String], message: c.Expr[T]): c.Expr[Unit] =
   {
     val rosName = convertMsgName( weakTypeOf[T] )
     val rosType = convertMsgType( weakTypeOf[T] )
-    val reactType = weakTypeOf[T]
 
     val tree = q"publish[$rosType]($topic, $rosName, exec.convertMessage[$rosType]($message))"
     c.Expr[Unit](tree)
   }
 
   def every(period: c.Expr[Int])(body: c.Expr[Unit]): c.Expr[Unit] = {
-    val tree = q"_tasks = ( $period -> (() => $body) ) :: _tasks"
+    val tree = q"addTask(new react.runtime.ScheduledTask($period, (() => $body)))"
     val tree2 = c.untypecheck(tree)
     c.Expr[Unit](tree2)
+  }
+  
+  def makeState(sid: c.Expr[scala.Symbol])(body: c.Expr[Unit]): c.Expr[Unit] = {
+    val tree = q"""{
+      assert(!(statesMap.contains($sid)), "redefinitions of " + $sid)
+      snapshotData
+      val state = new State($sid) { $body }
+      fixData(state)
+      statesMap += ($sid -> state)
+    }"""
+    //val tree2 = c.untypecheck(tree)
+    c.Expr[Unit](tree)
   }
 
 }

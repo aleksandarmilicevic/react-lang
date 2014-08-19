@@ -8,24 +8,7 @@ import react.rewriting.{RobotMacros, ExplorableMacros}
 
 //TODO the contructor should be private, robot should have a factory that ensures we create node using RosRun
 
-abstract class Robot(val id: String) {
-
-  def on(handler: PartialFunction[Any, Unit]) = {
-    handlers = handler :: handlers
-  }
-
-  def every(period: Int)(body: Unit): Unit = macro RobotMacros.every
-  
-  /** subscribe to a topic using the REACT messages */
-  def sensor[T <: Message](source: String)(handler: PartialFunction[T, Unit]): Unit = macro RobotMacros.registerHandler[T]
-
-  /** subscribe to a topic directly using ROS messages */
-  def subscribe[T](source: String, msgType: String)(handler: T => Unit) = {
-    val registerFct = ( (exec: react.runtime.RobotExecutor) => {
-      exec.subscribe[T](source, msgType, handler)
-    } )
-    sensors = registerFct :: sensors
-  }
+abstract class Robot(val id: String) extends robot.Controller {
 
   /** publishing using REACT message type */
   def publish[T <: Message](topic: String, message: T): Unit = macro RobotMacros.publish[T]
@@ -43,7 +26,7 @@ abstract class Robot(val id: String) {
   def setExec(n: react.runtime.RobotExecutor) {
     assert(exec == null, "setNode should be used only be the REACT runtime, thanks")
     exec = n
-    for(s <- sensors) s(exec)
+    register(n)
   }
 
   /** create a copy of the physical state of the robot, used later by generateMvmt (to compute pre/post difference) */
@@ -51,23 +34,6 @@ abstract class Robot(val id: String) {
 
   /** generate a sequence of messages for the robot to execute (match the physical state to the model state) */
   //def generateMvmt(period: Int): Seq[Message] = Seq()
-
-  protected var _tasks: List[(Int, (() => Unit))] = Nil
-  protected var handlers: List[PartialFunction[Any, Unit]] = Nil
-  protected var sensors: List[(react.runtime.RobotExecutor => Unit)] = Nil
-
-  def tasks = _tasks
-
-  //TODO get rid of that everything should be ros message only
-  def send(any: Any) {
-    val defined = handlers.filter(_.isDefinedAt(any))
-    lock.lock
-    try {
-      defined.foreach(_.apply(any))
-    } finally {
-      lock.unlock
-    }
-  }
 
   //helper to simplify message generation
   private var seq = 0

@@ -3,3 +3,4 @@ build/
 devel/
 .catkin_workspace
 /react_examples/src/main/resources/husky/src/
+*.bak
