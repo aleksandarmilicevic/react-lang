@@ -27,8 +27,8 @@ abstract class Robot(val id: String) extends Controller {
   //TODO move the lock to the executor ?
   val lock = new java.util.concurrent.locks.ReentrantLock
   
-  protected var exec: react.runtime.RobotExecutor = null
-  def setExec(n: react.runtime.RobotExecutor) {
+  protected var exec: Executor = null
+  def setExec(n: Executor) {
     assert(exec == null, "setNode should be used only be the REACT runtime, thanks")
     exec = n
     register(n)
@@ -72,7 +72,7 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
   var y = 0.0
   var orientation = 0.0
 
-  override def setExec(n: react.runtime.RobotExecutor) {
+  override def setExec(n: Executor) {
     super.setExec(n)
 
     //...
@@ -83,7 +83,7 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
         val msg = exec.convertMessage[geometry_msgs.PoseStamped](PoseStamped(h, p))
         exec.publish[geometry_msgs.PoseStamped]("/react/pose", geometry_msgs.PoseStamped._TYPE, msg)
       }
-      n.scheduler.schedule(new ScheduledTask(posePublishPeriod, publish))
+      n.schedule(new ScheduledTask(posePublishPeriod, publish))
     }
 
   }

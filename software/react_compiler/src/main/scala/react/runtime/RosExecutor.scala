@@ -6,7 +6,7 @@ import org.ros.namespace.GraphName
 import org.ros.node.{Node, NodeMain, ConnectedNode}
 import org.ros.concurrent.CancellableLoop
 
-abstract class RobotExecutor extends NodeMain {
+abstract class RosExecutor extends NodeMain with Executor {
 
   val robot: Robot
 
@@ -50,24 +50,13 @@ abstract class RobotExecutor extends NodeMain {
     }
   }
 
-  def subscribe[T](topic: String, typeName: String, handler: T => Unit) = {
-    val listener = new org.ros.message.MessageListener[T]{
-      def onNewMessage(message: T) {
-          robot.lock.lock()
-          try {
-            handler(message)
-          } finally {
-            robot.lock.unlock
-          }
-        }
-    }
-    val sub = getSubscriber[T](topic, typeName)
-    sub.addMessageListener(listener)
-  }
-
   def convertMessage[N](msg: Message): N = {
     Message.toMessage(node, msg).asInstanceOf[N] //TODO something nicer to avoid the casting
   }
+  
+  def schedule(t: react.runtime.ScheduledTask) = scheduler.schedule(t)
+
+  def removeCanceledTask: Unit = scheduler.removeCanceled
 
   ///////////////////
   // The ROS stuff //
@@ -84,7 +73,7 @@ abstract class RobotExecutor extends NodeMain {
       override def setup() {
         super.setup()
         //for subscribing and publishing
-        robot.setExec(RobotExecutor.this)
+        robot.setExec(RosExecutor.this)
       }
 
       def loop() {

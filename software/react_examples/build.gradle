@@ -24,5 +24,6 @@ dependencies {
 
   /* local subproject dependency */ 
   compile project(':react_compiler')
+  compile project(':react_verifier')
 }
 

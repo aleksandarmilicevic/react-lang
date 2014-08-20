@@ -5,26 +5,26 @@ import react.runtime._
 import react.examples.turtle._
 import react.examples.husky._
 
-class RunTurtleTeleop extends RobotExecutor {
+class RunTurtleTeleop extends RosExecutor {
   //define the robot we are working on
   val robot = new TurtleTeleop(Main.topic)
   //start the gui to control the robot
   new Remote(robot)
 }
 
-class RunTurtleRandom extends RobotExecutor {
+class RunTurtleRandom extends RosExecutor {
   //define the robot we are working on
   val robot = new TurtleRandom(Main.topic)
 }
 
-class RunHuskyTeleop extends RobotExecutor {
+class RunHuskyTeleop extends RosExecutor {
   //define the robot we are working on
   val robot = new HuskyTeleop(Main.topic)
   //start the gui to control the robot
   new Remote(robot)
 }
 
-class RunHuskyGrid extends RobotExecutor {
+class RunHuskyGrid extends RosExecutor {
   //define the robot we are working on
   val robot = new HuskyGrid(Main.topic)
   //start the gui to control the robot

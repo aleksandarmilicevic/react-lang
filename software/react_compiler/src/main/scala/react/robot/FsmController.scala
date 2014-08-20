@@ -50,13 +50,13 @@ trait FsmController extends Robot {
     super.send(any)
   }
 
-  override def register(exec: react.runtime.RobotExecutor) {
+  override def register(exec: Executor) {
     super.register(exec)
     assert(currentState != null, "initial state is not specified")
     getCurrentState.register(exec)
   }
 
-  override def deregister(exec: react.runtime.RobotExecutor) {
+  override def deregister(exec: Executor) {
     getCurrentState.deregister(exec)
     super.deregister(exec)
   }

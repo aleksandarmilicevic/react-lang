@@ -29,7 +29,6 @@ trait Controller {
   def subscribe[T](source: String, msgType: String)(handler: T => Unit) = {
     val wrapper = new react.runtime.MessageListenerWrapper{
       import org.ros.message.MessageListener
-      import react.runtime.RobotExecutor
       val topic: String = source
       val rosType: String = msgType
       val listener = new MessageListener[T]{
@@ -44,7 +43,7 @@ trait Controller {
           }
         }
       }
-      def register(exec: react.runtime.RobotExecutor) {
+      def register(exec: Executor) {
         registered = true
         val sub = exec.getSubscriber[T](topic, rosType)
         sub.addMessageListener(listener)
@@ -88,9 +87,9 @@ trait Controller {
   }
 
 
-  def register(exec: react.runtime.RobotExecutor) {
+  def register(exec: Executor) {
     for(t <- tasks) {
-      exec.scheduler.schedule(t)
+      exec.schedule(t)
     }
     for(s <- sensors) {
       s.register(exec)
@@ -98,11 +97,11 @@ trait Controller {
     }
   }
 
-  def deregister(exec: react.runtime.RobotExecutor) {
+  def deregister(exec: Executor) {
     for(t <- tasks) {
       t.cancel
     }
-    exec.scheduler.removeCanceled
+    exec.removeCanceledTask
     for(s <- sensors) {
       s.disable
     }

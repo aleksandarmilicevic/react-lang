@@ -26,7 +26,7 @@ abstract class MessageListenerWrapper {
 //}
 
   var registered = false
-  def register(exec: RobotExecutor): Unit
+  def register(exec: Executor): Unit
 //{
 //  if (!registered) {
 //    registered = true
