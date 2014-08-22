@@ -6,7 +6,7 @@ import react.runtime._
 
 import scala.language.experimental.macros
 
-import react.rewriting.{RobotMacros, ExplorableMacros}
+import react.rewriting.RobotMacros
 
 //TODO the contructor should be private, robot should have a factory that ensures we create node using RosRun
 
@@ -53,18 +53,6 @@ abstract class Robot(val id: String) extends Controller {
 
 }
 
-object Robot {
-
-  import java.nio.ByteBuffer
-
-  implicit class Explorable[M <: Robot](val robot: M) extends AnyVal {
-    def length(world: World): Int = macro ExplorableMacros.wordLength[M] //in byte
-    def serialize(world: World, out: ByteBuffer): Unit = macro ExplorableMacros.toWord[M]
-    def deserilize(world: World, in: ByteBuffer): Unit = macro ExplorableMacros.fromWord[M]
-  }
-
-}
-
 abstract class GroundRobot(_id: String) extends Robot(_id) {
 
   //ROS Pose2D
@@ -88,9 +76,9 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
 
   }
 
-//private var shadow_x = 0.0
-//private var shadow_y = 0.0
-//private var shadow_orientation = 0.0
+//@transient private var shadow_x = 0.0
+//@transient private var shadow_y = 0.0
+//@transient private var shadow_orientation = 0.0
 
 //override def shadow = {
 //  shadow_x = x

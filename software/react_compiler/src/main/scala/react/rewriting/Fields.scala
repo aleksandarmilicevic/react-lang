@@ -1,8 +1,8 @@
 package react.rewriting
 
-import react.World
+import react.verification.Playground
 
-trait Shadowing {
+trait Fields {
   self: ExplorableMacros =>
   import c.universe._
 
@@ -15,17 +15,13 @@ trait Shadowing {
     m.annotations.exists( _.tree.tpe =:= typeOf[scala.transient] )
   }
 
-  protected def isShadow(m: Symbol) = {
-    m.name.decodedName.toString startsWith "shadow_"
-  }
-
   /** collect every declared variables (mutable field) */
   protected def collectFields(t: Type): List[TermSymbol] = {
     // http://docs.scala-lang.org/overviews/reflection/symbols-trees-types.html
     // http://stackoverflow.com/questions/17223213/scala-macros-making-a-map-out-of-fields-of-a-class-in-scala
     // http://meta.plasm.us/posts/2013/08/30/horrible-code/
     val flds = t.members.collect{
-      case m: TermSymbol if m.isVar && !isShadow(m) && !m.isPrivate => m
+      case m: TermSymbol if m.isVar && !m.isPrivate => m
     }.toList
     //Console.err.println("collectFields:")
     //for (f <- flds) Console.err.println("  " + f)
@@ -47,8 +43,9 @@ trait Shadowing {
   protected def permanentFields[T: c.WeakTypeTag] = supportedFields[T].filter(!isTransient(_))
   protected def transientFields[T: c.WeakTypeTag] = supportedFields[T].filter( isTransient)
   
-  protected def size[T: c.WeakTypeTag](world: c.Expr[World]): Int = {
-    val toStore = permanentFields
+  protected def size[T: c.WeakTypeTag](world: c.Expr[Playground]): Int = {
+    assert(unsupportedFields.isEmpty, "")
+    val toStore = permanentFields 
     toStore.map(length).foldLeft(0)( _ + _ )
   }
 

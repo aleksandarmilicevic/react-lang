@@ -1,6 +1,7 @@
 package react.verification
 
 import react._
+import react.verification.ghost._
 
 import net.automatalib.util.automata.fsa.DFAs
 import net.automatalib.util.automata.Automata
@@ -18,36 +19,9 @@ import java.nio.ByteBuffer
 
 //TODO compute the overall period of the system (boundary between the inner and outer loop)
 
-class ModelChecker[R <: Robot](
-    world: World,
-    robots: Array[R],
-    ghosts: Array[GhostAgent]
- ) {
+class ModelChecker(world: World) {
 
   type State = Array[Byte]
-
-  val rLength = robots.length
-  val gLength = robots.length
-  val statePartition = {
-    val arr = Array[Int](rLength + gLength)
-    for (i <- 0 until rLength) arr(i) = robots(i).length(world)
-    for (i <- 0 until gLength) arr(i+rLength) = ghosts(i).length(world)
-    arr
-  }
-  val totalLength = statePartition.foldLeft(0)(_ + _)
-
-  def getCurrentState: State = {
-    val buffer = ByteBuffer.allocate(totalLength) 
-    for(r <- robots) r.serialize(world, buffer)
-    for(g <- ghosts) g.serialize(world, buffer)
-    buffer.array
-  }
-
-  def restoreState(s: State) {
-    val buffer = ByteBuffer.wrap(s) 
-    for(r <- robots) r.deserilize(world, buffer)
-    for(g <- ghosts) g.deserilize(world, buffer)
-  }
 
   //most compact representation of the state: automaton
   protected var permanentStates = new StateStore()
@@ -77,11 +51,11 @@ class ModelChecker[R <: Robot](
   protected def getT: State = frontierT.removeLast() //TODO last/first for BFS or DFS
 
   def controllerStep(s: State): State = {
-    restoreState(s)
+    world.restoreState(s)
     sys.error("TODO") //TODO
   }
   def ghostStep(s: State): Seq[State] = {
-    restoreState(s)
+    world.restoreState(s)
     sys.error("TODO") //TODO
   }
 
@@ -123,7 +97,7 @@ class ModelChecker[R <: Robot](
   }
 
   def verify = {
-    val initState = getCurrentState
+    val initState = world.getCurrentState
     permanentStates.addState(initState)
     put(initState)
     outerLoop

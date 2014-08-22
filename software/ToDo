@@ -4,12 +4,16 @@ Language
 To make things a bit simpler, we will aim for a shallow embedding into Scala and pimp it wth a few macros to make it less rough around the edges.
 The macro can be used to generate a shadow state and process the changes in variable into the mouvement commands we discussed.
 
+Frontend
+========
+
+can we get some kind of interactivity using: https://github.com/scala-ide/scala-worksheet/wiki/Getting-Started
 
 Backend
 =======
 
-The code we write should directly be executable using a minimal runtime + wrapper around ROS java.
-...
+beautify
+
 
 Example
 =======
@@ -29,7 +33,14 @@ For the outer MC, having the most compact storage is imoprtant. So we should go 
 For the inner MC, speeds matter most: simple hashtable.
 
 
-If we go toward TM,
+once we know what kind of operations we need for the model of the physical robot, refactor using spire and make it modular
+
+might contains routines that we can use:
+    http://www.cgal.org/
+    https://code.google.com/p/cgal-bindings/
+
+
+If we go toward Taylor Models,
 -existing tool:
     flow*: http://systems.cs.colorado.edu/research/cyberphysical/taylormodels/
 -for symbolic manipulation (extracting equations from a bond graph), maybe we can interface with maxima:

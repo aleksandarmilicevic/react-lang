@@ -53,6 +53,18 @@ object GetPose {
   }
 }
 
+object Poses {
+
+  def from2To3D(p: Pose2D): Pose = {
+    Pose(Point(p.x, p.y, 0), Angle.quaternionFromTheta(p.theta))
+  }
+
+  def from3To2D(p: Pose): Pose2D = {
+    Pose2D(p.position.x, p.position.y, Angle.thetaFromQuaternion(p.orientation))
+  }
+
+}
+
 
 sealed abstract class Orientation(val deg: Double) {
   val rad = Angle.normalize(math.toRadians(deg))

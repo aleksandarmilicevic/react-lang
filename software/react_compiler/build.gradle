@@ -44,6 +44,7 @@ dependencies {
   compile 'net.automatalib:automata-core:0.4.1'
   compile 'net.automatalib:automata-misc-parent:0.4.1'
   compile 'net.automatalib:automata-util:0.4.1'
+  compile 'org.spire-math:spire_2.11:0.8.2'
 
 // sbt does not generate a default config which is declared by gradlew
 // for the moment keep everything in the project

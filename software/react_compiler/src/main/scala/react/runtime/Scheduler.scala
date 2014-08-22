@@ -33,24 +33,29 @@ class Scheduler {
     val task = new ScheduledTask(-1, fct, now + delay)
     queue.enqueue(task)
   }
-
-  def waitUntilNextTask: Option[ScheduledTask] = {
+  
+  def nextTask: Option[ScheduledTask] = {
     if (queue.isEmpty) {
       None
     } else {
       val task = queue.dequeue
       if (task.cancelled) {
-        waitUntilNextTask
+        nextTask
       } else {
-        task.waitExpiration
         Some(task)
       }
     }
   }
+
+  def waitUntilNextTask: Option[ScheduledTask] = {
+    val nt = nextTask
+    for (t <- nt) t.waitExpiration
+    nt
+  }
   
   def schedule(t: ScheduledTask) = {
+    assert(t.period > 0, "period must be ≥ 1")
     if (t.expires == -1 || t.cancelled) {
-      assert(t.period > 0, "period must be ≥ 1")
       t.expires = now + t.period
       t.cancelled = false
     } else {
