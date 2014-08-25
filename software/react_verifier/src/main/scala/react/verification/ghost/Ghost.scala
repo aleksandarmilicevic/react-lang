@@ -1,12 +1,10 @@
 package react.verification.ghost
 
-trait Ghost {
+import react.verification._
 
-  //when can this ghost do something ?
-  //-1 ⇔ never
-  def nextActionIn = -1
+trait Ghost extends Executed {
 
-  //period of the events
-  def period = 1
+  // ...
+  def act: Unit
 
 }

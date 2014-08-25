@@ -9,23 +9,45 @@ import org.ros.concurrent.CancellableLoop
 
 abstract class RosExecutor extends NodeMain with Executor {
 
-  //TODO all the robots ?
-  val robot: Robot
+  val world: World
 
   protected var node: ConnectedNode = null 
 
   val scheduler = new Scheduler
 
   //TODO wrap the pub/sub to avoid the type casting
+
+  class NamespaceWrapper(namespace: String) extends Executor {
+    def publish[T](topic: String, typeName: String, message: T) = {
+      val topic2 = react.utils.RosUtils.mayAddPrefix(namespace, topic)
+      RosExecutor.this.publish[T](topic2, typeName, message)
+    }
+
+    def delayedPublish[T](delay: Int, topic: String, typeName: String, message: T) = {
+      val topic2 = react.utils.RosUtils.mayAddPrefix(namespace, topic)
+      RosExecutor.this.delayedPublish(delay, topic2, typeName, message)
+    }
+    
+    def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T] = {
+      val topic2 = react.utils.RosUtils.mayAddPrefix(namespace, topic)
+      RosExecutor.this.getSubscriber[T](topic2, typeName)
+    }
+                
+    def convertMessage[N](msg: Message): N = RosExecutor.this.convertMessage[N](msg)
+
+    def schedule(t: react.runtime.ScheduledTask) = RosExecutor.this.schedule(t)
+
+    def removeCanceledTask: Unit = RosExecutor.this.removeCanceledTask
+
+  }
   
   private val publishers = scala.collection.mutable.Map[String, Any]()
   def getPublisher[T](topic: String, typeName: String): org.ros.node.topic.Publisher[T] = {
-    val t = react.utils.RosUtils.mayAddPrefix(robot.id, topic)
-    if (publishers contains t) {
-      publishers(t).asInstanceOf[org.ros.node.topic.Publisher[T]]
+    if (publishers contains topic) {
+      publishers(topic).asInstanceOf[org.ros.node.topic.Publisher[T]]
     } else {
-      val p = node.newPublisher[T](t, typeName)
-      publishers += (t -> p)
+      val p = node.newPublisher[T](topic, typeName)
+      publishers += (topic -> p)
       p
     }
   }
@@ -42,12 +64,11 @@ abstract class RosExecutor extends NodeMain with Executor {
 
   private val subscribers = scala.collection.mutable.Map[String, Any]()
   def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T] = {
-    val t = react.utils.RosUtils.mayAddPrefix(robot.id, topic)
-    if (subscribers contains t) {
-      subscribers(t).asInstanceOf[org.ros.node.topic.Subscriber[T]]
+    if (subscribers contains topic) {
+      subscribers(topic).asInstanceOf[org.ros.node.topic.Subscriber[T]]
     } else {
-      val p = node.newSubscriber[T](t, typeName)
-      subscribers += (t -> p)
+      val p = node.newSubscriber[T](topic, typeName)
+      subscribers += (topic -> p)
       p
     }
   }
@@ -65,7 +86,7 @@ abstract class RosExecutor extends NodeMain with Executor {
   ///////////////////
 
   override def getDefaultNodeName: GraphName = {
-    GraphName.of("react/" + robot.id)
+    GraphName.of("react/verifier")
   }
 
   override def onStart(n: ConnectedNode) {
@@ -92,7 +113,7 @@ abstract class RosExecutor extends NodeMain with Executor {
 
   override def onError(node: Node, throwable: Throwable) {
     //TODO display more information, like state of the system when the error was throw, what input, ...
-    Console.err.println(robot.id + " has thrown: " + throwable)
+    Console.err.println("exception : " + throwable)
     throwable.printStackTrace(Console.err)
   }
 

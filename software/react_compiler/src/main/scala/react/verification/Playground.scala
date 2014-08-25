@@ -15,4 +15,7 @@ trait Playground {
 //val zMax: Int
 //val zDiscretization: Double
 
+  /** should we consider the boundaries as walls (for the sensors), or just discard anything beyond */
+  val enclosed: Boolean
+
 }

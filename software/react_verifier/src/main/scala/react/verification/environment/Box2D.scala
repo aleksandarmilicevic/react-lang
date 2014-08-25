@@ -34,5 +34,29 @@ class Box2D(val x: Double,
   def collides(b: Box2D): Boolean = {
     b.corners exists ( p => contains(p._1, p._2) )
   }
+
+  /** for each side, returns [a,b,c] such that ax + by + c = 0 */
+  def cartesianEqs = {
+    val eqs = Array.ofDim[Double](4,3)
+    def mkEq(target: Array[Double], x: Double, y: Double, dx: Double, dy: Double) {
+      target(0) = -dy
+      target(1) = dx
+      target(2) = dx*y - dy*x
+    }
+    val wx = width * cos(orientation)
+    val wy = width * sin(orientation)
+    val dx = -depth * sin(orientation)
+    val dy = depth * cos(orientation)
+    mkEq(eqs(0), x, y, wx, wy)
+    mkEq(eqs(1), x, y, dx, dy)
+    mkEq(eqs(2), x + wx + dx, y + wy + dy, wx, wy)
+    mkEq(eqs(3), x + wx + dx, y + wy + dy, dx, dy)
+    eqs
+  }
+
+  /** compute the intersections of this cube with a line */
+  def intersectLine(point: (Double,Double), direction: (Double, Double)): List[Double] = {
+    sys.error("TODO")
+  }
   
 }

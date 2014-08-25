@@ -4,15 +4,16 @@ import react._
 import react.verification._
 import react.message._
 import react.robot._
+import react.verification.model._
 
 class OdometrySensor( bodyFrame: String, //the element we report on ...
-                      topic: String,
+                      parent: TwistGroundRobot,
+                      _topic: String,
                       rate: Double
-                    ) extends Sensor(topic, rate)
+                    ) extends Sensor(parent, _topic, rate)
 {
 
   val mapFrame = "map"
-
 
   //from https://github.com/husky/husky_simulator/blob/hydro-devel/husky_gazebo_plugins/src/husky_plugin.cpp
   val pose_cov = Array[Double]( 1e-3, 0, 0, 0, 0, 0,
@@ -21,10 +22,6 @@ class OdometrySensor( bodyFrame: String, //the element we report on ...
                                 0, 0, 0, 1e6, 0, 0,
                                 0, 0, 0, 0, 1e6, 0,
                                 0, 0, 0, 0, 0, 1e3)
-
-
-  //TODO how to access the thing we report on ?
-
 
   //todo add an sequence number and the time (global time from the World)
   val dummyHeader = Header(0, Time(0, 0), mapFrame)
@@ -37,6 +34,12 @@ class OdometrySensor( bodyFrame: String, //the element we report on ...
     // pose specified in the coordinate frame given by mapFrame
     // twist specified in the coordinate frame given by bodyFrame
     Odometry(dummyHeader, bodyFrame, position, speed)
+  }
+  
+  def act {
+    val msg = mkOdometry2D(parent.x, parent.y, parent.orientation,
+                           parent.vx, parent.vo)
+    exec.publish(topic, nav_msgs.Odometry._TYPE, msg)
   }
 
 

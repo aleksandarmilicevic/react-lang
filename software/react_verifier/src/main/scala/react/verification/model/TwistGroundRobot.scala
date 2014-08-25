@@ -1,23 +1,34 @@
 package react.verification.model
 
+import react._
 import react.message._
 import react.verification.environment._
+import react.verification.ghost._
+import react.verification._
 import math._
 
 
 /** Model for an ideal (execute command perfectly) robot moving on the ground */
 class TwistGroundRobot( bBox: Box2D,
                         topic: String,
-                        cmdTime: String) {
+                        cmdTime: String,
+                        sensors: List[(Sensor, Pose2D)] /* sensor and offset w.r.t the robot frame */
+                      ) extends Executed {
 
-    //TODO can carry sensor
-
-    //TODO need to register on the given topic and wait for Twist messages
 
     var x = 0.0
     var y = 0.0
     //var z = 0.0
     var orientation = 0.0
+
+    /* what to execute */
+    var commandTimeLeft = 0
+    var vx = 0.0
+    var vo = 0.0
+    
+    @transient
+    var robotId = ""
+
 
     def setPosition(x: Double, y: Double) = {
       this.x = x
@@ -37,20 +48,31 @@ class TwistGroundRobot( bBox: Box2D,
       updateChildrenPose
     }
 
-    protected def updateChildrenPose {
-      sys.error("TODO")
+    protected def setChildPose(s: Sensor, offset: Pose2D) {
+      val cx = x + cos(orientation) * offset.x - sin(orientation) * offset.y
+      val cy = y + sin(orientation) * offset.x + cos(orientation) * offset.y
+      val co = orientation + offset.theta
+      s.pose = Pose2D(cx, cy, co)
     }
 
-    val nullCommand = Twist(Vector3(0,0,0), Vector3(0,0,0))
-    var commandTimeLeft = 0
-    var currentCommand = nullCommand
+    protected def updateChildrenPose {
+      for ( (s, p) <- sensors )
+        setChildPose(s, p)
+    }
 
-    def speed = currentCommand.linear.x
+    def restored {
+      updateChildrenPose
+    }
+
+    //rest of the world exclude the robot own bounding box
+    //this method will be called each time the world changes
+    def updateWorld(restOfTheWorld: List[Box2D]) {
+      sensors.foreach(_._1.update(restOfTheWorld))
+    }
 
     def elapse(t: Int) {
+      //TODO forward to the children ...
       val dt = min(t, commandTimeLeft)
-      val vx = currentCommand.linear.x
-      val vo = currentCommand.angular.z
 
       if (vo == 0.0) {
         x += dt * vx * cos(orientation)
@@ -68,7 +90,8 @@ class TwistGroundRobot( bBox: Box2D,
 
       commandTimeLeft -= dt
       if (commandTimeLeft <= 0) {
-        currentCommand = nullCommand
+        vx = 0.0
+        vo = 0.0
       }
     }
 
@@ -85,5 +108,14 @@ class TwistGroundRobot( bBox: Box2D,
                 bBox.depth)
     }
 
+    override def register(exec: Executor) {
+      super.register(exec)
+      sensors.foreach(_._1.register(exec))
+    }
+
+    override def deregister(exec: Executor) {
+      super.deregister(exec)
+      sensors.foreach(_._1.deregister(exec))
+    }
 
 }
