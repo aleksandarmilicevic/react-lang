@@ -17,7 +17,7 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
 
   //update the position with the info from the robot
   sensor[Odometry]("p3d"){
-    case GetPose( pX, pY, pT) =>
+    case GetPose(pX, pY, pT) =>
       x = pX
       y = pY
       orientation = pT
