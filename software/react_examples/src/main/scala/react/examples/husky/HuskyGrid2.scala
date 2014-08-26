@@ -52,7 +52,7 @@ class HuskyGrid2(_id: String) extends GroundRobot(_id) {
     println("publishing coords for " + modelName)
     println("x = " + x)
     println("y = " + y)
-    publish("gazebo/set_model_state", Command.moveTo(modelName, x, y))
+    publish("/gazebo/set_model_state", Command.moveTo(modelName, x, y))
   }
 
 }
