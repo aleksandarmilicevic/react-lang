@@ -1,6 +1,7 @@
 package react.examples.turtle
 
 import react._
+import react.robot._
 import react.message._
 import react.examples._
 

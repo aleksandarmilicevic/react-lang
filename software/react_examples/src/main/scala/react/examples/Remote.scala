@@ -1,12 +1,7 @@
 package react.examples
 
 import react._
-
-object Key extends Enumeration {
-  type Key = Value
-  val UP, DOWN, LEFT, RIGHT, NONE = Value
-}
-
+import react.robot._
 
 import javax.swing._
 

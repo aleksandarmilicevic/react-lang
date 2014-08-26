@@ -30,12 +30,14 @@ trait Fields {
   
   protected def fieldGetter(m: TermSymbol) = {
     val robot = Select(c.prefix.tree, TermName("robot"))
-    c.Expr(Select(robot, m.getter.name))
+    //c.Expr(Select(robot, m.getter.name))
+    Select(robot, m.getter.name)
   }
   
   protected def fieldSetter(m: TermSymbol) = {
     val robot = Select(c.prefix.tree, TermName("robot"))
-    c.Expr(Select(robot, m.setter.name))
+    //c.Expr(Select(robot, m.setter.name))
+    Select(robot, m.setter.name)
   }
 
   protected def supportedFields[T: c.WeakTypeTag] = collectFields(weakTypeOf[T]).filter(isSupported)

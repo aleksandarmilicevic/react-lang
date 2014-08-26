@@ -42,14 +42,14 @@ abstract class World extends Playground {
 
   //TODO connect to the MC and the executor ..
 
-  ///////////////////
-
+  ///////////////////////////////////////////////////
+  // data structures for the elements in the world //
+  ///////////////////////////////////////////////////
+  
   var robots: List[Robot] = Nil
   var models: List[TwistGroundRobot] = Nil
   var ghosts: List[Ghost] = Nil
   var boxes: List[Box2D] = Nil
-
-  var time = 0
 
   def allBoxes = {
     models.map(_.boundingBox) ++ boxes
@@ -60,6 +60,25 @@ abstract class World extends Playground {
     for ( (m,i) <- models.zipWithIndex ) {
       val boxes = bbs.take(i) ::: bbs.drop(i+1)
       m.updateWorld(boxes)
+    }
+  }
+  
+  
+  ////////////////
+  // time & co. //
+  ////////////////
+  
+  var time = 0
+
+  //TODO not complete
+  def waitUntilStable {
+    for (r <- robots) {
+      val acquired = r.lock.tryLock(1000, java.util.concurrent.TimeUnit.MILLISECONDS)
+      if (!acquired) {
+        sys.error("Robot " + r + "has been busy for more than 1000ms. infinite loop ?!?")
+      } else {
+        r.lock.unlock
+      }
     }
   }
   

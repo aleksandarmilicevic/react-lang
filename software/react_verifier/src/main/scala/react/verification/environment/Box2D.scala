@@ -22,41 +22,55 @@ class Box2D(val x: Double,
     )
   }
 
-  def contains(x: Double, y: Double) = {
+  def contains(x: Double, y: Double, error: Double = 1e-6) = {
     val dx = x - this.x
     val dy = y - this.y
     //val a = atan2(dy, dx) - orientation
     val dx2 = dx * cos(-orientation) - dy * sin(-orientation)
     val dy2 = dx * sin(-orientation) + dy * cos(-orientation)
-    dx2 >= 0 && dx2 <= width && dy2 >=0 && dy2 <= depth
+    dx2 >= -error && dx2 <= width + error && dy2 >= -error && dy2 <= depth + error
   }
 
   def collides(b: Box2D): Boolean = {
     b.corners exists ( p => contains(p._1, p._2) )
   }
 
-  /** for each side, returns [a,b,c] such that ax + by + c = 0 */
-  def cartesianEqs = {
-    val eqs = Array.ofDim[Double](4,3)
-    def mkEq(target: Array[Double], x: Double, y: Double, dx: Double, dy: Double) {
-      target(0) = -dy
-      target(1) = dx
-      target(2) = dx*y - dy*x
-    }
+  /** for each side, returns (a,b,c) such that ax + by + c = 0 */
+  def cartesianEqs: List[(Double,Double,Double)] = {
+    def mkEq(x: Double, y: Double, dx: Double, dy: Double) = (-dy, dx, dx*y - dy*x)
     val wx = width * cos(orientation)
     val wy = width * sin(orientation)
     val dx = -depth * sin(orientation)
     val dy = depth * cos(orientation)
-    mkEq(eqs(0), x, y, wx, wy)
-    mkEq(eqs(1), x, y, dx, dy)
-    mkEq(eqs(2), x + wx + dx, y + wy + dy, wx, wy)
-    mkEq(eqs(3), x + wx + dx, y + wy + dy, dx, dy)
-    eqs
+    List(
+      mkEq(x, y, wx, wy),
+      mkEq(x, y, dx, dy),
+      mkEq(x + wx + dx, y + wy + dy, wx, wy),
+      mkEq(x + wx + dx, y + wy + dy, dx, dy)
+    )
   }
 
   /** compute the intersections of this cube with a line */
-  def intersectLine(point: (Double,Double), direction: (Double, Double)): List[Double] = {
-    sys.error("TODO")
+  def intersectLine(point: (Double,Double), direction: (Double, Double), error: Double = 1e-6): List[Double] = {
+    cartesianEqs.flatMap{ case (a,b,c) =>
+      // a * (p.x + k*d.x) + b * (p.y + k*d.y) + c = 0
+      // k = (-c -a*p.x -b*p.y) / (a*d.x + b*d.y)
+      val num = -c  - a * point._1  - b * point._2
+      val den = a * direction._1 + b * direction._2
+      //look for the degenrated case and ignore them
+      if (den >= -error && den <= -error) {
+        None
+      } else {
+        val k = num/den
+        val ix = point._1 + k * direction._1
+        val iy = point._2 + k * direction._2
+        if ( contains(ix, iy, error) ) {
+          Some(k)
+        } else {
+          None
+        }
+      }
+    }
   }
   
 }

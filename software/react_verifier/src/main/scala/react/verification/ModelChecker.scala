@@ -14,12 +14,17 @@ import java.nio.ByteBuffer
 //import java.util.concurrent.ConcurrentHashMap
 //import java.util.Collections
 
-//TODO robots and ghosts should be part of the language (compiler project)
-//     robots and ghosts should be embedded into the world
-
-//TODO compute the overall period of the system (boundary between the inner and outer loop)
 
 class ModelChecker(world: World) {
+
+  ///////////////////////////
+  // Model checker options //
+  ///////////////////////////
+
+  /* how many ghosts steps per period */
+  var ghostSteps = 1
+
+  ///////////////////////////
 
   type State = Array[Byte]
 
@@ -58,6 +63,10 @@ class ModelChecker(world: World) {
     world.restoreState(s)
     sys.error("TODO") //TODO
   }
+
+  //TODO
+  // - we need to freeze the scheduler state for the outer loop
+  // - for the inner loop we need to add the state of the scheduler to the state
 
   //the inner loop proceeds into two steps.
   //first, it generates all the reachable states by ghost perturbations (simulates user inputs, etc...)

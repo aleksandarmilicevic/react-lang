@@ -10,27 +10,31 @@ import org.ros.concurrent.CancellableLoop
 abstract class RosExecutor extends NodeMain with Executor {
 
   val world: World
-
+  //TODO where to put the MC ?
+  
   protected var node: ConnectedNode = null 
 
   val scheduler = new Scheduler
 
   //TODO wrap the pub/sub to avoid the type casting
 
+
   class NamespaceWrapper(namespace: String) extends Executor {
+
+    private def mkTopic(t: String) = {
+      react.utils.RosUtils.mayAddPrefix(namespace, t)
+    }
+
     def publish[T](topic: String, typeName: String, message: T) = {
-      val topic2 = react.utils.RosUtils.mayAddPrefix(namespace, topic)
-      RosExecutor.this.publish[T](topic2, typeName, message)
+      RosExecutor.this.publish[T](mkTopic(topic), typeName, message)
     }
 
     def delayedPublish[T](delay: Int, topic: String, typeName: String, message: T) = {
-      val topic2 = react.utils.RosUtils.mayAddPrefix(namespace, topic)
-      RosExecutor.this.delayedPublish(delay, topic2, typeName, message)
+      RosExecutor.this.delayedPublish(delay, mkTopic(topic), typeName, message)
     }
     
     def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T] = {
-      val topic2 = react.utils.RosUtils.mayAddPrefix(namespace, topic)
-      RosExecutor.this.getSubscriber[T](topic2, typeName)
+      RosExecutor.this.getSubscriber[T](mkTopic(topic), typeName)
     }
                 
     def convertMessage[N](msg: Message): N = RosExecutor.this.convertMessage[N](msg)
@@ -40,6 +44,7 @@ abstract class RosExecutor extends NodeMain with Executor {
     def removeCanceledTask: Unit = RosExecutor.this.removeCanceledTask
 
   }
+
   
   private val publishers = scala.collection.mutable.Map[String, Any]()
   def getPublisher[T](topic: String, typeName: String): org.ros.node.topic.Publisher[T] = {

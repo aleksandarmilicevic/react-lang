@@ -19,8 +19,7 @@ class ExplorableMacros(val c: Context) extends Types
     val toStore = permanentFields
     val storing = for (f <- toStore) yield {
       val getter = fieldGetter(f)
-      val writer = write(f)
-      q"$out.$writer($getter)"
+      write(f, out, getter)
     }
     val tree = q"""
     {
@@ -34,14 +33,12 @@ class ExplorableMacros(val c: Context) extends Types
 
     val restored = for (f <- permanentFields) yield {
       val setter = fieldSetter(f)
-      val reader = read(f)
-      q"$setter($reader($in))"
+      read(f, in, setter)
     }
 
     val havoced = for (f <- transientFields) yield {
       val setter = fieldSetter(f)
-      val hvc = havoc(f)
-      q"$setter($hvc)"
+      havoc(f, setter)
     }
 
     val tree = q"""

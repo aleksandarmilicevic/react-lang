@@ -25,9 +25,9 @@ class ScheduledTask(val period: Int,
 
 class Scheduler {
 
-  private val queue = new PriorityQueue[ScheduledTask]()
+  protected val queue = new PriorityQueue[ScheduledTask]()
 
-  private def now = java.lang.System.currentTimeMillis()
+  protected def now = java.lang.System.currentTimeMillis()
 
   def addSingleTask(delay: Int, fct: () => Unit) {
     val task = new ScheduledTask(-1, fct, now + delay)

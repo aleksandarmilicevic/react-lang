@@ -38,7 +38,7 @@ trait FsmController extends Robot {
   }
 
   protected val statesMap = scala.collection.mutable.HashMap[Symbol,State]()
-  private var currentState: Symbol = null
+  var currentState: Symbol = null
   private def getCurrentState: State = {
     assert(statesMap contains currentState, "state " + currentState + " does not exists")
     statesMap(currentState)

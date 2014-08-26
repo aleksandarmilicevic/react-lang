@@ -3,16 +3,32 @@ package react.verification
 import react.runtime.ScheduledTask
 import scala.collection.mutable.PriorityQueue
 
-class Scheduler {
+class SchedulingPoint(tasks: List[ScheduledTask], scheduler: Scheduler) extends BranchingPoint {
 
-  private val queue = new PriorityQueue[ScheduledTask]()
+  def alternatives = tasks.length
 
-  var now = 0l
+  def act(alt: Int) {
+    val elt = tasks(alt)
+    elt.fct()
+    if (elt.isPeriodic) {
+      scheduler.schedule(elt)
+    }
+  }
+
+}
+
+
+class Scheduler extends react.runtime.Scheduler {
+
+  var _now = 0l
+  override def now = _now
   
   def timeToNext = {
     val next = queue.headOption.map(_.expires).getOrElse(now)
     next - now
   }
+
+  def nextBP: SchedulingPoint = new SchedulingPoint(nextTasks, this)
 
   //all the tasks that expire at the same time
   def nextTasks: List[ScheduledTask] = {
@@ -25,26 +41,6 @@ class Scheduler {
       queue.dropWhile(_.expires == task.expires) //take while does not modify the original queue
       task :: same.toList
     }
-  }
-
-  def addSingleTask(delay: Int, fct: () => Unit) {
-    val task = new ScheduledTask(-1, fct, now + delay)
-    queue.enqueue(task)
-  }
-  
-  def schedule(t: ScheduledTask) = {
-    assert(t.period > 0, "period must be ≥ 1")
-    if (t.expires == -1 || t.cancelled) {
-      t.expires = now + t.period
-      t.cancelled = false
-    } else {
-      t.expires += t.period
-    }
-    queue.enqueue(t)
-  }
-
-  def removeCanceled = {
-    queue.filterNot(_.cancelled)
   }
 
   /** return the LCM of the period of all task in the queue (empty queue has period 1) */
@@ -63,7 +59,8 @@ class Scheduler {
   }
 
   def shift(t: Int) = {
-    now = now - t
+    _now = _now - t
+    //TODO should we reenqueue the elements ?
     for (task <- queue) {
       task.expires -= t
     }
