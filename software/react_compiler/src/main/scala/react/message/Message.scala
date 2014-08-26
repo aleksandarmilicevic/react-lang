@@ -60,6 +60,13 @@ case class Path(header: Header, poses: Array[PoseStamped]) extends Message(nav_m
 //react_msgs
 case class Mvmt(header: Header, speed: Double, angular_speed: Double, d: Duration) extends Message(react_msgs.Mvmt._TYPE)
 
+case class ModelState(
+  model_name: String,
+  pose: Pose, 
+  twist: Twist, 
+  reference_frame: String) extends Message(gazebo_msgs.ModelState._TYPE)
+
+
 object Message {
 
   def time(ms: Long) = Time((ms/1000).toInt, ((ms % 1000) * 1000).toInt)
@@ -109,6 +116,14 @@ object Message {
                                                       o.getChildFrameId, 
                                                       from(o.getPose),
                                                       from(o.getTwist))
+
+  def from(m: gazebo_msgs.ModelState): ModelState = {
+    ModelState(m.getModelName(),
+      from(m.getPose()),
+      from(m.getTwist()),
+      m.getReferenceFrame())
+  }
+
   def from(o: nav_msgs.Path): Path = {
     val header = from(o.getHeader)
     val poses = o.getPoses.toArray[geometry_msgs.PoseStamped](Array[geometry_msgs.PoseStamped]()).map(from)
@@ -118,23 +133,24 @@ object Message {
   def from(m: react_msgs.Mvmt): Mvmt = Mvmt(from(m.getHeader), m.getSpeed, m.getAngularSpeed, from(m.getD))
 
   def fromMessage(rosType: String, msg: Any): Message = {
-    if (rosType == std_msgs.Header._TYPE) from(msg.asInstanceOf[std_msgs.Header])
-    else if (rosType == geometry_msgs.Point._TYPE) from(msg.asInstanceOf[geometry_msgs.Point])
-    else if (rosType == geometry_msgs.Vector3._TYPE) from(msg.asInstanceOf[geometry_msgs.Vector3])
-    else if (rosType == geometry_msgs.Quaternion._TYPE) from(msg.asInstanceOf[geometry_msgs.Quaternion])
-    else if (rosType == geometry_msgs.Pose2D._TYPE) from(msg.asInstanceOf[geometry_msgs.Pose2D])
-    else if (rosType == geometry_msgs.Pose._TYPE) from(msg.asInstanceOf[geometry_msgs.Pose])
-    else if (rosType == geometry_msgs.PoseStamped._TYPE) from(msg.asInstanceOf[geometry_msgs.PoseStamped])
-    else if (rosType == geometry_msgs.PoseWithCovariance._TYPE) from(msg.asInstanceOf[geometry_msgs.PoseWithCovariance])
-    else if (rosType == geometry_msgs.Twist._TYPE) from(msg.asInstanceOf[geometry_msgs.Twist])
-    else if (rosType == geometry_msgs.TwistStamped._TYPE) from(msg.asInstanceOf[geometry_msgs.TwistStamped])
+    if (rosType == std_msgs.Header._TYPE)                        from(msg.asInstanceOf[std_msgs.Header])
+    else if (rosType == geometry_msgs.Point._TYPE)               from(msg.asInstanceOf[geometry_msgs.Point])
+    else if (rosType == geometry_msgs.Vector3._TYPE)             from(msg.asInstanceOf[geometry_msgs.Vector3])
+    else if (rosType == geometry_msgs.Quaternion._TYPE)          from(msg.asInstanceOf[geometry_msgs.Quaternion])
+    else if (rosType == geometry_msgs.Pose2D._TYPE)              from(msg.asInstanceOf[geometry_msgs.Pose2D])
+    else if (rosType == geometry_msgs.Pose._TYPE)                from(msg.asInstanceOf[geometry_msgs.Pose])
+    else if (rosType == geometry_msgs.PoseStamped._TYPE)         from(msg.asInstanceOf[geometry_msgs.PoseStamped])
+    else if (rosType == geometry_msgs.PoseWithCovariance._TYPE)  from(msg.asInstanceOf[geometry_msgs.PoseWithCovariance])
+    else if (rosType == geometry_msgs.Twist._TYPE)               from(msg.asInstanceOf[geometry_msgs.Twist])
+    else if (rosType == geometry_msgs.TwistStamped._TYPE)        from(msg.asInstanceOf[geometry_msgs.TwistStamped])
     else if (rosType == geometry_msgs.TwistWithCovariance._TYPE) from(msg.asInstanceOf[geometry_msgs.TwistWithCovariance])
-    else if (rosType == sensor_msgs.Range._TYPE) from(msg.asInstanceOf[sensor_msgs.Range])
-    else if (rosType == sensor_msgs.Imu._TYPE) from(msg.asInstanceOf[sensor_msgs.Imu])
-    else if (rosType == sensor_msgs.LaserScan._TYPE) from(msg.asInstanceOf[sensor_msgs.LaserScan])
-    else if (rosType == nav_msgs.Odometry._TYPE) from(msg.asInstanceOf[nav_msgs.Odometry])
-    else if (rosType == nav_msgs.Path._TYPE) from(msg.asInstanceOf[nav_msgs.Path])
-    else if (rosType == react_msgs.Mvmt._TYPE) from(msg.asInstanceOf[react_msgs.Mvmt])
+    else if (rosType == sensor_msgs.Range._TYPE)                 from(msg.asInstanceOf[sensor_msgs.Range])
+    else if (rosType == sensor_msgs.Imu._TYPE)                   from(msg.asInstanceOf[sensor_msgs.Imu])
+    else if (rosType == sensor_msgs.LaserScan._TYPE)             from(msg.asInstanceOf[sensor_msgs.LaserScan])
+    else if (rosType == nav_msgs.Odometry._TYPE)                 from(msg.asInstanceOf[nav_msgs.Odometry])
+    else if (rosType == nav_msgs.Path._TYPE)                     from(msg.asInstanceOf[nav_msgs.Path])
+    else if (rosType == react_msgs.Mvmt._TYPE)                   from(msg.asInstanceOf[react_msgs.Mvmt])
+    else if (rosType == gazebo_msgs.ModelState._TYPE)            from(msg.asInstanceOf[gazebo_msgs.ModelState])
     else sys.error("TODO: message type " + rosType + " not yet supported")
   }
 
@@ -290,20 +306,30 @@ object Message {
     m2
   }
 
+  def to(node: Node, m: ModelState): gazebo_msgs.ModelState = {
+    val m2 = node.getTopicMessageFactory().newFromType[gazebo_msgs.ModelState](m.rosType)
+    m2.setModelName(m.model_name)
+    m2.setPose(to(node, m.pose))
+    m2.setTwist(to(node, m.twist))
+    m2.setReferenceFrame(m.reference_frame)
+    m2
+  }
+
   def toMessage(node: Node, m: Message): Any = m match {
-    case h: Header => to(node, h)
-    case p: Pose2D => to(node, p)
-    case p: Pose => to(node, p)
-    case p: PoseWithCovariance => to(node, p)
-    case v: Point => to(node, v)
-    case v: Vector3 => to(node, v)
-    case v: Quaternion => to(node, v)
-    case t: Twist => to(node, t)
-    case ts: TwistStamped => to(node, ts)
+    case h: Header              => to(node, h)
+    case p: Pose2D              => to(node, p)
+    case p: Pose                => to(node, p)
+    case p: PoseWithCovariance  => to(node, p)
+    case v: Point               => to(node, v)
+    case v: Vector3             => to(node, v)
+    case v: Quaternion          => to(node, v)
+    case t: Twist               => to(node, t)
+    case ts: TwistStamped       => to(node, ts)
     case t: TwistWithCovariance => to(node, t)
-    case r: Range => to(node, r)
-    case o: Odometry => to(node, o)
-    case m: Mvmt => to(node, m)
+    case r: Range               => to(node, r)
+    case o: Odometry            => to(node, o)
+    case m: Mvmt                => to(node, m)
+    case m: ModelState          => to(node, m)
     case other => sys.error("TODO: message type " + other+ " not fully supported")
   }
 
