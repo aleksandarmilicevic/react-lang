@@ -9,20 +9,20 @@ import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.words.impl.Alphabets
 import net.automatalib.words.{Word, WordBuilder}
 import scala.collection.mutable.HashSet
-import scala.collection.GenSeq
+import scala.collection.GenIterable
 import java.nio.ByteBuffer
 //import java.util.concurrent.ConcurrentHashMap
 //import java.util.Collections
 
 
-class ModelChecker(world: World) {
+class ModelChecker(world: World, scheduler: Scheduler) {
 
   ///////////////////////////
   // Model checker options //
   ///////////////////////////
 
   /* how many ghosts steps per period */
-  var ghostSteps = 1
+  //var ghostSteps = 1
 
   ///////////////////////////
 
@@ -31,7 +31,7 @@ class ModelChecker(world: World) {
   //most compact representation of the state: automaton
   protected var permanentStates = new StateStore()
 
-  def addToPermanent(s: GenSeq[Word[Integer]]) {
+  def addToPermanent(s: GenIterable[Word[Integer]]) {
     if (!s.isEmpty) {
       def union(a: CompactDFA[Integer], b: CompactDFA[Integer]) = {
         DFAs.or(a, b, permanentStates.alphabet)
@@ -55,26 +55,95 @@ class ModelChecker(world: World) {
   protected def putT(s: State) = frontierT.addFirst(s)
   protected def getT: State = frontierT.removeLast() //TODO last/first for BFS or DFS
 
-  def controllerStep(s: State): State = {
-    world.restoreState(s)
-    sys.error("TODO") //TODO
+
+  ////////////////////////////////
+  // saving and restoring state //
+  ////////////////////////////////
+
+  val wl = world.totalLength
+  var defaultSchedulerState: State = null //TODO initialize
+  var period = -1 //TODO initialize
+
+  def stripSchedulerState(s: State): State = {
+    s.slice(0, wl)
   }
-  def ghostStep(s: State): Seq[State] = {
-    world.restoreState(s)
-    sys.error("TODO") //TODO
+  
+  def getSchedulerState(s: State): State = {
+    s.drop(wl)
   }
 
-  //TODO
-  // - we need to freeze the scheduler state for the outer loop
-  // - for the inner loop we need to add the state of the scheduler to the state
+  def addDefaultSchedulerState(s: State): State = {
+    s ++ defaultSchedulerState
+  }
+
+  def saveStateWithScheduler: State = {
+    world.getCurrentState ++ scheduler.saveState
+  }
+
+  def saveStateWithoutScheduler: State = {
+    world.getCurrentState
+  }
+
+  def restoreStateWithScheduler(s: State) {
+    world.restoreState(s)
+    scheduler.restoreState(getSchedulerState(s))
+  }
+
+  def restoreStateWithoutScheduler(s: State) {
+    world.restoreState(s)
+  }
+
+
+  //////////////////
+  // taking steps //
+  //////////////////
+
+  /** executes until to next period */
+  def controllerStep(s: State): Iterable[State] = {
+    restoreStateWithScheduler(s)
+    if (scheduler.now >= period) {
+      Nil
+    } else {
+      //continuous behaviour until the next discrete action
+      val dt = scheduler.timeToNext.toInt
+      scheduler.elapse(dt)
+      for (m <- world.models) {
+        m.elapse(dt)
+      }
+      world.dispatchBoxes
+      //execute the next action
+      val s2 = saveStateWithScheduler
+      val bp = scheduler.nextBP
+      for (i <- 0 until bp.alternatives) yield {
+        restoreStateWithScheduler(s2)
+        bp.act(i) //TODO add a timeout for infinite loops 
+        world.waitUntilStable
+        saveStateWithScheduler
+      }
+    }
+  }
+
+  /** saturates the systems with ghosts inputs */
+  def ghostStep(s: State): Iterable[State] = {
+    restoreStateWithScheduler(s)
+    val bp = new BranchingPoints(world.ghosts)
+    val alt = bp.alternatives
+    for(i <- 0 until alt) yield {
+      restoreStateWithScheduler(s)
+      bp.act(i) //TODO add a timeout for infinite loops 
+      world.waitUntilStable
+      saveStateWithScheduler
+    }
+  }
 
   //the inner loop proceeds into two steps.
   //first, it generates all the reachable states by ghost perturbations (simulates user inputs, etc...)
   //then, we do the periodic controller update
-  def innerLoop(s: State): Seq[State] = {
-    //the ghost step ...
+  def innerLoop(s: State): Iterable[State] = {
+    //the ghost steps
     transientStates.clear()
-    putT(s)
+    val s2 = addDefaultSchedulerState(s)
+    putT(s2)
     while(!frontierT.isEmpty) {
       val s = getT
       val s2 = ghostStep(s)
@@ -82,15 +151,27 @@ class ModelChecker(world: World) {
       transientStates ++= s3
       s3 foreach putT
     }
-    //the update step ...
-    val afterGhost = transientStates.toArray
-    transientStates.clear()
-    for (idx <- afterGhost.indices) {
-      val s = afterGhost(idx)
-      val p = controllerStep(s)
-      afterGhost(idx) = p
+    //the controller step
+    transientStates foreach putT
+    while(!frontierT.isEmpty) {
+      val s = getT
+      val s2 = controllerStep(s)
+      val s3 = s2.filterNot(transientStates)
+      transientStates ++= s3
+      s3 foreach putT
     }
-    afterGhost
+    val stateLst = transientStates.toList
+    transientStates.clear
+    stateLst.flatMap[State, List[State]]( s => {
+      restoreStateWithScheduler(s)
+      //keep only those at the period
+      if (scheduler.now >= period) {
+        //shift everything back to 0
+        scheduler.shift(scheduler.now)
+        // remove scheduler state
+        Some(saveStateWithoutScheduler)
+      } else None
+    })
   }
   
   def outerLoop = {
@@ -106,7 +187,9 @@ class ModelChecker(world: World) {
   }
 
   def verify = {
-    val initState = world.getCurrentState
+    defaultSchedulerState = scheduler.saveState
+    period = scheduler.computePeriod
+    val initState = saveStateWithScheduler
     permanentStates.addState(initState)
     put(initState)
     outerLoop

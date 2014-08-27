@@ -68,9 +68,8 @@ abstract class World extends Playground {
   // time & co. //
   ////////////////
   
-  var time = 0
-
   //TODO not complete
+  //better alternative might be to grab all locks, there release and grab again, if the locks are fair that should work
   def waitUntilStable {
     for (r <- robots) {
       val acquired = r.lock.tryLock(1000, java.util.concurrent.TimeUnit.MILLISECONDS)
@@ -101,18 +100,18 @@ abstract class World extends Playground {
     statefulObj = s :: statefulObj
   }
   
-  val totalLength = statefulObj.foldLeft(4)(_ + _.length)
+  val totalLength = statefulObj.foldLeft(0)(_ + _.length)
 
+  //TODO round using discretisation
   def getCurrentState: State = {
     val buffer = ByteBuffer.allocate(totalLength) 
-    buffer.putInt(time)
     for(s <- statefulObj) s.serialize(buffer)
     buffer.array
   }
 
+  //TODO round using discretisation
   def restoreState(s: State) {
     val buffer = ByteBuffer.wrap(s) 
-    time = buffer.getInt
     for(s <- statefulObj) s.deserilize(buffer)
     for(m <- models) {
       m.restored //make the state consistent again
