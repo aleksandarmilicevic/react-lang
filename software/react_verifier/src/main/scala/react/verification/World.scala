@@ -15,10 +15,10 @@ abstract class World extends Playground {
   // for the user //
   //////////////////
 
-  // -the safety properties:
+  // safety properties:
   //   -some default ones: no collision
   //   -user defined: avoid some particular location, ...
-  def safetyProperty: Boolean
+  def safe: Boolean
   
   /* add an obstacle in the world */
   def obstacle(b: Box2D) {
@@ -35,12 +35,10 @@ abstract class World extends Playground {
   }
 
   /* ghost to 'close' the world (simulate user input, ...) */
-  def ghost(g: Ghost) {
+  def ghost[M <: Ghost](g: M) {
     addStatefulObject(g)
     ghosts = g :: ghosts
   }
-
-  //TODO connect to the MC and the executor ..
 
   ///////////////////////////////////////////////////
   // data structures for the elements in the world //
@@ -52,7 +50,12 @@ abstract class World extends Playground {
   var boxes: List[Box2D] = Nil
 
   def allBoxes = {
-    models.map(_.boundingBox) ++ boxes
+    val b = models.map(_.boundingBox) ++ boxes
+    if (enclosed) {
+       new Box2D(xMin, yMin, 0, xMax - xMin, yMax - yMin) :: b
+    } else {
+       b
+    }
   }
 
   def dispatchBoxes {

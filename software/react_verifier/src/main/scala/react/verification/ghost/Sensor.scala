@@ -1,5 +1,6 @@
 package react.verification.ghost
 
+import react._
 import react.message._
 import react.verification.environment._
 import react.verification.model._
@@ -20,12 +21,6 @@ abstract class Sensor(parent: TwistGroundRobot,
   //this pose in defined in the map frame
   var pose: Pose2D = null
 
-  //time ∈ [0,period)
-  var t = 0
-  
-  //when will this sensor publish its next message
-  def nextActionIn = period - (t % period)
-
   protected var world: List[Box2D] = Nil
 
   //this method will be called each time the world changes
@@ -36,17 +31,15 @@ abstract class Sensor(parent: TwistGroundRobot,
   //produce a value
   def act: Unit
 
-  def elapse(d: Int): Unit = {
-    var left = d
-    while (left > 0) {
-      val delta = math.min(left, period)
-      t += delta
-      left -= delta
-      if(t >= period) {
-        act
-      }
-      t = t % period
-    }
+  val task = new react.runtime.ScheduledTask(period, () => act )
+
+  override def register(e: Executor) {
+    super.register(e)
+    exec.schedule(task)
   }
 
+  override def deregister(e: Executor) {
+    super.deregister(e)
+    task.cancel
+  }
 }

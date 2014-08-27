@@ -11,10 +11,11 @@ import math._
 /** Model for an ideal (execute command perfectly) robot moving on the ground */
 class TwistGroundRobot( bBox: Box2D,
                         topic: String,
-                        cmdTime: String,
-                        sensors: List[(Sensor, Pose2D)] /* sensor and offset w.r.t the robot frame */
+                        cmdTime: Int
                       ) extends Executed {
 
+    /* sensor and offset w.r.t the robot frame */
+    @transient var sensors: List[(Sensor, Pose2D)] = Nil
 
     var x = 0.0
     var y = 0.0
@@ -29,6 +30,9 @@ class TwistGroundRobot( bBox: Box2D,
     @transient
     var robotId = ""
 
+    def addSensor(s: Sensor, p: Pose2D) {
+      sensors = (s,p) :: sensors
+    }
 
     def setPosition(x: Double, y: Double) = {
       this.x = x
@@ -108,8 +112,18 @@ class TwistGroundRobot( bBox: Box2D,
                 bBox.depth)
     }
 
+    val listener = new org.ros.message.MessageListener[geometry_msgs.Twist]{
+      def onNewMessage(message: geometry_msgs.Twist) {
+        commandTimeLeft = cmdTime
+        vx = message.getLinear.getX
+        vo = message.getAngular.getX
+      }
+    }
+
     override def register(exec: Executor) {
       super.register(exec)
+      val sub = exec.getSubscriber[geometry_msgs.Twist](topic, geometry_msgs.Twist._TYPE)
+      sub.addMessageListener(listener)
       sensors.foreach(_._1.register(exec))
     }
 

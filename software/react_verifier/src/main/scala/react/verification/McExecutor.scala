@@ -7,14 +7,15 @@ import org.ros.namespace.GraphName
 import org.ros.node.{Node, NodeMain, ConnectedNode}
 import org.ros.concurrent.CancellableLoop
 
-abstract class RosExecutor extends NodeMain with Executor {
+abstract class McExecutor extends NodeMain with Executor {
 
   val world: World
-  //TODO where to put the MC ?
   
   protected var node: ConnectedNode = null 
 
   val scheduler = new Scheduler
+
+  val mc = new ModelChecker(world, scheduler)
 
   //TODO wrap the pub/sub to avoid the type casting
 
@@ -26,22 +27,22 @@ abstract class RosExecutor extends NodeMain with Executor {
     }
 
     def publish[T](topic: String, typeName: String, message: T) = {
-      RosExecutor.this.publish[T](mkTopic(topic), typeName, message)
+      McExecutor.this.publish[T](mkTopic(topic), typeName, message)
     }
 
     def delayedPublish[T](delay: Int, topic: String, typeName: String, message: T) = {
-      RosExecutor.this.delayedPublish(delay, mkTopic(topic), typeName, message)
+      McExecutor.this.delayedPublish(delay, mkTopic(topic), typeName, message)
     }
     
     def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T] = {
-      RosExecutor.this.getSubscriber[T](mkTopic(topic), typeName)
+      McExecutor.this.getSubscriber[T](mkTopic(topic), typeName)
     }
                 
-    def convertMessage[N](msg: Message): N = RosExecutor.this.convertMessage[N](msg)
+    def convertMessage[N](msg: Message): N = McExecutor.this.convertMessage[N](msg)
 
-    def schedule(t: react.runtime.ScheduledTask) = RosExecutor.this.schedule(t)
+    def schedule(t: react.runtime.ScheduledTask) = McExecutor.this.schedule(t)
 
-    def removeCanceledTask: Unit = RosExecutor.this.removeCanceledTask
+    def removeCanceledTask: Unit = McExecutor.this.removeCanceledTask
 
   }
 
@@ -100,11 +101,16 @@ abstract class RosExecutor extends NodeMain with Executor {
 
       override def setup() {
         super.setup()
-        //TODO ...
+        //set the exec to everybody
+        for (r <- world.robots) r.setExec(new NamespaceWrapper(r.id))
+        for (m <- world.models) m.register(McExecutor.this)
+        for (g <- world.ghosts) g.register(McExecutor.this)
+        //initialize the MC
+        mc.init
       }
 
       def loop() {
-        //TODO ...
+        mc.oneStep
       }
     })
   }

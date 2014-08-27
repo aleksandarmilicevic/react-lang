@@ -118,6 +118,7 @@ class ModelChecker(world: World, scheduler: Scheduler) {
         restoreStateWithScheduler(s2)
         bp.act(i) //TODO add a timeout for infinite loops 
         world.waitUntilStable
+        assert(world.safe) //TODO nicer error reporting
         saveStateWithScheduler
       }
     }
@@ -132,6 +133,7 @@ class ModelChecker(world: World, scheduler: Scheduler) {
       restoreStateWithScheduler(s)
       bp.act(i) //TODO add a timeout for infinite loops 
       world.waitUntilStable
+      assert(world.safe) //TODO nicer error reporting
       saveStateWithScheduler
     }
   }
@@ -186,12 +188,15 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     }
   }
 
-  def verify = {
+  def init {
     defaultSchedulerState = scheduler.saveState
     period = scheduler.computePeriod
     val initState = saveStateWithScheduler
     permanentStates.addState(initState)
     put(initState)
+  }
+
+  def oneStep = {
     outerLoop
   }
 
