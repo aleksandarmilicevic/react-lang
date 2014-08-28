@@ -24,10 +24,11 @@ class HuskyVerif extends World {
 
   def safe = {
     val bxs = allBoxes
-    bxs.forall( x =>
-      bxs.forall( y =>
-        (x == y) || !(x collides y)
-      )
+    bxs.forall( b =>
+      models.forall( r => {
+        val br = r.boundingBox
+        (b == br) || !(b collides br)
+      })
     )
   }
 
@@ -35,7 +36,7 @@ class HuskyVerif extends World {
 
   /////////
 
-  val husky1 = new HuskyGrid("husky1")
+  val husky1 = new HuskyTeleop("husky1")
   val m1 = new TwistGroundRobot(new Box2D(-0.5, -0.5, 0, 1, 1),
                                 "/husky1/cmd_vel",
                                 100)
@@ -50,13 +51,7 @@ class HuskyVerif extends World {
 
 }
 
-class HuskyVerifExec extends McExecutor {
+class RunHuskyVerif extends McExecutor {
   val world = new HuskyVerif
 }
   
-object HuskyVerifRunner { 
-  def main(args: Array[String]) {
-    org.ros.RosRun.main(Array(classOf[HuskyVerifExec].getName))
-  }
-}
-

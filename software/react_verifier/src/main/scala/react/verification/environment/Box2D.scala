@@ -9,6 +9,24 @@ class Box2D(val x: Double,
             val width: Double,
             val depth: Double) {
 
+  override def toString = {
+    "Box2D(" + x + ", " + y + ", " + orientation + ", " + width + ", " + depth + ")"
+  }
+
+  override def equals(obj: Any) = {
+    if (obj.isInstanceOf[Box2D]) {
+      //TODO account for rounding error ??
+      val b = obj.asInstanceOf[Box2D]
+      x == b.x &&
+      y == b.y &&
+      orientation == b.orientation &&
+      width == b.width &&
+      depth == b.depth
+    } else {
+      false
+    }
+  }
+
   def corners: Array[(Double, Double)] = {
     val wx = width * cos(orientation)
     val wy = width * sin(orientation)

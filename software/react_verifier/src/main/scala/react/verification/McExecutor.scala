@@ -15,8 +15,6 @@ abstract class McExecutor extends NodeMain with Executor {
 
   val scheduler = new Scheduler
 
-  val mc = new ModelChecker(world, scheduler)
-
   //TODO wrap the pub/sub to avoid the type casting
 
 
@@ -98,6 +96,8 @@ abstract class McExecutor extends NodeMain with Executor {
   override def onStart(n: ConnectedNode) {
     node = n
     node.executeCancellableLoop(new CancellableLoop {
+
+      val mc = new ModelChecker(world, scheduler)
 
       override def setup() {
         super.setup()

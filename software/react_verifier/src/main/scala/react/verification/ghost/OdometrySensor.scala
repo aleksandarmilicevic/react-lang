@@ -39,7 +39,8 @@ class OdometrySensor( bodyFrame: String, //the element we report on ...
   def act {
     val msg = mkOdometry2D(parent.x, parent.y, parent.orientation,
                            parent.vx, parent.vo)
-    exec.publish(topic, nav_msgs.Odometry._TYPE, msg)
+    val msg2 = exec.convertMessage[nav_msgs.Odometry](msg)
+    exec.publish(topic, nav_msgs.Odometry._TYPE, msg2)
   }
 
 

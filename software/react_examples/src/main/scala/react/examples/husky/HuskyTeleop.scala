@@ -10,8 +10,8 @@ class HuskyTeleop(_id: String) extends GroundRobot(_id) {
 
   val period = 100
 
-  val vLinMax = 5
-  val vAngMax = 10
+  val vLinMax = 3
+  val vAngMax = 5
   def clamp(v: Int, vMin: Int, vMax: Int) = math.min(vMax, math.max(v, vMin))
   //0.5 is ~1/2 size of the base along the x axis
   //0.8 is a guessed coefficient of friction

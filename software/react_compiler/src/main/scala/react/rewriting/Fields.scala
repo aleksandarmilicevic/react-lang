@@ -11,8 +11,12 @@ trait Fields {
    */
   protected def isTransient(m: TermSymbol) = {
     // http://stackoverflow.com/questions/17236066/scala-macros-checking-for-a-certain-annotation
-    //m.accessed.annotations.exists( _.tpe =:= typeOf[scala.transient] )
     m.annotations.exists( _.tree.tpe =:= typeOf[scala.transient] )
+  }
+  
+  protected def isIgnored(m: TermSymbol) = {
+    // http://stackoverflow.com/questions/17236066/scala-macros-checking-for-a-certain-annotation
+    m.annotations.exists( _.tree.tpe =:= typeOf[react.verification.ignore] )
   }
 
   /** collect every declared variables (mutable field) */
@@ -21,10 +25,8 @@ trait Fields {
     // http://stackoverflow.com/questions/17223213/scala-macros-making-a-map-out-of-fields-of-a-class-in-scala
     // http://meta.plasm.us/posts/2013/08/30/horrible-code/
     val flds = t.members.collect{
-      case m: TermSymbol if m.isVar && !m.isPrivate => m
+      case m: TermSymbol if m.isVar && !m.getter.isPrivate && !isIgnored(m) => m
     }.toList
-    //Console.err.println("collectFields:")
-    //for (f <- flds) Console.err.println("  " + f)
     flds
   }
   
@@ -45,10 +47,4 @@ trait Fields {
   protected def permanentFields[T: c.WeakTypeTag] = supportedFields[T].filter(!isTransient(_))
   protected def transientFields[T: c.WeakTypeTag] = supportedFields[T].filter( isTransient)
   
-  protected def size[T: c.WeakTypeTag](world: c.Expr[Playground]): Int = {
-    assert(unsupportedFields.isEmpty, "")
-    val toStore = permanentFields 
-    toStore.map(length).foldLeft(0)( _ + _ )
-  }
-
 }

@@ -327,6 +327,8 @@ object Message {
     case ts: TwistStamped       => to(node, ts)
     case t: TwistWithCovariance => to(node, t)
     case r: Range               => to(node, r)
+    case i: Imu                 => to(node, i)
+    case l: LaserScan           => to(node, l)
     case o: Odometry            => to(node, o)
     case m: Mvmt                => to(node, m)
     case m: ModelState          => to(node, m)

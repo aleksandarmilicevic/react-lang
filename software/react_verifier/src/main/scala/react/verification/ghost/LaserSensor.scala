@@ -45,7 +45,9 @@ class LaserSensor(minAngle: Float,
       intensities
     )
 
-    exec.publish(topic, sensor_msgs.LaserScan._TYPE, msg)
+    val msg2 = exec.convertMessage[sensor_msgs.LaserScan](msg)
+
+    exec.publish(topic, sensor_msgs.LaserScan._TYPE, msg2)
   }
 
 }

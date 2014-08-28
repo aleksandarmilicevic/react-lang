@@ -7,15 +7,16 @@ import react.verification.ghost._
 import react.verification._
 import math._
 
+//TODO round according to the world
 
 /** Model for an ideal (execute command perfectly) robot moving on the ground */
 class TwistGroundRobot( bBox: Box2D,
-                        topic: String,
+                        val topic: String,
                         cmdTime: Int
                       ) extends Executed {
 
     /* sensor and offset w.r.t the robot frame */
-    @transient var sensors: List[(Sensor, Pose2D)] = Nil
+    @ignore var sensors: List[(Sensor, Pose2D)] = Nil
 
     var x = 0.0
     var y = 0.0
@@ -27,7 +28,7 @@ class TwistGroundRobot( bBox: Box2D,
     var vx = 0.0
     var vo = 0.0
     
-    @transient
+    @ignore
     var robotId = ""
 
     def addSensor(s: Sensor, p: Pose2D) {
@@ -99,14 +100,14 @@ class TwistGroundRobot( bBox: Box2D,
       }
     }
 
-    val boxOffsetX = bBox.x - x
-    val boxOffsetY = bBox.y - y
-    val boxOffsetO = bBox.orientation - orientation
+    val boxOffsetX = bBox.x //- x
+    val boxOffsetY = bBox.y //- y
+    val boxOffsetO = bBox.orientation //- orientation
 
     def boundingBox = {
       //return the box that corresponds to the robot current position
-      new Box2D(x + boxOffsetX * cos(orientation + boxOffsetO),
-                y + boxOffsetY * sin(orientation + boxOffsetO),
+      new Box2D(x + boxOffsetX * cos(orientation) - boxOffsetY * sin(orientation),
+                y + boxOffsetY * sin(orientation) + boxOffsetY * cos(orientation),
                 orientation + boxOffsetO,
                 bBox.width,
                 bBox.depth)

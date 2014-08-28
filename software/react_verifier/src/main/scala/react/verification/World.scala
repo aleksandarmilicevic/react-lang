@@ -6,7 +6,10 @@ import react.verification.model._
 import react.verification.ghost._
 import java.nio.ByteBuffer
 
-//for verification purpose, we need to provide a model of the environement (dimensions, etc.)
+import scala.language.experimental.macros
+//import scala.reflect.macros.whitebox.Context
+import scala.reflect.macros.blackbox.Context
+
 
 //For the moment a simple 2D world
 abstract class World extends Playground {
@@ -21,24 +24,15 @@ abstract class World extends Playground {
   def safe: Boolean
   
   /* add an obstacle in the world */
-  def obstacle(b: Box2D) {
+  final def obstacle(b: Box2D) {
     boxes = b :: boxes
   }
 
   /* add a robot in the world */
-  def robot[M <: Robot](r: M, model: TwistGroundRobot) {
-    addStatefulObject(r)
-    addStatefulObject(model)
-    model.robotId = r.id
-    robots = r :: robots
-    models = model :: models
-  }
+  final def robot[T <: Robot](r: T, model: TwistGroundRobot): Unit = macro WorldMacros.addRobot[T]
 
   /* ghost to 'close' the world (simulate user input, ...) */
-  def ghost[M <: Ghost](g: M) {
-    addStatefulObject(g)
-    ghosts = g :: ghosts
-  }
+  final def ghost[T <: Ghost](g: T): Unit = macro WorldMacros.addGhost[T]
 
   ///////////////////////////////////////////////////
   // data structures for the elements in the world //
@@ -49,13 +43,22 @@ abstract class World extends Playground {
   var ghosts: List[Ghost] = Nil
   var boxes: List[Box2D] = Nil
 
+  protected def enclosure = {
+    val wall = 0.1
+    if (enclosed) {
+      List(
+        new Box2D(xMin - wall, yMin, 0, wall, yMax - yMin),
+        new Box2D(xMin, yMin - wall, 0, xMax - xMin, wall),
+        new Box2D(xMax, yMin, 0, wall, yMax - yMin),
+        new Box2D(xMin, yMax, 0, xMax - xMin, wall)
+      )
+    }
+    else Nil
+  }
+
   def allBoxes = {
     val b = models.map(_.boundingBox) ++ boxes
-    if (enclosed) {
-       new Box2D(xMin, yMin, 0, xMax - xMin, yMax - yMin) :: b
-    } else {
-       b
-    }
+    enclosure ::: b
   }
 
   def dispatchBoxes {
@@ -64,6 +67,47 @@ abstract class World extends Playground {
       val boxes = bbs.take(i) ::: bbs.drop(i+1)
       m.updateWorld(boxes)
     }
+  }
+
+  override def toString = {
+    val buffer = new StringBuilder(1024)
+    buffer.append("world {\n")
+    buffer.append("  x ∈ ["+xMin+", "+xMax+"], steps of " + xDiscretization + "\n")
+    buffer.append("  y ∈ ["+yMin+", "+yMax+"], steps of " + yDiscretization + "\n")
+    buffer.append("  robots:\n")
+    for (r <- robots) {
+      buffer.append("    " + r.id + ": " + r +"\n" )
+    }
+    buffer.append("  models:\n")
+    for (m <- models) {
+      buffer.append("    " + m + "\n")
+      buffer.append("      as physical model executing command from " + m.topic + "\n")
+      buffer.append("      bounding boxe: " + m.boundingBox + "\n")
+    }
+    buffer.append("  ghosts:\n")
+    for (g <- ghosts) {
+      buffer.append("    " + g + "\n")
+    }
+    buffer.append("  obstacles:\n")
+    for (b <- enclosure) {
+      buffer.append("    " + b + " (enclosure)\n")
+    }
+    for (b <- boxes) {
+      buffer.append("    " + b + "\n")
+    }
+    buffer.append("}\n")
+    buffer.toString
+  }
+
+  def stateSpaceDescription = {
+    val buffer = new StringBuilder(1024)
+    buffer.append("state space has " + totalLength + " bytes (without scheduler).\n")
+    for (s <- statefulObj){
+      buffer.append("  ")
+      buffer.append(s.description)
+      buffer.append("\n")
+    }
+    buffer.toString
   }
   
   
@@ -74,6 +118,7 @@ abstract class World extends Playground {
   //TODO not complete
   //better alternative might be to grab all locks, there release and grab again, if the locks are fair that should work
   def waitUntilStable {
+    Thread.`yield`()
     for (r <- robots) {
       val acquired = r.lock.tryLock(1000, java.util.concurrent.TimeUnit.MILLISECONDS)
       if (!acquired) {
@@ -92,18 +137,7 @@ abstract class World extends Playground {
   
   protected var statefulObj: List[Stateful] = Nil
   
-  protected def addStatefulObject[T](obj: T) = {
-    val s = new Stateful {
-      import Stateful._
-      val o = obj
-      def length: Int = o.length(World.this)
-      def serialize(out: ByteBuffer): Unit = o.serialize(World.this, out)
-      def deserilize(in: ByteBuffer): Unit = o.deserilize(World.this, in)
-    }
-    statefulObj = s :: statefulObj
-  }
-  
-  val totalLength = statefulObj.foldLeft(0)(_ + _.length)
+  lazy val totalLength = statefulObj.foldLeft(0)(_ + _.length)
 
   //TODO round using discretisation
   def getCurrentState: State = {
@@ -123,4 +157,53 @@ abstract class World extends Playground {
     dispatchBoxes  
   }
 
+}
+
+class WorldMacros(val c: Context) {
+
+  import c.universe._
+
+  def addRobot[T <: Robot : c.WeakTypeTag](r: c.Expr[T], model: c.Expr[TwistGroundRobot]): c.Expr[Unit] = {
+    val id1 = Ident(TermName(c.freshName("id")))
+    val id2 = Ident(TermName(c.freshName("id")))
+    val st1 = addStatefulObject(c.Expr[T](id1))
+    val st2 = addStatefulObject(c.Expr[TwistGroundRobot](id2))
+    val tree = q"""
+      val $id1 = $r
+      val $id2 = $model
+      $st1
+      $st2
+      $id2.robotId = $id1.id
+      robots = $id1 :: robots
+      models = $id2 :: models
+    """
+    c.Expr[Unit](tree)
+  }
+
+  def addGhost[T <: Ghost : c.WeakTypeTag](g: c.Expr[T]): c.Expr[Unit] = {
+    val id = Ident(TermName(c.freshName("id")))
+    val st = addStatefulObject(c.Expr[T](id))
+    val tree = q"""
+      val $id = $g
+      $st
+      ghosts = $id :: ghosts
+      """
+    c.Expr[Unit](tree)
+  }
+
+  protected def addStatefulObject[T: c.WeakTypeTag](obj: c.Expr[T]): Tree = {
+    val t = c.prefix
+    q"""
+    val s = new Stateful {
+      import Stateful._
+      val o = $obj
+      def length: Int = o.length($t)
+      def serialize(out: java.nio.ByteBuffer): Unit = o.serialize($t, out)
+      def deserilize(in: java.nio.ByteBuffer): Unit = o.deserilize($t, in)
+      def description: String = o.description
+    }
+    statefulObj = s :: statefulObj
+    """
+  }
+  
 }

@@ -58,6 +58,8 @@ object Main {
         org.ros.RosRun.main(Array(classOf[RunHuskyGrid].getName))
       case "huskyA" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyGrid2].getName))
+      case "huskyV" =>
+        org.ros.RosRun.main(Array(classOf[RunHuskyVerif].getName))
       case other =>
         println("unknown controller '" + other + "', using teleop instead")
         org.ros.RosRun.main(Array(classOf[RunTurtleTeleop].getName))

@@ -23,6 +23,10 @@ class StateStore {
         return alpha;
     }
 
+    public int size() {
+        return states.size();
+    }
+
     public void minimize() {
         //Automata.invasiveMinimize<Integer, Integer, Integer, Boolean, Void, CompactDFA<Integer>>(states, alpha);
         Automata.invasiveMinimize(states, alpha);

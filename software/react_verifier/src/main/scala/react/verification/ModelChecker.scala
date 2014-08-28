@@ -2,6 +2,7 @@ package react.verification
 
 import react._
 import react.verification.ghost._
+import react.utils._
 
 import net.automatalib.util.automata.fsa.DFAs
 import net.automatalib.util.automata.Automata
@@ -11,8 +12,14 @@ import net.automatalib.words.{Word, WordBuilder}
 import scala.collection.mutable.HashSet
 import scala.collection.GenIterable
 import java.nio.ByteBuffer
+
+import HashStateStore._
+
 //import java.util.concurrent.ConcurrentHashMap
 //import java.util.Collections
+
+class SafetyError(step: String, suffix: List[Array[Byte]]) extends Exception("safety violation (" + step + ")") {
+}
 
 
 class ModelChecker(world: World, scheduler: Scheduler) {
@@ -48,9 +55,8 @@ class ModelChecker(world: World, scheduler: Scheduler) {
   protected def get: State = frontier.removeLast() //TODO last/first for BFS or DFS
 
   //to represent the transient states between the round
-  protected val transientStates = HashSet[State]()
+  protected val transientStates = new HashStateStore()
 
-  //val transientStates = Collections.newSetFromMap(new ConcurrentHashMap<State, Boolean>())
   protected val frontierT = new java.util.ArrayDeque[State]()
   protected def putT(s: State) = frontierT.addFirst(s)
   protected def getT: State = frontierT.removeLast() //TODO last/first for BFS or DFS
@@ -106,6 +112,8 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     } else {
       //continuous behaviour until the next discrete action
       val dt = scheduler.timeToNext.toInt
+      Logger("ModelChecker", LogNotice, "controller step: Δt = " + dt + ", t = " + scheduler.now)
+      Logger("ModelChecker", LogNotice, scheduler.toString)
       scheduler.elapse(dt)
       for (m <- world.models) {
         m.elapse(dt)
@@ -118,8 +126,13 @@ class ModelChecker(world: World, scheduler: Scheduler) {
         restoreStateWithScheduler(s2)
         bp.act(i) //TODO add a timeout for infinite loops 
         world.waitUntilStable
-        assert(world.safe) //TODO nicer error reporting
-        saveStateWithScheduler
+        val s3 = saveStateWithScheduler
+        if (!world.safe) {
+          Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
+          throw new SafetyError("controller step", List(s,s2,s3))
+        } else {
+          s3
+        }
       }
     }
   }
@@ -129,12 +142,20 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     restoreStateWithScheduler(s)
     val bp = new BranchingPoints(world.ghosts)
     val alt = bp.alternatives
+    Logger("ModelChecker", LogNotice, "ghost steps (|branching point| = " + alt + ")")
+    //Logger("ModelChecker", LogNotice, "s  = " + new RichState(s))
     for(i <- 0 until alt) yield {
       restoreStateWithScheduler(s)
       bp.act(i) //TODO add a timeout for infinite loops 
       world.waitUntilStable
-      assert(world.safe) //TODO nicer error reporting
-      saveStateWithScheduler
+      val s2 = saveStateWithScheduler
+      //Logger("ModelChecker", LogNotice, "s2 = " + new RichState(s2))
+      if (!world.safe) {
+        Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
+        throw new SafetyError("ghost step", List(s,s2))
+      } else {
+        s2
+      }
     }
   }
 
@@ -145,24 +166,33 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     //the ghost steps
     transientStates.clear()
     val s2 = addDefaultSchedulerState(s)
+    transientStates += s2
     putT(s2)
     while(!frontierT.isEmpty) {
+      Logger("ModelChecker", LogNotice, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
       val s = getT
       val s2 = ghostStep(s)
-      val s3 = s2.filterNot(transientStates)
-      transientStates ++= s3
-      s3 foreach putT
+      for (x <- s2) {
+        if (!transientStates.contains(x)) {
+          transientStates += x
+          putT(x)
+        }
+      }
     }
     //the controller step
-    transientStates foreach putT
+    transientStates foreach (rs => putT(rs.state))
     while(!frontierT.isEmpty) {
+      Logger("ModelChecker", LogNotice, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
       val s = getT
       val s2 = controllerStep(s)
-      val s3 = s2.filterNot(transientStates)
-      transientStates ++= s3
-      s3 foreach putT
+      for (x <- s2) {
+        if (!transientStates.contains(x)) {
+          transientStates += x
+          putT(x)
+        }
+      }
     }
-    val stateLst = transientStates.toList
+    val stateLst = transientStates.toList.map(_.state)
     transientStates.clear
     stateLst.flatMap[State, List[State]]( s => {
       restoreStateWithScheduler(s)
@@ -177,6 +207,7 @@ class ModelChecker(world: World, scheduler: Scheduler) {
   }
   
   def outerLoop = {
+    Logger("ModelChecker", LogNotice, "outer loop (|permantent states|: " + permanentStates.size + ", frontier = " + frontier.size + ")")
     if (!frontier.isEmpty) {
       val s = get
       val post = innerLoop(s).par
@@ -189,11 +220,19 @@ class ModelChecker(world: World, scheduler: Scheduler) {
   }
 
   def init {
+    Logger("ModelChecker", LogNotice, "initializing model-checker.")
+    Logger("ModelChecker", LogNotice, world.stateSpaceDescription)
     defaultSchedulerState = scheduler.saveState
     period = scheduler.computePeriod
+    Logger("ModelChecker", LogNotice, "period = " + period)
+    Logger("ModelChecker", LogNotice, scheduler.toString)
     val initState = saveStateWithScheduler
     permanentStates.addState(initState)
     put(initState)
+    if(!world.safe) {
+      Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
+      throw new SafetyError("initial state", List(initState))
+    }
   }
 
   def oneStep = {

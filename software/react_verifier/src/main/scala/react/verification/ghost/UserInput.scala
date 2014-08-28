@@ -13,7 +13,7 @@ class UserInput(robot: Robot) extends Ghost {
     case 2 => robot.send(Key.LEFT)
     case 3 => robot.send(Key.RIGHT)
     case 4 => robot.send(Key.NONE)
-    case _ => sys.error("alt should be in [0,4]")
+    case _ => sys.error("alt should be in [0,4], given: " + alt)
   }
 
 }

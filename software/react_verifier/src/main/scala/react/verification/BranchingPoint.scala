@@ -20,10 +20,10 @@ class BranchingPoints(points: List[BranchingPoint]) extends BranchingPoint {
   def act(alt: Int) = {
     def traverse(alt: Int, points: List[BranchingPoint]) {
       val a = points.head.alternatives
-      if (a >= alt) {
+      if (alt >= a) {
         traverse(alt - a, points.tail)
       } else {
-        points.head.act(a)
+        points.head.act(alt)
       }
     }
     traverse(alt, points)

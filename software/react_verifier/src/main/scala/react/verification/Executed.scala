@@ -5,7 +5,7 @@ import react.Executor
 /** a class that depends on an executor */
 trait Executed {
 
-  @transient protected var exec: Executor = null
+  protected var exec: Executor = null
 
   def register(exec: Executor) = {
     this.exec = exec

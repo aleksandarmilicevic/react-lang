@@ -4,6 +4,7 @@ import java.nio.ByteBuffer
 import react.runtime.ScheduledTask
 import scala.collection.mutable.PriorityQueue
 
+//TODO should execute all the alternative but in different permuations
 class SchedulingPoint(tasks: List[ScheduledTask], scheduler: Scheduler) extends BranchingPoint {
 
   def alternatives = tasks.length
@@ -48,6 +49,20 @@ class Scheduler extends react.runtime.Scheduler {
     }
   }
 
+  override def toString = {
+    val buffer = new StringBuilder(1024)
+    buffer.append("Scheduler {\n")
+    buffer.append("  now = " + now + "\n")
+    buffer.append("  tasks:\n")
+    for (t <- queue) {
+      buffer.append("    ")
+      buffer.append(t.toString)
+      buffer.append("\n")
+    }
+    buffer.append("}\n")
+    buffer.toString
+  }
+
 
   val bytePerTask = 1
 
@@ -83,7 +98,7 @@ class Scheduler extends react.runtime.Scheduler {
         else sys.error("bytePerTask has an incorrect size")
       val task = cache.value(index)
       //find the next expiration
-      val exp = math.ceil(t/task.period.toDouble).toInt * task.period
+      val exp = math.ceil(t/task.period.toDouble).toInt * task.period //TODO expires should be > now
       task.expires = exp
       t = exp
       task.cancelled = false

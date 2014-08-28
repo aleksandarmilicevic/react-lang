@@ -9,6 +9,8 @@ class ScheduledTask(val period: Int,
                     var cancelled: Boolean = false
                    ) extends java.lang.Comparable[ScheduledTask] {
 
+  override def toString = "ScheduledTask(period = "+period+", expires = "+expires+", cancelled = "+cancelled+", " + fct + ")"
+
   def compareTo(other: ScheduledTask) = other.expires.compareTo(expires)
 
   def isPeriodic = period > 0
