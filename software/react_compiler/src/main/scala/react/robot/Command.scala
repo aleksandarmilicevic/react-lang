@@ -13,4 +13,9 @@ object Command {
     ModelState(name, Pose(Point(x, y, 0), Quaternion(0, 0, 0, 0)), setSpeed(0, 0), "world")
   }
 
+  def moveToAndOrient(name: String, x: Double, y: Double, o: Double): ModelState = {
+    val q = Angle.quaternionFromTheta(o)
+    ModelState(name, Pose(Point(x, y, 0), q), setSpeed(0, 0), "world")
+  }
+
 }
