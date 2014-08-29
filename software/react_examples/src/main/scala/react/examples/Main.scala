@@ -38,6 +38,13 @@ class RunHuskyGrid2 extends RosExecutor {
   new Remote(robot)
 }
 
+class RunHuskyGridSnap extends RosExecutor {
+  //define the robot we are working on
+  val robot = new HuskyGridSnap(Main.topic)
+  //start the gui to control the robot
+  new Remote(robot)
+}
+
 object Main {
 
   var topic = ""
@@ -60,6 +67,8 @@ object Main {
         org.ros.RosRun.main(Array(classOf[RunHuskyGrid2].getName))
       case "huskyV" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyVerif].getName))
+      case "huskyS" =>
+        org.ros.RosRun.main(Array(classOf[RunHuskyGridSnap].getName))
       case other =>
         println("unknown controller '" + other + "', using teleop instead")
         org.ros.RosRun.main(Array(classOf[RunTurtleTeleop].getName))

@@ -1,4 +1,4 @@
-package react.examples.sg
+package react.examples.sw
 
 import react._
 import react.message._
@@ -8,29 +8,29 @@ import react.examples._
 
 class SW(_id: String) extends GroundRobot(_id) {
 
-  var vx = 0
-  var vy = 0
+  // var vx = 0
+  // var vy = 0
 
-  every(200){
-    x += vx
-    y += vy
-    orientation = math.atan2(vy, vx)
-  }
+  // every(200){
+  //   x += vx
+  //   y += vy
+  //   orientation = math.atan2(vy, vx)
+  // }
 
-  on {
-    case Key.UP =>    vy += 1
-    case Key.DOWN =>  vy -= 1
-    case Key.LEFT =>  vx += 1
-    case Key.RIGHT => vx -= 1
-    case Key.NONE =>
-  }
+  // on {
+  //   case Key.UP =>    vy += 1
+  //   case Key.DOWN =>  vy -= 1
+  //   case Key.LEFT =>  vx += 1
+  //   case Key.RIGHT => vx -= 1
+  //   case Key.NONE =>
+  // }
 
-  sensor[Range]("front"){
-    case Range(_, _, _, _, _, range) =>
-      if (range < 10) {
-        vx = 0
-        vy = 0
-      }
-  }
+  // sensor[Range]("front"){
+  //   case Range(_, _, _, _, _, range) =>
+  //     if (range < 10) {
+  //       vx = 0
+  //       vy = 0
+  //     }
+  // }
 
 }
