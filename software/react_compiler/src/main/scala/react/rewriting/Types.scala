@@ -27,15 +27,15 @@ trait Types {
     new TypeIO {
       def is(t: Type) = t =:= BooleanTpe
       val length: Int = 1
-      def read(in: c.Expr[ByteBuffer], setter: Tree): Tree = q"$setter($in.getBoolean)"
-      def write(out: c.Expr[ByteBuffer], getter: Tree): Tree = q"$out.putBoolean($getter)"
+      def read(in: c.Expr[ByteBuffer], setter: Tree): Tree = q"$setter($in.get != 0)"
+      def write(out: c.Expr[ByteBuffer], getter: Tree): Tree = q"if ($getter) $out.put(1: Byte) else $out.put(0: Byte)"
       def havoc(setter: Tree): Tree = q"$setter(scala.util.Random.nextBoolean())"
     },
     new TypeIO {
       def is(t: Type) = t =:= ByteTpe
       val length: Int = 1
-      def read(in: c.Expr[ByteBuffer], setter: Tree): Tree = q"$setter($in.getByte)"
-      def write(out: c.Expr[ByteBuffer], getter: Tree): Tree = q"$out.putByte($getter)"
+      def read(in: c.Expr[ByteBuffer], setter: Tree): Tree = q"$setter($in.get)"
+      def write(out: c.Expr[ByteBuffer], getter: Tree): Tree = q"$out.put($getter)"
       def havoc(setter: Tree): Tree = q"$setter(scala.util.Random.nextByte())"
     },
     new TypeIO {

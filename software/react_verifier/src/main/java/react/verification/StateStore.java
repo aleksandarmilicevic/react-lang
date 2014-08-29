@@ -99,4 +99,6 @@ class StateStore {
     public CompactDFA<Integer> stateToDFA(byte[] state) {
         return dfaFromWord(stateToWord(state));
     }
+
+    //TODO ennumerate the words in the DFA
 }

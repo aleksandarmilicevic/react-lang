@@ -93,11 +93,13 @@ abstract class McExecutor extends NodeMain with Executor {
     GraphName.of("react/verifier")
   }
 
+  var mc: ModelChecker = null 
+
   override def onStart(n: ConnectedNode) {
     node = n
     node.executeCancellableLoop(new CancellableLoop {
 
-      val mc = new ModelChecker(world, scheduler)
+    mc = new ModelChecker(world, scheduler)
 
       override def setup() {
         super.setup()
@@ -112,7 +114,8 @@ abstract class McExecutor extends NodeMain with Executor {
       def loop() {
         val somethingNew = mc.oneStep
         if (!somethingNew) {
-          mc.printStats
+          if (mc != null)
+            mc.printStats
           System.exit(0)
         }
       }
@@ -120,14 +123,14 @@ abstract class McExecutor extends NodeMain with Executor {
   }
 
   override def onShutdown(node: Node) {
-    //TODO ...
+    if (mc != null)
+      mc.printStats
   }
 
   override def onShutdownComplete(node: Node) {
   }
 
   override def onError(node: Node, throwable: Throwable) {
-    //TODO display more information, like state of the system when the error was throw, what input, ...
     Console.err.println("exception : " + throwable)
     throwable.printStackTrace(Console.err)
   }

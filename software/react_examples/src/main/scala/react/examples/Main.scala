@@ -2,6 +2,7 @@ package react.examples
 
 import react._
 import react.runtime._
+import react.utils._
 import react.examples.turtle._
 import react.examples.husky._
 
@@ -45,16 +46,22 @@ class RunHuskyGridSnap extends RosExecutor {
   new Remote(robot)
 }
 
-object Main {
+object Main extends Options {
+
+  newOption("-v", Arg.Unit(() => Logger.moreVerbose), "increase the verbosity level.")
+  newOption("-q", Arg.Unit(() => Logger.lessVerbose), "decrease the verbosity level.")
+
+  val usage = "..."
 
   var topic = ""
 
   def main(args: Array[String]) {
-    if (args.length != 2) {
+    apply(args) // preprocess the args
+    if (input.length != 2) {
       sys.error("need exactlty two argument: the type of controller and the namespace of the turtle")
     }
-    topic = args(1)
-    args(0) match {
+    topic = input(0)
+    input(1) match {
       case "teleop" =>
         org.ros.RosRun.main(Array(classOf[RunTurtleTeleop].getName))
       case "random" =>

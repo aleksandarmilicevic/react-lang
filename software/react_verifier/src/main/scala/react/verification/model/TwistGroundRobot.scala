@@ -1,6 +1,7 @@
 package react.verification.model
 
 import react._
+import react.robot._
 import react.message._
 import react.verification.environment._
 import react.verification.ghost._
@@ -12,7 +13,8 @@ import math._
 /** Model for an ideal (execute command perfectly) robot moving on the ground */
 class TwistGroundRobot( bBox: Box2D,
                         val topic: String,
-                        cmdTime: Int
+                        cmdTime: Int,
+                        snap: Option[(String,String)] = None
                       ) extends Executed {
 
     val lock = new java.util.concurrent.locks.ReentrantLock(true)
@@ -78,7 +80,8 @@ class TwistGroundRobot( bBox: Box2D,
     }
 
     def elapse(t: Int) {
-      val dt = min(t, commandTimeLeft)
+      val mt = min(t, commandTimeLeft)
+      val dt = mt / 1000.0
 
       if (vo == 0.0) {
         x += dt * vx * cos(orientation)
@@ -94,7 +97,7 @@ class TwistGroundRobot( bBox: Box2D,
 
       updateChildrenPose
 
-      commandTimeLeft -= dt
+      commandTimeLeft -= mt
       if (commandTimeLeft <= 0) {
         vx = 0.0
         vo = 0.0
@@ -129,6 +132,25 @@ class TwistGroundRobot( bBox: Box2D,
       super.register(exec)
       val sub = exec.getSubscriber[geometry_msgs.Twist](topic, geometry_msgs.Twist._TYPE)
       sub.addMessageListener(listener)
+      if (snap.isDefined) {
+        val listener2 = new org.ros.message.MessageListener[gazebo_msgs.ModelState]{
+          val name = snap.get._2
+          def onNewMessage(message: gazebo_msgs.ModelState) {
+            lock.lock
+            try {
+              if (message.getModelName == name) {
+                x = message.getPose.getPosition.getX
+                y = message.getPose.getPosition.getY
+                orientation = Angle.thetaFromQuaternion(Message.from(message.getPose.getOrientation))
+                vx = message.getTwist.getLinear.getX
+                vo = message.getTwist.getAngular.getX
+              }
+            } finally lock.unlock
+          }
+        }
+        val sub = exec.getSubscriber[gazebo_msgs.ModelState](snap.get._1, gazebo_msgs.ModelState._TYPE)
+        sub.addMessageListener(listener2)
+      }
       sensors.foreach(_._1.register(exec))
     }
 

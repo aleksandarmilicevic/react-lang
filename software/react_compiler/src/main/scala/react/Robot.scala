@@ -41,8 +41,8 @@ abstract class Robot(val id: String) extends Controller {
   //def generateMvmt(period: Int): Seq[Message] = Seq()
 
   //helper to simplify message generation, to report pose to react master
-  var publishPose = false
-  var posePublishPeriod = 500
+  @verification.ignore var publishPose = false
+  @verification.ignore var posePublishPeriod = 500
   private var seq = 0
   protected def nextHeader = {
     val s = seq

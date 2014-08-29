@@ -25,8 +25,11 @@ trait Fields {
     // http://stackoverflow.com/questions/17223213/scala-macros-making-a-map-out-of-fields-of-a-class-in-scala
     // http://meta.plasm.us/posts/2013/08/30/horrible-code/
     val flds = t.members.collect{
-      case m: TermSymbol if m.isVar && !m.getter.isPrivate && !isIgnored(m) => m
+      //case m: TermSymbol if m.isVar && !m.getter.isPrivate && !isIgnored(m) => m
+      case m: TermSymbol if m.isSetter && m.isPublic && !isIgnored(m.accessed.asInstanceOf[TermSymbol]) =>
+        m.accessed.asInstanceOf[TermSymbol]
     }.toList
+    //Console.err.println("members of " + t + "\n  " + t.members.mkString("\n  "))
     flds
   }
   

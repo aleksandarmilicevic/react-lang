@@ -116,6 +116,10 @@ abstract class World extends Playground {
     }
     buffer.toString
   }
+
+  def round {
+    for (s <- statefulObj) s.round
+  }
   
   
   ////////////////
@@ -222,9 +226,10 @@ class WorldMacros(val c: Context) {
     val s = new Stateful {
       import Stateful._
       val o = $obj
-      def length: Int = o.length($t)
-      def serialize(out: java.nio.ByteBuffer): Unit = o.serialize($t, out)
-      def deserilize(in: java.nio.ByteBuffer): Unit = o.deserilize($t, in)
+      def length: Int = o.length
+      def round: Unit = o.round($t)
+      def serialize(out: java.nio.ByteBuffer): Unit = o.serialize(out)
+      def deserilize(in: java.nio.ByteBuffer): Unit = o.deserilize(in)
       def description: String = o.description
     }
     statefulObj = s :: statefulObj

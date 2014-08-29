@@ -103,3 +103,27 @@ object Arg {
 
 }
 
+/** A default configuration class */
+abstract class Options {
+
+  private var options = List[Arg.Def]()
+       
+  def newOption(opt: java.lang.String, fct: Arg.Spec, doc: java.lang.String) {
+    options = (opt, fct, doc) :: options
+  }
+                      
+  protected var input: List[java.lang.String] = Nil
+
+  /** process arguments that do not belong to an option (i.e. the input files). */
+  def default(arg: java.lang.String) {
+    input = arg :: input
+  }
+
+  val usage: java.lang.String
+                                         
+  def apply(args: Seq[java.lang.String]) {
+    Arg.process(options, default, usage)(args)
+  }
+
+}
+

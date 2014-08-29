@@ -7,12 +7,9 @@ The macro can be used to generate a shadow state and process the changes in vari
 Frontend
 ========
 
-can we get some kind of interactivity using: https://github.com/scala-ide/scala-worksheet/wiki/Getting-Started
-
-Backend
-=======
-
 beautify
+
+can we get some kind of interactivity using: https://github.com/scala-ide/scala-worksheet/wiki/Getting-Started
 
 
 Example
@@ -24,14 +21,24 @@ when the indigo packages are available
 Verification
 ============
 
-To build on top of an explicit state model checker http://divine.fi.muni.cz/ is a good candidate.
+current part
+------------
+
+-rounding of orientation (any fp var in general ?)
+-more robust handling of the scheduler in the case of FSM: make sure the task are (de)registered properly
+-frontend support for the model checker options
+
+Done:
 Compared to a normal model-checking algorithm, we want two separate state-spaces:
 - the state of the system at the boundaries of the discrete time steps
 - the state during the execution of the controllers
 The trick is knowing how/when to exchange states between the two.
-For the outer MC, having the most compact storage is imoprtant. So we should go for a DFA over {0,1}.
+For the outer MC, having the most compact storage is important. So we should go for a DFA over {0,1}.
 For the inner MC, speeds matter most: simple hashtable.
 
+
+model complex model (extracted from robot description)
+-------------------
 
 once we know what kind of operations we need for the model of the physical robot, refactor using spire and make it modular
 
