@@ -110,7 +110,11 @@ abstract class McExecutor extends NodeMain with Executor {
       }
 
       def loop() {
-        mc.oneStep
+        val somethingNew = mc.oneStep
+        if (!somethingNew) {
+          mc.printStats
+          System.exit(0)
+        }
       }
     })
   }

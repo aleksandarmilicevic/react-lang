@@ -27,7 +27,7 @@ class LaserSensor(minAngle: Float,
     for(i <- 0 until samples) {
       val a = pose.theta + minAngle + i * da
       val intersections = world.flatMap(_.intersectLine((pose.x, pose.y), (cos(a), sin(a))).filter(_ > 0))
-      val closest = intersections.min
+      val closest = if (!intersections.isEmpty) intersections.min else maxRange
       rays(i) = min(maxRange, max(closest, minRange)).toFloat //TODO round to resolution
       intensities(i) = 1
     }

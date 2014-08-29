@@ -69,6 +69,13 @@ abstract class World extends Playground {
     }
   }
 
+  def elapse(dt: Int) {
+    for (m <- models) {
+      m.elapse(dt)
+    }
+    dispatchBoxes
+  }
+
   override def toString = {
     val buffer = new StringBuilder(1024)
     buffer.append("world {\n")
@@ -112,21 +119,39 @@ abstract class World extends Playground {
   
   
   ////////////////
-  // time & co. //
+  // sync & co. //
   ////////////////
   
-  //TODO not complete
-  //better alternative might be to grab all locks, there release and grab again, if the locks are fair that should work
-  def waitUntilStable {
-    Thread.`yield`()
+  //TODO not complete unless very strong assumptions on the scheduler
+
+  def grabAllLocks {
     for (r <- robots) {
       val acquired = r.lock.tryLock(1000, java.util.concurrent.TimeUnit.MILLISECONDS)
       if (!acquired) {
         sys.error("Robot " + r + "has been busy for more than 1000ms. infinite loop ?!?")
-      } else {
-        r.lock.unlock
       }
     }
+    for (r <- models) {
+      val acquired = r.lock.tryLock(1000, java.util.concurrent.TimeUnit.MILLISECONDS)
+      if (!acquired) {
+        sys.error("Model " + r + "has been busy for more than 1000ms. infinite loop ?!?")
+      }
+    }
+  }
+
+  def releaseAllLock {
+    for (r <- robots) {
+      r.lock.unlock()
+    }
+    for (r <- models) {
+      r.lock.unlock()
+    }
+  }
+
+  def waitUntilStable {
+    releaseAllLock
+    Thread.`yield`()
+    grabAllLocks
   }
   
   ////////////////////////////////

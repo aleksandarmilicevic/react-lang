@@ -15,6 +15,8 @@ class TwistGroundRobot( bBox: Box2D,
                         cmdTime: Int
                       ) extends Executed {
 
+    val lock = new java.util.concurrent.locks.ReentrantLock(true)
+
     /* sensor and offset w.r.t the robot frame */
     @ignore var sensors: List[(Sensor, Pose2D)] = Nil
 
@@ -76,7 +78,6 @@ class TwistGroundRobot( bBox: Box2D,
     }
 
     def elapse(t: Int) {
-      //TODO forward to the children ...
       val dt = min(t, commandTimeLeft)
 
       if (vo == 0.0) {
@@ -115,9 +116,12 @@ class TwistGroundRobot( bBox: Box2D,
 
     val listener = new org.ros.message.MessageListener[geometry_msgs.Twist]{
       def onNewMessage(message: geometry_msgs.Twist) {
-        commandTimeLeft = cmdTime
-        vx = message.getLinear.getX
-        vo = message.getAngular.getX
+        lock.lock
+        try {
+          commandTimeLeft = cmdTime
+          vx = message.getLinear.getX
+          vo = message.getAngular.getX
+        } finally lock.unlock
       }
     }
 

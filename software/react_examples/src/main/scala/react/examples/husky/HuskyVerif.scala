@@ -36,12 +36,12 @@ class HuskyVerif extends World {
 
   /////////
 
-  val husky1 = new HuskyTeleop("husky1")
+  val husky1 = new HuskyTeleop("/husky1")
   val m1 = new TwistGroundRobot(new Box2D(-0.5, -0.5, 0, 1, 1),
-                                "/husky1/cmd_vel",
+                                "/husky1/husky/cmd_vel",
                                 100)
-  val ls1 = new LaserSensor(-0.78f, 0.78f, 90, 0.1f, 5, 0.01f, m1, "/husky1/laser", 30)
-  val os1 = new OdometrySensor("husky1", m1, "/husky1/p3d", 30)
+  val ls1 = new LaserSensor(-0.78f, 0.78f, 90, 0.1f, 5, 0.01f, m1, "/husky1/laser", 20)
+  val os1 = new OdometrySensor("husky1", m1, "/husky1/p3d", 20)
   m1.addSensor(ls1, Pose2D(0,0,0))
   m1.addSensor(os1, Pose2D(0,0,0))
 

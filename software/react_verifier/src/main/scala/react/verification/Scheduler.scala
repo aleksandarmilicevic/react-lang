@@ -4,16 +4,18 @@ import java.nio.ByteBuffer
 import react.runtime.ScheduledTask
 import scala.collection.mutable.PriorityQueue
 
-//TODO should execute all the alternative but in different permuations
 class SchedulingPoint(tasks: List[ScheduledTask], scheduler: Scheduler) extends BranchingPoint {
 
-  def alternatives = tasks.length
+  val perms = tasks.permutations.toList
+
+  def alternatives = perms.length
 
   def act(alt: Int) {
-    val elt = tasks(alt)
-    elt.fct()
-    if (elt.isPeriodic) {
-      scheduler.schedule(elt)
+    for (t <- perms(alt)) {
+      t.fct()
+      if (t.isPeriodic) {
+        scheduler.schedule(t)
+      }
     }
   }
 
@@ -42,10 +44,14 @@ class Scheduler extends react.runtime.Scheduler {
     if (queue.isEmpty) {
       Nil
     } else {
+      val old = queue.size
       val task = queue.dequeue
-      val same = queue.takeWhile(_.expires == task.expires)
-      queue.dropWhile(_.expires == task.expires) //take while does not modify the original queue
-      task :: same.toList
+      val same = queue.takeWhile(_.expires == task.expires).toList
+      while(!queue.isEmpty && queue.head.expires == task.expires) {
+        queue.dequeue
+      }
+      assert(old == queue.size + 1 + same.size, "nextTasks: queue size does not agree")
+      task :: same
     }
   }
 
@@ -73,13 +79,18 @@ class Scheduler extends react.runtime.Scheduler {
     val size = 2 + queue.size* bytePerTask
     val buffer = ByteBuffer.allocate(size)
     buffer.putShort(now.toShort)
-    for(t <- queue){
+    var content = List[ScheduledTask]()
+    while (!queue.isEmpty) {
+      val t = queue.dequeue
       val idx = cache.idx(t)
       if (bytePerTask == 1)      buffer.put(idx.toByte)
       else if (bytePerTask == 2) buffer.putShort(idx.toShort)
       else if (bytePerTask == 4) buffer.putInt(idx)
       else sys.error("bytePerTask has an incorrect size")
+      content = t :: content
     }
+    for (t <- content) queue.enqueue(t)
+    assert(size == 2 + queue.size* bytePerTask, "error while sazing scheduler state")
     buffer.array
   }
 
@@ -88,7 +99,7 @@ class Scheduler extends react.runtime.Scheduler {
     queue.clear
     _now = buffer.getShort
     val tasks = buffer.remaining / bytePerTask
-    var t = _now
+    var t = _now + 1 //assumption that we don't have task scheduled now
     for (i <- 0 until tasks){
       //restore the task (and their expiration)
       val index: Int =
@@ -98,7 +109,7 @@ class Scheduler extends react.runtime.Scheduler {
         else sys.error("bytePerTask has an incorrect size")
       val task = cache.value(index)
       //find the next expiration
-      val exp = math.ceil(t/task.period.toDouble).toInt * task.period //TODO expires should be > now
+      val exp = math.ceil(t/task.period.toDouble).toInt * task.period
       task.expires = exp
       t = exp
       task.cancelled = false

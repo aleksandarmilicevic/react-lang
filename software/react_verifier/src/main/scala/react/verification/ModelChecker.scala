@@ -47,6 +47,7 @@ class ModelChecker(world: World, scheduler: Scheduler) {
       val dfa = s2.reduce( union )
       permanentStates.addDFA(dfa)
       permanentStates.minimize()
+      permanentStatesStored += s.size
     }
   }
 
@@ -75,7 +76,9 @@ class ModelChecker(world: World, scheduler: Scheduler) {
   }
   
   def getSchedulerState(s: State): State = {
-    s.drop(wl)
+    val sched = s.drop(wl)
+    //Logger("ModelChecker", LogWarning, "sched = " + sched.size + ", s = " + s.size)
+    sched
   }
 
   def addDefaultSchedulerState(s: State): State = {
@@ -83,7 +86,11 @@ class ModelChecker(world: World, scheduler: Scheduler) {
   }
 
   def saveStateWithScheduler: State = {
-    world.getCurrentState ++ scheduler.saveState
+    val w = world.getCurrentState
+    val s = scheduler.saveState
+    val full = w ++ s
+    //Logger("ModelChecker", LogWarning, "wl = " + wl + ", w = " + w.size + ", s = " + s.size + ", full = " + full.size)
+    full
   }
 
   def saveStateWithoutScheduler: State = {
@@ -91,6 +98,7 @@ class ModelChecker(world: World, scheduler: Scheduler) {
   }
 
   def restoreStateWithScheduler(s: State) {
+    //Logger("ModelChecker", LogNotice, scheduler.toString)
     world.restoreState(s)
     scheduler.restoreState(getSchedulerState(s))
   }
@@ -104,6 +112,12 @@ class ModelChecker(world: World, scheduler: Scheduler) {
   // taking steps //
   //////////////////
 
+  def step(bp: BranchingPoint, i: Int) {
+    bp.act(i) //TODO add a timeout for infinite loops 
+    world.waitUntilStable
+    statesGenerated += 1
+  }
+
   /** executes until to next period */
   def controllerStep(s: State): Iterable[State] = {
     restoreStateWithScheduler(s)
@@ -112,20 +126,16 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     } else {
       //continuous behaviour until the next discrete action
       val dt = scheduler.timeToNext.toInt
-      Logger("ModelChecker", LogNotice, "controller step: Δt = " + dt + ", t = " + scheduler.now)
-      Logger("ModelChecker", LogNotice, scheduler.toString)
+      //Logger("ModelChecker", LogNotice, "controller step: Δt = " + dt + ", t = " + scheduler.now)
+      //Logger("ModelChecker", LogNotice, scheduler.toString)
       scheduler.elapse(dt)
-      for (m <- world.models) {
-        m.elapse(dt)
-      }
-      world.dispatchBoxes
+      world.elapse(dt)
       //execute the next action
-      val s2 = saveStateWithScheduler
       val bp = scheduler.nextBP
+      val s2 = saveStateWithScheduler
       for (i <- 0 until bp.alternatives) yield {
         restoreStateWithScheduler(s2)
-        bp.act(i) //TODO add a timeout for infinite loops 
-        world.waitUntilStable
+        step(bp, i)
         val s3 = saveStateWithScheduler
         if (!world.safe) {
           Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
@@ -142,12 +152,11 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     restoreStateWithScheduler(s)
     val bp = new BranchingPoints(world.ghosts)
     val alt = bp.alternatives
-    Logger("ModelChecker", LogNotice, "ghost steps (|branching point| = " + alt + ")")
+    //Logger("ModelChecker", LogNotice, "ghost steps (|branching point| = " + alt + ")")
     //Logger("ModelChecker", LogNotice, "s  = " + new RichState(s))
     for(i <- 0 until alt) yield {
       restoreStateWithScheduler(s)
-      bp.act(i) //TODO add a timeout for infinite loops 
-      world.waitUntilStable
+      step(bp, i)
       val s2 = saveStateWithScheduler
       //Logger("ModelChecker", LogNotice, "s2 = " + new RichState(s2))
       if (!world.safe) {
@@ -163,18 +172,24 @@ class ModelChecker(world: World, scheduler: Scheduler) {
   //first, it generates all the reachable states by ghost perturbations (simulates user inputs, etc...)
   //then, we do the periodic controller update
   def innerLoop(s: State): Iterable[State] = {
+    var cnt = 0
     //the ghost steps
     transientStates.clear()
     val s2 = addDefaultSchedulerState(s)
     transientStates += s2
+    transientStatesStored += 1
     putT(s2)
     while(!frontierT.isEmpty) {
-      Logger("ModelChecker", LogNotice, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
+      if (cnt % 100 == 0) {
+        Logger("ModelChecker", LogNotice, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
+      }
+      cnt += 1 
       val s = getT
       val s2 = ghostStep(s)
       for (x <- s2) {
         if (!transientStates.contains(x)) {
           transientStates += x
+          transientStatesStored += 1
           putT(x)
         }
       }
@@ -182,12 +197,16 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     //the controller step
     transientStates foreach (rs => putT(rs.state))
     while(!frontierT.isEmpty) {
-      Logger("ModelChecker", LogNotice, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
+      if (cnt % 100 == 0) {
+        Logger("ModelChecker", LogNotice, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
+      }
+      cnt += 1 
       val s = getT
       val s2 = controllerStep(s)
       for (x <- s2) {
         if (!transientStates.contains(x)) {
           transientStates += x
+          transientStatesStored += 1
           putT(x)
         }
       }
@@ -206,7 +225,26 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     })
   }
   
-  def outerLoop = {
+  def init {
+    Logger("ModelChecker", LogNotice, "initializing model-checker.")
+    Logger("ModelChecker", LogNotice, world.stateSpaceDescription)
+    defaultSchedulerState = scheduler.saveState
+    period = scheduler.computePeriod
+    Logger("ModelChecker", LogNotice, "period = " + period)
+    Logger("ModelChecker", LogNotice, scheduler.toString)
+    val initState = saveStateWithoutScheduler
+    permanentStates.addState(initState)
+    permanentStatesStored += 1
+    put(initState)
+    if(!world.safe) {
+      Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
+      throw new SafetyError("initial state", List(initState))
+    }
+    world.grabAllLocks
+    startTime = java.lang.System.currentTimeMillis()
+  }
+
+  def oneStep = {
     Logger("ModelChecker", LogNotice, "outer loop (|permantent states|: " + permanentStates.size + ", frontier = " + frontier.size + ")")
     if (!frontier.isEmpty) {
       val s = get
@@ -216,27 +254,32 @@ class ModelChecker(world: World, scheduler: Scheduler) {
       val (newStates, newWords) = news.unzip
       addToPermanent(newWords)
       newStates.seq foreach put
+      true
+    } else {
+      false
     }
   }
 
-  def init {
-    Logger("ModelChecker", LogNotice, "initializing model-checker.")
-    Logger("ModelChecker", LogNotice, world.stateSpaceDescription)
-    defaultSchedulerState = scheduler.saveState
-    period = scheduler.computePeriod
-    Logger("ModelChecker", LogNotice, "period = " + period)
-    Logger("ModelChecker", LogNotice, scheduler.toString)
-    val initState = saveStateWithScheduler
-    permanentStates.addState(initState)
-    put(initState)
-    if(!world.safe) {
-      Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
-      throw new SafetyError("initial state", List(initState))
-    }
-  }
 
-  def oneStep = {
-    outerLoop
+  ///////////
+  // stats //
+  ///////////
+
+  var startTime = 0l
+  var statesGenerated = 0l
+  var transientStatesStored = 0l
+  var permanentStatesStored = 0l
+  //var numberOfPeriod = 0l
+
+  def printStats {
+    val dt = java.lang.System.currentTimeMillis() - startTime
+    val sec = dt / 1000
+    val ms = dt % 1000
+    Logger("ModelChecker", LogNotice, "Verification took " + sec + "." + ms + "seconds")
+    Logger("ModelChecker", LogNotice, "  #states generated = " + statesGenerated)
+    Logger("ModelChecker", LogNotice, "  #transient states = " + transientStatesStored)
+    Logger("ModelChecker", LogNotice, "  #permanent states = " + permanentStatesStored)
+    //todo some more ...
   }
 
 }
