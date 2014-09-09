@@ -26,6 +26,11 @@ class HuskyGridSnap(_id: String) extends GroundRobot(_id) with FsmController {
     d < 0.2
   }
 
+  def snap() = {
+    publish("/gazebo/set_model_state", 
+      Command.moveToAndOrient(modelName(), targetX, targetY, targetO))
+  }
+
   //update the position with the info from the robot
   sensor[Odometry]("p3d"){
     case GetPose(pX, pY, pT) =>
@@ -59,113 +64,120 @@ class HuskyGridSnap(_id: String) extends GroundRobot(_id) with FsmController {
     //input from keyboard
     on {
       case Key.UP =>
-          val (x,y,o) = currentIntegralPosition
-          if (frontDistance > 1.5) {
-            o match {
-              case North => targetX = x; targetY = y + 1
-              case South => targetX = x; targetY = y - 1
-              case East  => targetX = x + 1; targetY = y
-              case West  => targetX = x - 1; targetY = y
-            }
-            println("move forward")
-            nextState('moving)
-          } else {
-            println("too close")
+        val (x,y,o) = currentIntegralPosition
+        if (frontDistance > 1.5) {
+          o match {
+            case North => targetX = x; targetY = y + 1
+            case South => targetX = x; targetY = y - 1
+            case East  => targetX = x + 1; targetY = y
+            case West  => targetX = x - 1; targetY = y
           }
+          println("move forward")
+          snap()
+          // nextState('moving)
+        } else {
+          println("too close")
+        }
       case Key.LEFT => 
-          val (x,y,o) = currentIntegralPosition
-          targetO = Angle.normalize(o.rad + math.Pi / 2)
-          println("turn left")
-          nextState('turning)
+        val (x,y,o) = currentIntegralPosition
+        targetO = Angle.normalize(o.rad + math.Pi / 2)
+        println("turn left")
+        snap()
+        // nextState('turning)
       case Key.RIGHT =>
-          val (x,y,o) = currentIntegralPosition
-          targetO = Angle.normalize(o.rad - math.Pi / 2)
-          println("turn right")
-          nextState('turning)
+        val (x,y,o) = currentIntegralPosition
+        targetO = Angle.normalize(o.rad - math.Pi / 2)
+        println("turn right")
+        snap()
+        // nextState('turning)
     }
-
-
-  //every(100){
-  //  //decide what to do next
-  //  val (x,y,o) = currentIntegralPosition
-  //  (scala.util.Random.nextInt % 4) match {
-  //    case 0 =>
-  //      targetO = Angle.normalize(o.rad + math.Pi / 2)
-  //      state = sOrientation
-  //      println("turn left")
-  //      nextState('turning)
-  //    case 1 =>
-  //      targetO = Angle.normalize(o.rad - math.Pi / 2)
-  //      println("turn right")
-  //      nextState('turning)
-  //    case _ =>
-  //      if (frontDistance > 1.5) {
-  //        o match {
-  //          case North => targetX = x; targetY = y + 1
-  //          case South => targetX = x; targetY = y - 1
-  //          case East  => targetX = x + 1; targetY = y
-  //          case West  => targetX = x - 1; targetY = y
-  //        }
-  //        println("move forward")
-  //        nextState('moving)
-  //      } else {
-  //        println("too close")
-  //      }
-  //  }
-  //}
-
   }
 
   state('moving) {
-    
-    every(100){
-      //moving the frame at the robot position
-      val dx = targetX - x
-      val dy = targetY - y
-      if (closeEnough(dx, dy)) {
-        publish("/gazebo/set_model_state", Command.moveToAndOrient(modelName(), targetX, targetY, targetO))
-        nextState('loop)
-      } else {
-        //normal to the line on which the robot currently moves
-        val nx = math.sin(orientation)
-        val ny = math.cos(orientation)
-        //distance between T and the line
-        val d = dx*nx + dy*ny
-        //projection of T on the line
-        val px = dx - d * nx
-        val py = dy - d * ny
-        val p = math.sqrt( px*px + py*py )
-        //compute an arc to the next position
-        val ang = -math.atan2(d, p)
-        val sign = (px * ny + py * nx).signum
-        val lin = sign * p / math.cos(ang)
-        //scale down
-        val rawScale = math.min(vMaxLinear / lin.abs, vMaxAngle / ang.abs)
-        val scale = math.min(rawScale, 10)
-        //
-        val cmd = Command.setSpeed(scale * lin, scale * ang)
-        publish("husky/cmd_vel", cmd)
-        if(rawScale >= 10) {
-          nextState('turning)
-        }
-      }
-    }
 
+    //moving the frame at the robot position
+    // val dx = targetX - x
+    // val dy = targetY - y
+    // if (closeEnough(dx, dy)) {
+    //   snap()
+    //   nextState('loop)
+    // } else {
+    //     //normal to the line on which the robot currently moves
+    //     val nx = math.sin(orientation)
+    //     val ny = math.cos(orientation)
+    //     //distance between T and the line
+    //     val d = dx*nx + dy*ny
+    //     //projection of T on the line
+    //     val px = dx - d * nx
+    //     val py = dy - d * ny
+    //     val p = math.sqrt( px*px + py*py )
+    //     //compute an arc to the next position
+    //     val ang = -math.atan2(d, p)
+    //     val sign = (px * ny + py * nx).signum
+    //     val lin = sign * p / math.cos(ang)
+    //     //scale down
+    //     val rawScale = math.min(vMaxLinear / lin.abs, vMaxAngle / ang.abs)
+    //     val scale = math.min(rawScale, 10)
+    //     //
+    //     // val cmd = Command.setSpeed(scale * lin, scale * ang)
+    //     val cmd = Command.setSpeed(scale * lin, 0)
+    //     publish("husky/cmd_vel", cmd)
+    //     if(rawScale >= 10) {
+    //       snap()
+    //       // nextState('turning)
+    //     }
+    // }
   }
+
+
+  // state('moving) {
+  //   every(30){
+  //     //moving the frame at the robot position
+  //     val dx = targetX - x
+  //     val dy = targetY - y
+  //     if (closeEnough(dx, dy)) {
+  //       snap()
+  //       nextState('loop)
+  //     } else {
+  //       //normal to the line on which the robot currently moves
+  //       val nx = math.sin(orientation)
+  //       val ny = math.cos(orientation)
+  //       //distance between T and the line
+  //       val d = dx*nx + dy*ny
+  //       //projection of T on the line
+  //       val px = dx - d * nx
+  //       val py = dy - d * ny
+  //       val p = math.sqrt( px*px + py*py )
+  //       //compute an arc to the next position
+  //       val ang = -math.atan2(d, p)
+  //       val sign = (px * ny + py * nx).signum
+  //       val lin = sign * p / math.cos(ang)
+  //       //scale down
+  //       val rawScale = math.min(vMaxLinear / lin.abs, vMaxAngle / ang.abs)
+  //       val scale = math.min(rawScale, 10)
+  //       //
+  //       // val cmd = Command.setSpeed(scale * lin, scale * ang)
+  //       val cmd = Command.setSpeed(scale * lin, 0)
+  //       publish("husky/cmd_vel", cmd)
+  //       if(rawScale >= 10) {
+  //         snap()
+  //         // nextState('turning)
+  //       }
+  //     }
+  //   }
+  // }
   
-  state('turning) {
-
-    every(100){
-      val delta = Angle.normalize(targetO - orientation)
-      val da = clamp(10 * delta, -vMaxAngle, vMaxAngle)
-      val cmd = Command.setSpeed(0, da)
-      publish("husky/cmd_vel", cmd)
-      if(da < vMaxAngle && da > -vMaxAngle) {
-        nextState('loop)
-      }
-    }
-
-  }
+  // state('turning) {
+  //   every(100){
+  //     val delta = Angle.normalize(targetO - orientation)
+  //     val da = clamp(10 * delta, -vMaxAngle, vMaxAngle)
+  //     val cmd = Command.setSpeed(0, da)
+  //     publish("husky/cmd_vel", cmd)
+  //     if(da < vMaxAngle && da > -vMaxAngle) {
+  //       nextState('loop)
+  //     }
+  //   }
+  // }
 
   val vMaxAngle  = 1.0
   val vMaxLinear = 1.0
