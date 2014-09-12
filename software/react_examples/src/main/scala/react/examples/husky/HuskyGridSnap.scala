@@ -4,46 +4,9 @@ import react._
 import react.robot._
 import react.message._
 import react.examples._
+import react.examples.husky._
 
-
-class HuskyGridSnap(_id: String) extends GroundRobot(_id) with FsmController {
-
-  def currentIntegralPosition = {
-    val pX = math.round(x)
-    val pY = math.round(y)
-    val pO = Orientation.closest(orientation)
-    (pX, pY, pO)
-  }
-
-  def modelName() = {
-    _id.substring(1)
-  }
-
-  def closeEnough(dx: Double, dy: Double) = {
-    val xx = Math.abs(dx)
-    val yy = Math.abs(dy)
-    val d = Math.sqrt(xx*xx + yy+yy)
-    d < 0.2
-  }
-
-  def snap() = {
-    publish("/gazebo/set_model_state", 
-      Command.moveToAndOrient(modelName(), targetX, targetY, targetO))
-  }
-
-  //update the position with the info from the robot
-  sensor[Odometry]("p3d"){
-    case GetPose(pX, pY, pT) =>
-      x = pX
-      y = pY
-      orientation = pT
-  }
-
-  var frontDistance = 1.0
-  sensor[LaserScan]("laser"){
-    case GetRange(distance) =>
-      frontDistance = distance
-  }
+class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
 
   initialState('init)
 
@@ -66,13 +29,13 @@ class HuskyGridSnap(_id: String) extends GroundRobot(_id) with FsmController {
       case Key.UP =>
         val (x,y,o) = currentIntegralPosition
         if (frontDistance > 1.5) {
+          println("move forward")
           o match {
             case North => targetX = x; targetY = y + 1
             case South => targetX = x; targetY = y - 1
             case East  => targetX = x + 1; targetY = y
             case West  => targetX = x - 1; targetY = y
           }
-          println("move forward")
           snap()
           // nextState('moving)
         } else {
@@ -179,13 +142,9 @@ class HuskyGridSnap(_id: String) extends GroundRobot(_id) with FsmController {
   //   }
   // }
 
-  val vMaxAngle  = 1.0
-  val vMaxLinear = 1.0
-  def clamp(v: Double, vMin: Double, vMax: Double) = math.min(vMax, math.max(v, vMin))
-
-  var targetX = 0.0
-  var targetY = 0.0
-  var targetO = 0.0
+  // val vMaxAngle  = 1.0
+  // val vMaxLinear = 1.0
+  // def clamp(v: Double, vMin: Double, vMax: Double) = math.min(vMax, math.max(v, vMin))
 
 ////print some debug every 5 second
 //every(5000){
