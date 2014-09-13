@@ -8,36 +8,42 @@ import react.examples.husky._
 
 class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
 
+  val tmpWait = getEnv("REACT_STEP_WAIT", 1)
+  val steps = getEnv("REACT_STEPS", 70)
+  var stepCnt = 0
+  var dX = 0.0
+  var dY = 0.0
+  var dO = 0.0
+
   initialState('init)
 
   state('init){
-
     every(100){
-      val (x,y,o) = currentIntegralPosition
-      targetX = x
-      targetY = y
-      targetO = o.rad
-      nextState('loop)
+      if (poseUpdated) {
+        val (x,y,o) = currentIntegralPosition
+        targetX = x
+        targetY = y
+        targetO = o.rad
+        nextState('loop)
+      }
     }
-
   }
 
   state('loop) {
-
     //input from keyboard
     on {
       case Key.UP =>
         val (x,y,o) = currentIntegralPosition
-        if (frontDistance > 1.5) {
+        if (distanceUpdated && frontDistance > saveDistance) {
           println("move forward")
           o match {
-            case North => targetX = x; targetY = y + 1
+            case North => targetX = x; targetY = y + 1; 
             case South => targetX = x; targetY = y - 1
             case East  => targetX = x + 1; targetY = y
             case West  => targetX = x - 1; targetY = y
           }
-          snap()
-          // nextState('moving)
+          initMoving()
+          nextState('moving)
         } else {
           println("too close")
         }
@@ -46,117 +52,37 @@ class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
         targetO = Angle.normalize(o.rad + math.Pi / 2)
         println("turn left")
         snap()
-        // nextState('turning)
       case Key.RIGHT =>
         val (x,y,o) = currentIntegralPosition
         targetO = Angle.normalize(o.rad - math.Pi / 2)
         println("turn right")
         snap()
-        // nextState('turning)
     }
   }
 
   state('moving) {
-
-    //moving the frame at the robot position
-    // val dx = targetX - x
-    // val dy = targetY - y
-    // if (closeEnough(dx, dy)) {
-    //   snap()
-    //   nextState('loop)
-    // } else {
-    //     //normal to the line on which the robot currently moves
-    //     val nx = math.sin(orientation)
-    //     val ny = math.cos(orientation)
-    //     //distance between T and the line
-    //     val d = dx*nx + dy*ny
-    //     //projection of T on the line
-    //     val px = dx - d * nx
-    //     val py = dy - d * ny
-    //     val p = math.sqrt( px*px + py*py )
-    //     //compute an arc to the next position
-    //     val ang = -math.atan2(d, p)
-    //     val sign = (px * ny + py * nx).signum
-    //     val lin = sign * p / math.cos(ang)
-    //     //scale down
-    //     val rawScale = math.min(vMaxLinear / lin.abs, vMaxAngle / ang.abs)
-    //     val scale = math.min(rawScale, 10)
-    //     //
-    //     // val cmd = Command.setSpeed(scale * lin, scale * ang)
-    //     val cmd = Command.setSpeed(scale * lin, 0)
-    //     publish("husky/cmd_vel", cmd)
-    //     if(rawScale >= 10) {
-    //       snap()
-    //       // nextState('turning)
-    //     }
-    // }
+    every(tmpWait) {
+      if (stepCnt == steps) {
+        snap()
+        distanceUpdated = false
+        nextState('loop)
+      } else {
+        stepCnt += 1
+        x += dX
+        y += dY
+        orientation += dO
+        println("micro step " + stepCnt + " to (" + x + ", " + y + ", " + orientation + ")")
+        snapTo(x, y, orientation)
+      }
+    }
   }
 
-
-  // state('moving) {
-  //   every(30){
-  //     //moving the frame at the robot position
-  //     val dx = targetX - x
-  //     val dy = targetY - y
-  //     if (closeEnough(dx, dy)) {
-  //       snap()
-  //       nextState('loop)
-  //     } else {
-  //       //normal to the line on which the robot currently moves
-  //       val nx = math.sin(orientation)
-  //       val ny = math.cos(orientation)
-  //       //distance between T and the line
-  //       val d = dx*nx + dy*ny
-  //       //projection of T on the line
-  //       val px = dx - d * nx
-  //       val py = dy - d * ny
-  //       val p = math.sqrt( px*px + py*py )
-  //       //compute an arc to the next position
-  //       val ang = -math.atan2(d, p)
-  //       val sign = (px * ny + py * nx).signum
-  //       val lin = sign * p / math.cos(ang)
-  //       //scale down
-  //       val rawScale = math.min(vMaxLinear / lin.abs, vMaxAngle / ang.abs)
-  //       val scale = math.min(rawScale, 10)
-  //       //
-  //       // val cmd = Command.setSpeed(scale * lin, scale * ang)
-  //       val cmd = Command.setSpeed(scale * lin, 0)
-  //       publish("husky/cmd_vel", cmd)
-  //       if(rawScale >= 10) {
-  //         snap()
-  //         // nextState('turning)
-  //       }
-  //     }
-  //   }
-  // }
-  
-  // state('turning) {
-  //   every(100){
-  //     val delta = Angle.normalize(targetO - orientation)
-  //     val da = clamp(10 * delta, -vMaxAngle, vMaxAngle)
-  //     val cmd = Command.setSpeed(0, da)
-  //     publish("husky/cmd_vel", cmd)
-  //     if(da < vMaxAngle && da > -vMaxAngle) {
-  //       nextState('loop)
-  //     }
-  //   }
-  // }
-
-  // val vMaxAngle  = 1.0
-  // val vMaxLinear = 1.0
-  // def clamp(v: Double, vMin: Double, vMax: Double) = math.min(vMax, math.max(v, vMin))
-
-////print some debug every 5 second
-//every(5000){
-//  println("info:")
-//  println("  x: " + x)
-//  println("  y: " + y)
-//  println("  θ: " + orientation)
-//  val (_x,_y,_o) = currentIntegralPosition
-//  println(" integral:")
-//  println("  x: " + _x)
-//  println("  y: " + _y)
-//  println("  θ: " + _o)
-//}
+  def initMoving() = {
+    dX = (targetX - x) / (1.0*steps)
+    dY = (targetY - y) / (1.0*steps)
+    // dO = (targetO - orientation) / (1.0*steps)
+    dO = 0.0
+    stepCnt = 0
+  }
 
 }

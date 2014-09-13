@@ -115,11 +115,11 @@
     <!-- DECORATIONS -->
     <!-- Top Plate -->
     <husky_part parent="base_footprint" name="top_plate" mesh="top_plate" 
-          colour="Yellow"
+          colour="$(arg color)"
           translateX="0.0" translateY="0.0" translateZ="${wheel_x_size/2 - base_z_origin_to_wheel_origin}" 
           rotateX="0.0" rotateY="0.0" rotateZ="0.0"/>
     <gazebo reference="base_footprint_top_plate_part">
-        <material>Gazebo/Yellow</material>
+        <material>Gazebo/$(arg color)</material>
     </gazebo>
 
     <!-- User Rail -->
@@ -213,13 +213,14 @@
             <horizontal>
               <samples>90</samples>
               <resolution>1</resolution>
-              <min_angle>-0.1</min_angle>
-              <max_angle>0.1</max_angle>
+              <min_angle>-0.2</min_angle>
+              <max_angle>0.2</max_angle>
+              
             </horizontal>
           </scan>
           <range>
             <min>0.01</min>
-            <max>10.0</max>
+            <max>3.0</max>
             <resolution>0.01</resolution>
           </range>
         </ray>

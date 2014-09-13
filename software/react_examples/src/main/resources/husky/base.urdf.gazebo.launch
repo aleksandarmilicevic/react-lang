@@ -33,7 +33,8 @@ robot model in Gazebo
     <!-- new stuff -->
     <arg name="robot_name" default="husky1"/>
     <arg name="init_pose" default="-x 0 -y 0 -z 0"/>
-
+    <arg name="color" default="Yellow"/>
+    
     <arg name="gps_enabled" default="true"/>
     <arg name="imu_enabled" default="true"/>
     <arg name="lidar_enabled" default="true"/>
@@ -41,6 +42,7 @@ robot model in Gazebo
     <param name="robot_description" command="$(find xacro)/xacro.py 
       'base.urdf.xacro' 
         robot_name:=$(arg robot_name)
+        color:=$(arg color)
         gps_enabled:=$(arg gps_enabled)
         imu_enabled:=$(arg imu_enabled)
         lidar_enabled:=$(arg lidar_enabled)

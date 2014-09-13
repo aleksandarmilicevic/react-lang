@@ -913,9 +913,18 @@
       <pose>8 8.59332 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>598 123000000</sim_time>
-      <real_time>20 22398913</real_time>
-      <wall_time>1408555479 180191096</wall_time>
+      <sim_time>640 798000000</sim_time>
+      <real_time>42 970317685</real_time>
+      <wall_time>1410636258 263752871</wall_time>
+      <model name='Lamp Post'>
+        <pose>-1 -6.51471 0 0 -0 0</pose>
+        <link name='link'>
+          <pose>-1 -6.51471 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
       <model name='brick_box_3x1x3'>
         <pose>-0.894139 -5.0168 0 0 -0 0</pose>
         <link name='chassis'>
@@ -1094,5 +1103,42 @@
         <view_controller>orbit</view_controller>
       </camera>
     </gui>
+    <model name='Lamp Post'>
+      <static>1</static>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://lamp_post/meshes/lamp_post.dae</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://lamp_post/meshes/lamp_post.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <velocity_decay>
+          <linear>0</linear>
+          <angular>0</angular>
+        </velocity_decay>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <pose>-1 -6.51471 0 0 -0 0</pose>
+    </model>
   </world>
 </sdf>

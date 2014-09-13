@@ -7,11 +7,26 @@ import react.examples._
 
 class HuskyRobot(_id: String) extends GroundRobot(_id) {
 
+  def getEnv(key: String, defaultValue: Int): Int = {
+    val ans = System.getenv(key)
+    if (ans != null)
+      try {
+        return Integer.parseInt(ans)
+      } catch {
+        case e: NumberFormatException => defaultValue
+      }
+    else
+      return defaultValue
+  }
+
   var targetX = 0.0
   var targetY = 0.0
   var targetO = 0.0
 
-  var frontDistance = 1.0
+  val safeDistance    = getEnv("REACT_SAFE_DISTANCE", 1.5)
+  var frontDistance   = 1.0
+  var poseUpdated     = false
+  var distanceUpdated = false
 
   def currentIntegralPosition = {
     val pX = math.round(x)
@@ -32,8 +47,11 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
   }
 
   def snap() = {
-    publish("/gazebo/set_model_state", 
-      Command.moveToAndOrient(modelName(), targetX, targetY, targetO))
+    snapTo(targetX, targetY, targetO)
+  }
+
+  def snapTo(x: Double, y: Double, o: Double) = {
+    publish("/gazebo/set_model_state", Command.moveToAndOrient(modelName(), x, y, o))
   }
 
   //update the position with the info from the robot
@@ -42,12 +60,14 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
       x = pX
       y = pY
       orientation = pT
+      poseUpdated = true
   }
 
   sensor[LaserScan]("laser"){
     case GetRange(distance) =>
-      println("distance = " + distance)
       frontDistance = distance
+      distanceUpdated = true
+      println("laser: distance = " + frontDistance)
   }
 
 
