@@ -8,8 +8,8 @@ import react.examples.husky._
 
 class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
 
-  val tmpWait = getEnv("REACT_STEP_WAIT", 1)
-  val steps = getEnv("REACT_STEPS", 70)
+  val tmpWait = getEnvI("REACT_STEP_WAIT", 1)
+  val steps = getEnvI("REACT_STEPS", 70)
   var stepCnt = 0
   var dX = 0.0
   var dY = 0.0
@@ -34,7 +34,7 @@ class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
     on {
       case Key.UP =>
         val (x,y,o) = currentIntegralPosition
-        if (distanceUpdated && frontDistance > saveDistance) {
+        if (distanceUpdated && frontDistance > safeDistance) {
           println("move forward")
           o match {
             case North => targetX = x; targetY = y + 1; 

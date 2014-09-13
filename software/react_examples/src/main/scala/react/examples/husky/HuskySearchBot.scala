@@ -1,77 +1,14 @@
 package react.examples.husky
 
-import java.util.Random
 import react._
 import react.robot._
 import react.message._
 import react.examples._
+import react.examples.husky._
 
+class HuskySearchBot(_id: String) extends HuskyRobot(_id) with FsmController {
 
-class HuskySearchBot(_id: String) extends GroundRobot(_id) with FsmController {
-
-  def currentIntegralPosition = {
-    val pX = math.round(x)
-    val pY = math.round(y)
-    val pO = Orientation.closest(orientation)
-    (pX, pY, pO)
-  }
-
-  def modelName() = {
-    _id.substring(1)
-  }
-
-  // def pickTarget() = {
-  //   val dx = maxX - minX
-  //   targetX = minX + new Random().nextInt(dx + 2)
-  //   val dy = maxY - minY
-  //   targetY = minY + new Random().nextInt(dy + 2)
-  // }
-
-  def clamp(v: Double, vMin: Double, vMax: Double) = math.min(vMax, math.max(v, vMin))
-
-  def goStraightBy(d: Double) = {
-    val (x, y, o) = currentIntegralPosition
-    o match {
-      case North => myX = x; myY = y + d; 
-      case South => myX = x; myY = y - d; 
-      case East  => myX = x + d; myY = y; 
-      case West  => myX = x - d; myY = y; 
-    }
-    snap()
-  }
-
-  def rotate(rad: Double) = {
-    val (x,y,o) = currentIntegralPosition
-    myO = Angle.normalize(o.rad - rad)
-    snap()
-  }
-  def turnRight() = rotate(-math.Pi / 2)
-  def turnLeft()  = rotate(math.Pi / 2)
-
-  def snap() = {
-    publish("/gazebo/set_model_state", 
-      Command.moveToAndOrient(modelName(), myX, myY, myO))
-  }
-
-  //update the position with the info from the robot
-  sensor[Odometry]("p3d"){
-    case GetPose(pX, pY, pT) =>
-      x = pX
-      y = pY
-      orientation = pT
-      if (currentState == 'init) {
-        // pickTarget()
-        nextState('main)
-        println(" === switched to 'main state")
-      }
-  }
-
-  var frontDistance = 1.0
-  sensor[LaserScan]("laser"){
-    case GetRange(distance) =>
-      frontDistance = distance
-      println("!!!!!!! laser info received: distance = " + distance)
-  }
+  val botWaitTime = getEnvI("REACT_BOT_WAIT_TIME", 500)
 
   val maxX = 10
   val minX = -10
@@ -88,17 +25,17 @@ class HuskySearchBot(_id: String) extends GroundRobot(_id) with FsmController {
   initialState('init)
 
   state('init) {
-    println("@@@@@@ waiting to receive odometry data...")
+    every(100) { if (poseUpdated) nextState('main) }
   }
 
   state('main) {
-    every(500) {
-      if (frontDistance > 2.5) {
-        val whatNext = new Random().nextInt(7)
+    every(botWaitTime) {
+      if (frontDistance > safeDistance) {
+        val whatNext = new java.util.Random().nextInt(7)
         whatNext match {
-          case 0 => turnLeft();        println("<--")
-          case 1 => turnRight();       println("-->")
-          case _ => goStraightBy(1.0); println("^^^")
+          case 0 => turnLeft();      println("<--")
+          case 1 => turnRight();     println("-->")
+          case _ => goStraightBy(1); println("^^^")
         }        
       } else {
         turnLeft()
