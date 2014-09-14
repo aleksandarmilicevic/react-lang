@@ -9,7 +9,7 @@ import react.examples.husky._
 class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
 
   val tmpWait = getEnvI("REACT_STEP_WAIT", 1)
-  val steps = getEnvI("REACT_STEPS", 70)
+  val steps = getEnvI("REACT_STEPS", 20)
   var stepCnt = 0
   var dX = 0.0
   var dY = 0.0
@@ -35,7 +35,6 @@ class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
       case Key.UP =>
         val (x,y,o) = currentIntegralPosition
         if (distanceUpdated && frontDistance > safeDistance) {
-          println("move forward")
           o match {
             case North => targetX = x; targetY = y + 1; 
             case South => targetX = x; targetY = y - 1
@@ -47,16 +46,8 @@ class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
         } else {
           println("too close")
         }
-      case Key.LEFT => 
-        val (x,y,o) = currentIntegralPosition
-        targetO = Angle.normalize(o.rad + math.Pi / 2)
-        println("turn left")
-        snap()
-      case Key.RIGHT =>
-        val (x,y,o) = currentIntegralPosition
-        targetO = Angle.normalize(o.rad - math.Pi / 2)
-        println("turn right")
-        snap()
+      case Key.LEFT  => targetO = turnLeft()
+      case Key.RIGHT => targetO = turnRight()
     }
   }
 

@@ -47,17 +47,11 @@ class RunHuskyGridSnap extends RosExecutor {
 }
 
 class RunHuskySearchBot extends RosExecutor {
-  //define the robot we are working on
   val robot = new HuskySearchBot(Main.topic)
-  //start the gui to control the robot
-  new Remote(robot)
 }
 
 class RunHuskyPathfinder extends RosExecutor {
-  //define the robot we are working on
   val robot = new HuskyPathfinder(Main.topic)
-  //start the gui to control the robot
-  new Remote(robot)
 }
 
 object Main extends Options {

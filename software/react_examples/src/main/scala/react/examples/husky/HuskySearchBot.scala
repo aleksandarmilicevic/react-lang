@@ -8,7 +8,7 @@ import react.examples.husky._
 
 class HuskySearchBot(_id: String) extends HuskyRobot(_id) with FsmController {
 
-  val botWaitTime = getEnvI("REACT_BOT_WAIT_TIME", 500)
+  val botWaitTime = getEnvI("REACT_BOT_WAIT_TIME", 300)
 
   val maxX = 10
   val minX = -10

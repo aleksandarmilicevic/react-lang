@@ -913,13 +913,13 @@
       <pose>8 8.59332 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>640 798000000</sim_time>
-      <real_time>42 970317685</real_time>
-      <wall_time>1410636258 263752871</wall_time>
-      <model name='Lamp Post'>
-        <pose>-1 -6.51471 0 0 -0 0</pose>
+      <sim_time>761 757000000</sim_time>
+      <real_time>121 228975124</real_time>
+      <wall_time>1410729501 524049444</wall_time>
+      <model name='Lamp Post_0'>
+        <pose>-2 -7 0 0 -0 0</pose>
         <link name='link'>
-          <pose>-1 -6.51471 0 0 -0 0</pose>
+          <pose>-2 -7 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -1099,11 +1099,11 @@
     </state>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>28.4539 -2.23711 36.1242 0 0.953806 2.83131</pose>
+        <pose>28.1916 -1.85871 36.3833 0 0.953806 2.83131</pose>
         <view_controller>orbit</view_controller>
       </camera>
     </gui>
-    <model name='Lamp Post'>
+    <model name='Lamp Post_0'>
       <static>1</static>
       <link name='link'>
         <collision name='collision'>
@@ -1138,7 +1138,7 @@
         <kinematic>0</kinematic>
         <gravity>1</gravity>
       </link>
-      <pose>-1 -6.51471 0 0 -0 0</pose>
+      <pose>-2 -7 0 0 -0 0</pose>
     </model>
   </world>
 </sdf>
