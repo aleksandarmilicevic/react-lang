@@ -22,6 +22,11 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
   def getEnvI(key: String, value: Int): Int = getEnv(key, value, (s) => s.toInt)
   def getEnvD(key: String, v: Double): Double = getEnv(key, v, (s) => s.toDouble)
 
+  val STAY_PUT    = -1
+  val TURN_LEFT   = 0
+  val TURN_RIGHT  = 1
+  val GO_STRAIGHT = 2
+
   var targetX = 0.0
   var targetY = 0.0
   var targetO = 0.0
@@ -55,6 +60,10 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
 
   def snapTo(x: Double, y: Double, o: Double) = {
     publish("/gazebo/set_model_state", Command.moveToAndOrient(modelName(), x, y, o))
+    this.x = x
+    this.y = y
+    this.orientation = o
+    distanceUpdated = false
   }
 
   def goStraightBy(d: Int) = {
@@ -76,6 +85,74 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
   def turnRight() = rotate(-math.Pi / 2)
   def turnLeft()  = rotate(math.Pi / 2)
 
+  def toOp(from: (Long,Long), to: (Long,Long)): Int = {
+    val dx = to._1 - from._1
+    val dy = to._2 - from._2
+    assert(dx == 0 || dy == 0)
+    
+    def opAsIfNorth(dx: Long, dy: Long): Int = {
+      if (dx == 0 && dy == 0) {
+        println("  should stay")
+        return STAY_PUT
+      } else if (dx == 0) {
+        if (dy > 0) {
+          println("  should go straight")
+          GO_STRAIGHT
+        } else {
+          println("  should go back")
+          TURN_LEFT
+        }
+      } else if (dx < 0) {
+          println("  should turn left")
+          TURN_LEFT
+      } else {
+          println("  should turn right")
+          TURN_RIGHT
+      }
+    }
+    
+    currentIntegralPosition._3 match {
+      case North => 
+        println("pos: North")
+        opAsIfNorth(dx, dy)
+      case South => 
+        println("pos: South")
+        opAsIfNorth(-dx, -dy)
+        // if (dx == 0)
+        //   if (dy < 0) 
+        //     GO_STRAIGHT 
+        //   else 
+        //     TURN_LEFT
+        // else if (dx > 0) 
+        //   TURN_LEFT
+        // else
+        //   TURN_RIGHT
+      case East  => 
+        println("pos: East")
+        opAsIfNorth(-dy, dx)
+        // if (dy == 0)
+        //   if (dx > 0) 
+        //     GO_STRAIGHT 
+        //   else 
+        //     TURN_LEFT
+        // else if (dy > 0) 
+        //   TURN_LEFT
+        // else
+        //   TURN_RIGHT
+      case West  => 
+        println("pos: West")
+        opAsIfNorth(-dy, -dx)
+        // if (dy == 0)
+        //   if (dx < 0) 
+        //     GO_STRAIGHT 
+        //   else 
+        //     TURN_LEFT
+        // else if (dy > 0) 
+        //   TURN_LEFT
+        // else
+        //   TURN_RIGHT
+    }
+  }
 
   //update the position with the info from the robot
   sensor[Odometry]("p3d"){
@@ -90,7 +167,7 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
     case GetRange(distance) =>
       frontDistance = distance
       distanceUpdated = true
-      println("laser: distance = " + frontDistance)
+      // println("laser: distance = " + frontDistance)
   }
 
 

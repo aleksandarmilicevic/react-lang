@@ -17,7 +17,7 @@ class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
 
   initialState('init)
 
-  state('init){
+  state('init) {
     every(100){
       if (poseUpdated) {
         val (x,y,o) = currentIntegralPosition
@@ -64,7 +64,6 @@ class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
     every(tmpWait) {
       if (stepCnt == steps) {
         snap()
-        distanceUpdated = false
         nextState('loop)
       } else {
         stepCnt += 1

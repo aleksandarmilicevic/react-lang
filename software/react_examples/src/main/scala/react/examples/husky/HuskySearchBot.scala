@@ -15,9 +15,6 @@ class HuskySearchBot(_id: String) extends HuskyRobot(_id) with FsmController {
   val maxY = 10
   val minY = -10;
 
-  // var targetX = 0.0
-  // var targetY = 0.0
-
   var myX = 0.0
   var myY = 0.0
   var myO = 0.0
@@ -30,16 +27,15 @@ class HuskySearchBot(_id: String) extends HuskyRobot(_id) with FsmController {
 
   state('main) {
     every(botWaitTime) {
-      if (frontDistance > safeDistance) {
-        val whatNext = new java.util.Random().nextInt(7)
-        whatNext match {
-          case 0 => turnLeft();      println("<--")
-          case 1 => turnRight();     println("-->")
-          case _ => goStraightBy(1); println("^^^")
-        }        
-      } else {
-        turnLeft()
-        println("---->")
+      val whatNext = new java.util.Random().nextInt(7)
+      whatNext match {
+        case TURN_LEFT  => turnLeft();  println("<--")
+        case TURN_RIGHT => turnRight(); println("-->")
+        case _ => 
+          if (distanceUpdated && frontDistance > safeDistance) {
+            goStraightBy(1)
+            println("^^^")
+          }
       }
     }
   }

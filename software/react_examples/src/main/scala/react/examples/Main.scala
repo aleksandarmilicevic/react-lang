@@ -53,6 +53,13 @@ class RunHuskySearchBot extends RosExecutor {
   new Remote(robot)
 }
 
+class RunHuskyPathfinder extends RosExecutor {
+  //define the robot we are working on
+  val robot = new HuskyPathfinder(Main.topic)
+  //start the gui to control the robot
+  new Remote(robot)
+}
+
 object Main extends Options {
 
   newOption("-v", Arg.Unit(() => Logger.moreVerbose), "increase the verbosity level.")
@@ -85,9 +92,10 @@ object Main extends Options {
         org.ros.RosRun.main(Array(classOf[RunHuskyGridSnap].getName))
       case "huskyB" =>
         org.ros.RosRun.main(Array(classOf[RunHuskySearchBot].getName))
+      case "huskyP" =>
+        org.ros.RosRun.main(Array(classOf[RunHuskyPathfinder].getName))
       case other =>
-        println("unknown controller '" + other + "', using teleop instead")
-        org.ros.RosRun.main(Array(classOf[RunTurtleTeleop].getName))
+        throw new RuntimeException("Unknown robot: " + other)
     }
   }
 
