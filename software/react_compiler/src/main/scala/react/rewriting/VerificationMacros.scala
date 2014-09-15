@@ -1,6 +1,6 @@
 package react.rewriting
 
-import react.verification.Playground
+import react.verification.{Playground, Stateful}
 
 import scala.language.experimental.macros
 //import scala.reflect.macros.whitebox.Context
@@ -14,43 +14,6 @@ class ExplorableMacros(val c: Context) extends Types
 {
 
   import c.universe._
-
-  def toWord[T: c.WeakTypeTag](out: c.Expr[ByteBuffer]): c.Expr[Unit] = {
-    val toStore = permanentFields
-    //val wtt = weakTypeOf[T]
-    //c.echo(world.tree.pos, "" + wtt + ": state is composed of " + toStore.map(fieldGetter).mkString(","))
-    val storing = for (f <- toStore) yield {
-      val getter = fieldGetter(f)
-      write(f, out, getter)
-    }
-    val tree = q"""
-    {
-      ..$storing
-    }
-    """
-    c.Expr[Unit](tree)
-  }
-
-  def fromWord[T: c.WeakTypeTag](in: c.Expr[ByteBuffer]): c.Expr[Unit] = {
-
-    val restored = for (f <- permanentFields) yield {
-      val setter = fieldSetter(f)
-      read(f, in, setter)
-    }
-
-    val havoced = for (f <- transientFields) yield {
-      val setter = fieldSetter(f)
-      havoc(f, setter)
-    }
-
-    val tree = q"""
-    {
-      ..$restored
-      ..$havoced
-    }
-    """
-    c.Expr[Unit](tree)
-  }
 
   def wordLength[T: c.WeakTypeTag]: c.Expr[Int] = {
     assert(unsupportedFields.isEmpty, "unsupported fields: " + unsupportedFields)
@@ -85,6 +48,73 @@ class ExplorableMacros(val c: Context) extends Types
     }
     val tree = q"{ ..$rounding }"
     c.Expr[Unit](tree)
+  }
+  
+  def makeStateful[M: c.WeakTypeTag](robot: c.Expr[M], world: c.Expr[Playground]): c.Expr[Stateful] = {
+
+    val caches = for (f <- permanentFields if !isNative(f) ) yield {
+      val cid = cacheId(f)
+      val t = f.typeSignature
+      q"val $cid = new react.verification.Cache[$t](4)"
+    }
+
+    var length = wordLength[M]
+    
+    val storing = for (f <- permanentFields) yield {
+      val getter = fieldGetter(f)
+      write(f, c.Expr[ByteBuffer](Ident(TermName("out"))), getter)
+    }
+
+    val restored = for (f <- permanentFields) yield {
+      val setter = fieldSetter(f)
+      read(f, c.Expr[ByteBuffer](Ident(TermName("in"))), setter)
+    }
+
+    val havoced = for (f <- transientFields) yield {
+      val setter = fieldSetter(f)
+      havoc(f, setter)
+    }
+    
+    val rounding = for (f <- permanentFields) yield {
+      def r(f: TermSymbol) = {
+        val set = fieldSetter(f)
+        val get = fieldGetter(f)
+        val name = get.name.toString
+        val min = Select(world.tree, TermName(name+"Min"))
+        val max = Select(world.tree, TermName(name+"Max"))
+        val step = Select(world.tree, TermName(name+"Discretization"))
+        //c.echo(world.tree.pos, "rounding " + name + " in " + f.owner)
+        q"$set(react.verification.Stateful.round($get, $min, $max, $step))"
+      }
+      fieldGetter(f).name.toString match {
+        case "x" | "y" if f.typeSignature =:= definitions.DoubleTpe  => r(f) //TODO somthing more robust
+        case _ =>
+          //c.echo(world.tree.pos, "ignoring " + f + " in " + f.owner)
+          q"()"
+      }
+    }
+    
+    val descr = fieldsSaved[M]
+    val tree = q"""
+    new Stateful {
+      import Stateful._
+      val robot = $robot
+      ..$caches
+      def length: Int = $length
+      def round: Unit = {
+        ..$rounding
+      }
+      def serialize(out: java.nio.ByteBuffer): Unit = {
+        ..$storing
+      }
+      def deserilize(in: java.nio.ByteBuffer): Unit = {
+        ..$restored
+        ..$havoced
+      }
+      def description: String = $descr
+    }
+    """
+    c.Expr[Stateful](tree)
   }
 
 }

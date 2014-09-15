@@ -97,30 +97,43 @@ trait Types {
       def write(out: c.Expr[ByteBuffer], getter: Tree): Tree = q"$out.putByte(react.verification.OrientationCache.idx($getter))"
       def havoc(setter: Tree): Tree = q"$setter(react.verification.OrientationCache.returnSome)"
     }
-    //TODO extends to more type (MetaCache ?)
   )
-  
+
+  protected def cacheId(m: TermSymbol): TermName = TermName(m.name.toString + "__cache")
   
   /** check whether this is a supported type */
-  protected def isSupported(m: TermSymbol) = {
+  protected def isSupported(m: TermSymbol) = true
+
+  /** check whether this is a natively supported type (or if it needs a cache) */
+  protected def isNative(m: TermSymbol) = {
     val t = m.typeSignature
     supportedType.exists(_.is(t))
   }
 
   protected def length(t: Type): Int =
-    supportedType.find(_.is(t)).get.length
+    supportedType.find(_.is(t)).map(_.length).getOrElse(4)
   protected def length(s: TermSymbol): Int =
     length(s.typeSignature)
   
-  protected def write(t: Type, out: c.Expr[ByteBuffer], getter: Tree): Tree =
-    supportedType.find(_.is(t)).get.write(out, getter)
-  protected def write(s: TermSymbol, out: c.Expr[ByteBuffer], getter: Tree): Tree =
-    write(s.typeSignature, out, getter)
+  protected def write(s: TermSymbol, out: c.Expr[ByteBuffer], getter: Tree): Tree = {
+    val t = s.typeSignature
+    supportedType.find(_.is(t)) match {
+      case Some(tio) => tio.write(out, getter)
+      case None => 
+        val cid = cacheId(s)
+        q"$out.putInt($cid.idx($getter))"
+    }
+  }
 
-  protected def read(t: Type, in: c.Expr[ByteBuffer], setter: Tree): Tree =
-    supportedType.find(_.is(t)).get.read(in, setter)
-  protected def read(s: TermSymbol, in: c.Expr[ByteBuffer], setter: Tree): Tree =
-    read(s.typeSignature, in, setter)
+  protected def read(s: TermSymbol, in: c.Expr[ByteBuffer], setter: Tree): Tree = {
+    val t = s.typeSignature
+    supportedType.find(_.is(t)) match {
+      case Some(tio) => tio.read(in, setter)
+      case None =>
+        val cid = cacheId(s)
+        q"$setter($cid.value($in.getInt))"
+    }
+  }
 
   protected def havoc(t: Type, setter: Tree): Tree =
     supportedType.find(_.is(t)).get.havoc(setter)

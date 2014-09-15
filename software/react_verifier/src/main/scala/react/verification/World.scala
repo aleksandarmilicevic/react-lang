@@ -1,6 +1,6 @@
 package react.verification
 
-import react._
+import react.Robot
 import react.verification.environment._
 import react.verification.model._
 import react.verification.ghost._
@@ -29,7 +29,7 @@ abstract class World extends Playground {
   }
 
   /* add a robot in the world */
-  final def robot[T <: Robot](r: T, model: TwistGroundRobot): Unit = macro WorldMacros.addRobot[T]
+  final def robot[T1 <: Robot, T2 <: GroundRobot](r: T1, m: T2): Unit = macro WorldMacros.addRobot[T1,T2]
 
   /* ghost to 'close' the world (simulate user input, ...) */
   final def ghost[T <: Ghost](g: T): Unit = macro WorldMacros.addGhost[T]
@@ -39,7 +39,7 @@ abstract class World extends Playground {
   ///////////////////////////////////////////////////
   
   var robots: List[Robot] = Nil
-  var models: List[TwistGroundRobot] = Nil
+  var models: List[GroundRobot] = Nil
   var ghosts: List[Ghost] = Nil
   var boxes: List[Box2D] = Nil
 
@@ -192,16 +192,15 @@ class WorldMacros(val c: Context) {
 
   import c.universe._
 
-  def addRobot[T <: Robot : c.WeakTypeTag](r: c.Expr[T], model: c.Expr[TwistGroundRobot]): c.Expr[Unit] = {
+  def addRobot[T1 <: Robot : c.WeakTypeTag, T2 <: GroundRobot : c.WeakTypeTag](r: c.Expr[T1], m: c.Expr[T2]): c.Expr[Unit] = {
     val id1 = Ident(TermName(c.freshName("id")))
     val id2 = Ident(TermName(c.freshName("id")))
-    val st1 = addStatefulObject(c.Expr[T](id1))
-    val st2 = addStatefulObject(c.Expr[TwistGroundRobot](id2))
+    val t = c.prefix
     val tree = q"""
       val $id1 = $r
-      val $id2 = $model
-      $st1
-      $st2
+      val $id2 = $m
+      statefulObj = Stateful.makeStateful($id1, $t) :: statefulObj
+      statefulObj = Stateful.makeStateful($id2, $t) :: statefulObj
       $id2.robotId = $id1.id
       robots = $id1 :: robots
       models = $id2 :: models
@@ -211,29 +210,13 @@ class WorldMacros(val c: Context) {
 
   def addGhost[T <: Ghost : c.WeakTypeTag](g: c.Expr[T]): c.Expr[Unit] = {
     val id = Ident(TermName(c.freshName("id")))
-    val st = addStatefulObject(c.Expr[T](id))
+    val t = c.prefix
     val tree = q"""
       val $id = $g
-      $st
+      statefulObj = Stateful.makeStateful($id, $t) :: statefulObj
       ghosts = $id :: ghosts
       """
     c.Expr[Unit](tree)
   }
 
-  protected def addStatefulObject[T: c.WeakTypeTag](obj: c.Expr[T]): Tree = {
-    val t = c.prefix
-    q"""
-    val s = new Stateful {
-      import Stateful._
-      val o = $obj
-      def length: Int = o.length
-      def round: Unit = o.round($t)
-      def serialize(out: java.nio.ByteBuffer): Unit = o.serialize(out)
-      def deserilize(in: java.nio.ByteBuffer): Unit = o.deserilize(in)
-      def description: String = o.description
-    }
-    statefulObj = s :: statefulObj
-    """
-  }
-  
 }

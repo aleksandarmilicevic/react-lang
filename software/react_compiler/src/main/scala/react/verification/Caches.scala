@@ -59,6 +59,3 @@ object OrientationCache extends Cache[react.robot.Orientation](1) {
   idx(West)
 }
 
-//TODO make cache parametric so we can adapt to new types
-//object MetaCache {
-//}

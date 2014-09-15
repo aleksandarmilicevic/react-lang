@@ -50,7 +50,7 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
   def closeEnough(dx: Double, dy: Double) = {
     val xx = Math.abs(dx)
     val yy = Math.abs(dy)
-    val d = Math.sqrt(xx*xx + yy+yy)
+    val d = Math.sqrt(xx*xx + yy*yy)
     d < 0.2
   }
 

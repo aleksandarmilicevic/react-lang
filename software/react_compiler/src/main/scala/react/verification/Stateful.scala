@@ -20,13 +20,7 @@ trait Stateful {
 
 object Stateful {
 
-  implicit class Explorable[M](val robot: M) extends AnyVal {
-    def length: Int = macro ExplorableMacros.wordLength[M] //in byte
-    def round(world: Playground): Unit = macro ExplorableMacros.round[M]
-    def serialize(out: ByteBuffer): Unit = macro ExplorableMacros.toWord[M]
-    def deserilize(in: ByteBuffer): Unit = macro ExplorableMacros.fromWord[M]
-    def description: String = macro ExplorableMacros.fieldsSaved[M]
-  }
+  def makeStateful[M](robot: M, world: Playground): Stateful = macro ExplorableMacros.makeStateful[M]
 
   def round(value: Double, min: Double, max: Double, step: Double): Double = {
     val stepped = (value / step).round * step
