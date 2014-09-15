@@ -11,7 +11,6 @@ import math._
 //TODO uncertainty according rounding
 
 class GroundRobot( bBox: Box2D,
-                   val topic: String,
                    snap: Option[(String,String)] = None
                  ) extends Executed {
 

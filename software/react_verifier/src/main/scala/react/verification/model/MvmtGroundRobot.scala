@@ -11,10 +11,10 @@ import math._
 
 /** Model for an ideal (execute command perfectly) robot moving on the ground */
 class MvmtGroundRobot( bBox: Box2D,
-                       _topic: String,
+                       val topic: String,
                        cmdTime: Int,
                        snap: Option[(String,String)] = None
-                     ) extends GroundRobot(bBox, _topic, snap) {
+                     ) extends GroundRobot(bBox, snap) {
 
   /* what to execute */
   var commandTimeLeft = 0

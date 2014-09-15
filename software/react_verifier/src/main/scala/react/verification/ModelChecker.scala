@@ -179,6 +179,7 @@ class ModelChecker(world: World, scheduler: Scheduler) {
       case s: SafetyError =>
         throw new SafetyError(s.cause, suffix ::: s.suffix)
       case exn: Throwable =>
+        exn.printStackTrace
         throw new SafetyError(exn.toString, suffix) //TODO stack trace ?
     }
   }
@@ -195,6 +196,7 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     transientStatesStored += 1
     putT(s2)
     while(!frontierT.isEmpty) {
+      Logger("ModelChecker", LogDebug, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
       if (cnt % 100 == 0) {
         Logger("ModelChecker", LogInfo, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
       }
@@ -212,6 +214,7 @@ class ModelChecker(world: World, scheduler: Scheduler) {
     //the controller step
     transientStates foreach (rs => putT(rs.state))
     while(!frontierT.isEmpty) {
+      Logger("ModelChecker", LogDebug, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
       if (cnt % 1000 == 0) {
         Logger("ModelChecker", LogInfo, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
       }
@@ -273,14 +276,14 @@ class ModelChecker(world: World, scheduler: Scheduler) {
       }
     } catch {
       case s: SafetyError =>
-        Logger("ModelChecker", LogWarning, "Error found: " + s.cause)
+        Logger("ModelChecker", LogError, "Error found: " + s.cause)
         if (!s.suffix.isEmpty) {
           val last = s.suffix.last
           restoreStateWithScheduler(last)
-          Logger("ModelChecker", LogWarning, "last known state: " + world)
+          Logger("ModelChecker", LogError, "last known state: " + world)
           if (keepTrace) {
             val trace = makeTrace(s.suffix.head) ::: s.suffix.tail
-            Logger("ModelChecker", LogWarning, "trace:\n  " + trace.mkString("\n  ")) //TODO decent printing
+            Logger("ModelChecker", LogError, "trace:\n  " + trace.mkString("\n  ")) //TODO decent printing
           }
         }
         false

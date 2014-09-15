@@ -83,6 +83,8 @@ object Main extends Options {
         org.ros.RosRun.main(Array(classOf[RunHuskyGrid2].getName))
       case "huskyV" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyVerif].getName))
+      case "huskyV2" =>
+        org.ros.RosRun.main(Array(classOf[RunHuskyVerif2].getName))
       case "huskyS" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyGridSnap].getName))
       case "huskyB" =>

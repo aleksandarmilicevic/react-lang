@@ -88,7 +88,6 @@ abstract class World extends Playground {
     buffer.append("  models:\n")
     for (m <- models) {
       buffer.append("    " + m + "\n")
-      buffer.append("      as physical model executing command from " + m.topic + "\n")
       buffer.append("      bounding boxe: " + m.boundingBox + "\n")
     }
     buffer.append("  ghosts:\n")

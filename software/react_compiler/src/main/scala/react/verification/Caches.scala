@@ -4,6 +4,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.ConcurrentHashMap
 import scala.reflect.ClassTag
 
+//TODO make size increase on the fly
+
 /** A class to store/restore _immutable_ values of an arbitrary type */
 class Cache[T: ClassTag](nbrByte: Int) {
   assert(nbrByte > 0 && nbrByte <= 4)

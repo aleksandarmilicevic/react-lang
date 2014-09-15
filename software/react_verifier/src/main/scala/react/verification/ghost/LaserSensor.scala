@@ -11,7 +11,7 @@ class LaserSensor(minAngle: Float,
                   minRange: Float,
                   maxRange: Float,
                   resolution: Float,
-                  parent: TwistGroundRobot,
+                  parent: GroundRobot,
                   _topic: String,
                   rate: Double
                  ) extends Sensor(parent, _topic, rate) {

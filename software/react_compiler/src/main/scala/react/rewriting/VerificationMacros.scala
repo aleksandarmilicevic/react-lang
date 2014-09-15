@@ -55,7 +55,7 @@ class ExplorableMacros(val c: Context) extends Types
     val caches = for (f <- permanentFields if !isNative(f) ) yield {
       val cid = cacheId(f)
       val t = f.typeSignature
-      q"val $cid = new react.verification.Cache[$t](4)"
+      q"val $cid = new react.verification.Cache[$t](3)"
     }
 
     var length = wordLength[M]

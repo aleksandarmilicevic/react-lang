@@ -16,7 +16,7 @@ class HuskyVerif extends World {
 
   val yMin = -3
   val yMax = 3
-  val yDiscretization = 1.0
+  val yDiscretization = 0.1
 
   val enclosed = true
   

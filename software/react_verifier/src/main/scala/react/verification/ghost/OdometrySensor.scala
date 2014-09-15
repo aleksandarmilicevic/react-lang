@@ -7,7 +7,7 @@ import react.robot._
 import react.verification.model._
 
 class OdometrySensor( bodyFrame: String, //the element we report on ...
-                      parent: TwistGroundRobot,
+                      parent: react.verification.model.GroundRobot,
                       _topic: String,
                       rate: Double
                     ) extends Sensor(parent, _topic, rate)

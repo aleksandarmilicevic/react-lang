@@ -8,7 +8,7 @@ import react.verification._
 import react.utils.RosUtils
 
 //sensor are considered as stateless by the model checker (i.e. not saved/restored)
-abstract class Sensor(parent: TwistGroundRobot,
+abstract class Sensor(parent: react.verification.model.GroundRobot,
                       _topic: String,
                       rate: Double) extends Executed {
 
