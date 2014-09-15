@@ -47,6 +47,7 @@ class RunHuskyGridSnap extends RosExecutor {
 }
 
 class RunHuskySearchBot extends RosExecutor {
+
   val robot = new HuskySearchBot(Main.topic)
 }
 

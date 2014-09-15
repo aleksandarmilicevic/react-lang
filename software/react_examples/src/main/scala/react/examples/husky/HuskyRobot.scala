@@ -31,7 +31,7 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
   var targetY = 0.0
   var targetO = 0.0
 
-  val safeDistance    = getEnvD("REACT_SAFE_DISTANCE", 2.0)
+  val safeDistance    = getEnvD("REACT_SAFE_DISTANCE", 1.7)
   var frontDistance   = 1.0
   var poseUpdated     = false
   var distanceUpdated = false
@@ -123,45 +123,10 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
     }
     
     currentIntegralPosition._3 match {
-      case North => 
-        println("pos: North")
-        opsAsIfNorth(dx, dy)
-      case South => 
-        println("pos: South")
-        opsAsIfNorth(-dx, -dy)
-        // if (dx == 0)
-        //   if (dy < 0) 
-        //     GO_STRAIGHT 
-        //   else 
-        //     TURN_LEFT
-        // else if (dx > 0) 
-        //   TURN_LEFT
-        // else
-        //   TURN_RIGHT
-      case East  => 
-        println("pos: East")
-        opsAsIfNorth(-dy, dx)
-        // if (dy == 0)
-        //   if (dx > 0) 
-        //     GO_STRAIGHT 
-        //   else 
-        //     TURN_LEFT
-        // else if (dy > 0) 
-        //   TURN_LEFT
-        // else
-        //   TURN_RIGHT
-      case West  => 
-        println("pos: West")
-        opsAsIfNorth(dy, -dx)
-        // if (dy == 0)
-        //   if (dx < 0) 
-        //     GO_STRAIGHT 
-        //   else 
-        //     TURN_LEFT
-        // else if (dy < 0) 
-        //   TURN_LEFT
-        // else
-        //   TURN_RIGHT
+      case North => opsAsIfNorth(dx, dy)
+      case South => opsAsIfNorth(-dx, -dy)
+      case East  => opsAsIfNorth(-dy, dx)
+      case West  => opsAsIfNorth(dy, -dx)
     }
   }
 
@@ -178,7 +143,7 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
     case GetRange(distance) =>
       frontDistance = distance
       distanceUpdated = true
-      // println("laser: distance = " + frontDistance)
+      println("laser: distance = " + frontDistance)
   }
 
 

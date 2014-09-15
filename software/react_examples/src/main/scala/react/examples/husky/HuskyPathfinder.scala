@@ -58,15 +58,10 @@ class HuskyPathfinder(_id: String) extends HuskyRobot(_id) with FsmController {
             }.sortWith { (e1, e2) =>
               goalDist(e1._1, e1._2) < goalDist(e2._1, e2._2)
             }
-
-            println("my pos: " + (ix,iy))
-            println("goal:   " + (destX,destY))
-            println("moves:  " + moves)
           }
 
           if (!moves.isEmpty)  {
             actions = toOps((ix,iy), moves.head)
-            println("actions: " + actions)
             moves = moves.tail
           }
         }
