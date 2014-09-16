@@ -6,12 +6,16 @@ import scala.collection.mutable.PriorityQueue
 
 class SchedulingPoint(tasks: List[ScheduledTask], scheduler: Scheduler) extends BranchingPoint {
 
+  val expiration = tasks.head.expires
+  assert(tasks.forall(_.expires == expiration))
+
   val perms = tasks.permutations.toList
 
   def alternatives = perms.length
 
   def act(alt: Int) {
     for (t <- perms(alt)) {
+      t.expires = expiration //reset the expirations since the tasks are not in the scheduler.
       t.fct()
       if (t.isPeriodic) {
         scheduler.schedule(t)
@@ -44,14 +48,18 @@ class Scheduler extends react.runtime.Scheduler {
     if (queue.isEmpty) {
       Nil
     } else {
+      println(toString)
       val old = queue.size
       val task = queue.dequeue
-      val same = queue.takeWhile(_.expires == task.expires).toList
+      assert(queue.size + 1 == old)
+      var same = List[ScheduledTask](task)
       while(!queue.isEmpty && queue.head.expires == task.expires) {
-        queue.dequeue
+        same = queue.dequeue :: same
       }
-      assert(old == queue.size + 1 + same.size, "nextTasks: queue size does not agree")
-      task :: same
+      //println(toString)
+      //println(same)
+      assert(old == queue.size + same.size, "nextTasks: queue sizes do not agree (" + old + " ≠ " + (queue.size + same.size) +")")
+      same
     }
   }
 
@@ -81,13 +89,15 @@ class Scheduler extends react.runtime.Scheduler {
     buffer.putShort(now.toShort)
     var content = List[ScheduledTask]()
     while (!queue.isEmpty) {
-      val t = queue.dequeue
-      val idx = cache.idx(t)
-      if (bytePerTask == 1)      buffer.put(idx.toByte)
-      else if (bytePerTask == 2) buffer.putShort(idx.toShort)
-      else if (bytePerTask == 4) buffer.putInt(idx)
-      else sys.error("bytePerTask has an incorrect size")
-      content = t :: content
+      val ts = nextTasks
+      val idx = ts.map(cache.idx(_)).sorted
+      for (i <- idx) {
+        if (bytePerTask == 1)      buffer.put(i.toByte)
+        else if (bytePerTask == 2) buffer.putShort(i.toShort)
+        else if (bytePerTask == 4) buffer.putInt(i)
+        else sys.error("bytePerTask has an incorrect size")
+      }
+      content = ts ::: content
     }
     for (t <- content) queue.enqueue(t)
     assert(size == 2 + queue.size* bytePerTask, "error while sazing scheduler state")
@@ -117,10 +127,24 @@ class Scheduler extends react.runtime.Scheduler {
     }
   }
 
+  def content = queue.toList
+
   val cache = new Cache[ScheduledTask](bytePerTask)
 
+  def shift(t: Long) = {
+    _now = _now - t
+    //TODO should we reenqueue the elements ?
+    for (task <- queue) {
+      task.expires -= t
+    }
+  }
+
+}
+
+object Scheduler {
+
   /** return the LCM of the period of all task in the queue (empty queue has period 1) */
-  def computePeriod = {
+  def computePeriod(tasks: Iterable[ScheduledTask]) = {
     // http://algorithmguru.com/content/?viewpage=./contentfiles/showalgo.php&id=17&type=r
     def lcm(m: Int, n: Int) = {
       var a = m
@@ -131,15 +155,8 @@ class Scheduler extends react.runtime.Scheduler {
       }
       a
     }
-    queue.foldLeft(1)( (acc, t) => if (t.period > 0) lcm(acc, t.period) else acc )
+    tasks.foldLeft(1)( (acc, t) => if (t.period > 0) lcm(acc, t.period) else acc )
   }
 
-  def shift(t: Long) = {
-    _now = _now - t
-    //TODO should we reenqueue the elements ?
-    for (task <- queue) {
-      task.expires -= t
-    }
-  }
 
 }

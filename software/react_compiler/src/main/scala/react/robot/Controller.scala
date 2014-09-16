@@ -69,6 +69,8 @@ trait Controller {
   def addSensor(wrapper: MessageListenerWrapper) {
     sensors = wrapper :: sensors
   }
+  /** return all tasks (used by verification to compute the period)*/
+  def getAllTasks = tasks
 
     
   /////////////////////

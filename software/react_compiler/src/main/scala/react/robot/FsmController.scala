@@ -44,6 +44,9 @@ trait FsmController extends Robot {
     statesMap(currentState)
   }
 
+  override def getAllTasks = {
+    super.getAllTasks ++ statesMap.values.flatMap(_.getAllTasks)
+  }
 
   override def send(any: Any) {
     getCurrentState.send(any)
@@ -64,7 +67,7 @@ trait FsmController extends Robot {
   ////////////////////
   // fixing symbols //
   ////////////////////
-  // thi is needed due to the way the compiler currently handles symbols and prevent capture of external symbols
+  // this is needed due to the way the compiler currently handles symbols and prevent capture of external symbols
   
   private var _tasks: List[ScheduledTask] = Nil
   private var _handlers: List[PartialFunction[Any, Unit]] = Nil

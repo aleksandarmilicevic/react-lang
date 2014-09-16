@@ -139,6 +139,7 @@ class ModelChecker(world: World, scheduler: Scheduler) {
       val s2 = saveStateWithScheduler
       for (i <- 0 until bp.alternatives) yield {
         restoreStateWithScheduler(s2)
+        assert(bp.expiration == scheduler.now)
         step(bp, i)
         val s3 = saveStateWithScheduler
         if (!world.safe) {
@@ -293,8 +294,9 @@ class ModelChecker(world: World, scheduler: Scheduler) {
   def init {
     Logger("ModelChecker", LogNotice, "initializing model-checker.")
     Logger("ModelChecker", LogNotice, world.stateSpaceDescription)
-    defaultSchedulerState = scheduler.saveState
-    period = scheduler.computePeriod
+    defaultSchedulerState = scheduler.saveState //TODO not true in the case of FSM!!
+    val allTasks = scheduler.content ++ world.robots.flatMap(_.getAllTasks)
+    period = Scheduler.computePeriod(allTasks)
     Logger("ModelChecker", LogNotice, "period = " + period)
     Logger("ModelChecker", LogNotice, scheduler.toString)
     val initState = saveStateWithoutScheduler
