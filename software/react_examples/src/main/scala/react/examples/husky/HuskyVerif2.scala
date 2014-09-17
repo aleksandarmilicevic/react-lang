@@ -54,5 +54,6 @@ class HuskyVerif2 extends World {
 
 class RunHuskyVerif2 extends McExecutor {
   val world = new HuskyVerif2
+  override def getMcOptions = react.examples.Main
 }
   

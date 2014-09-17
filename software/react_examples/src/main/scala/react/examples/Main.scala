@@ -55,10 +55,15 @@ class RunHuskyPathfinder extends RosExecutor {
   val robot = new HuskyPathfinder(Main.topic)
 }
 
-object Main extends Options {
+object Main extends Options with react.verification.McOptions {
 
   newOption("-v", Arg.Unit(() => Logger.moreVerbose), "increase the verbosity level.")
   newOption("-q", Arg.Unit(() => Logger.lessVerbose), "decrease the verbosity level.")
+
+  newOption("-bfs", Arg.Unit(() => bfs = true), "")
+  newOption("-dfs", Arg.Unit(() => bfs = false), "")
+  newOption("-tb", Arg.Int(l => timeBound = l), "")
+  newOption("-trace", Arg.Unit(() => keepTrace = true), "")
 
   val usage = "..."
 
@@ -66,11 +71,15 @@ object Main extends Options {
 
   def main(args: Array[String]) {
     apply(args) // preprocess the args
-    if (input.length != 2) {
-      sys.error("need exactlty two argument: the type of controller and the namespace of the turtle")
-    }
-    topic = input(0)
-    input(1) match {
+    val (cls, topic) =
+      if (input.length == 0)
+        sys.error("need at least on argument: the class to launch")
+      else if (input.length == 1)
+        (input(0), "")
+      else {
+        (input(1), input(0))
+      }
+    cls match {
       case "teleop" =>
         org.ros.RosRun.main(Array(classOf[RunTurtleTeleop].getName))
       case "random" =>

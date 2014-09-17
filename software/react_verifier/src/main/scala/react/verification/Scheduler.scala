@@ -17,7 +17,7 @@ class SchedulingPoint(tasks: List[ScheduledTask], scheduler: Scheduler) extends 
     for (t <- perms(alt)) {
       t.expires = expiration //reset the expirations since the tasks are not in the scheduler.
       t.fct()
-      if (t.isPeriodic) {
+      if (t.isPeriodic && !t.cancelled) {
         scheduler.schedule(t)
       }
     }
@@ -48,7 +48,7 @@ class Scheduler extends react.runtime.Scheduler {
     if (queue.isEmpty) {
       Nil
     } else {
-      println(toString)
+      //println(toString)
       val old = queue.size
       val task = queue.dequeue
       assert(queue.size + 1 == old)
@@ -104,20 +104,19 @@ class Scheduler extends react.runtime.Scheduler {
     buffer.array
   }
 
-  def restoreState(in: Array[Byte]) {
-    val buffer = ByteBuffer.wrap(in)
+  def compactState = {
+    removeCanceled
+    val idx = Scheduler.scheduleIdx(content)
+    val buffer = ByteBuffer.allocate(2)
+    buffer.putShort(idx)
+    buffer.array
+  }
+  
+  def restoreTasks(now: Long, lst: Iterable[ScheduledTask]) {
     queue.clear
-    _now = buffer.getShort
-    val tasks = buffer.remaining / bytePerTask
+    _now = now
     var t = _now + 1 //assumption that we don't have task scheduled now
-    for (i <- 0 until tasks){
-      //restore the task (and their expiration)
-      val index: Int =
-        if (bytePerTask == 1)      buffer.get
-        else if (bytePerTask == 2) buffer.getShort
-        else if (bytePerTask == 4) buffer.getInt
-        else sys.error("bytePerTask has an incorrect size")
-      val task = cache.value(index)
+    for (task <- lst) {
       //find the next expiration
       val exp = math.ceil(t/task.period.toDouble).toInt * task.period
       task.expires = exp
@@ -125,6 +124,30 @@ class Scheduler extends react.runtime.Scheduler {
       task.cancelled = false
       queue.enqueue(task)
     }
+  }
+
+  def restoreState(in: Array[Byte]) {
+    val buffer = ByteBuffer.wrap(in)
+    queue.clear
+    val now = buffer.getShort
+    val tasks = buffer.remaining / bytePerTask
+    var t = _now + 1 //assumption that we don't have task scheduled now
+    val ts = for (i <- 0 until tasks) yield {
+      //restore the task (and their expiration)
+      val index: Int =
+        if (bytePerTask == 1)      buffer.get
+        else if (bytePerTask == 2) buffer.getShort
+        else if (bytePerTask == 4) buffer.getInt
+        else sys.error("bytePerTask has an incorrect size")
+      cache.value(index)
+    }
+    restoreTasks(now, ts)
+  }
+  
+  def restoreCompact(in: Array[Byte]) {
+    val buffer = ByteBuffer.wrap(in)
+    val ts = Scheduler.scheduleVal(buffer.getShort)
+    restoreTasks(0, ts)
   }
 
   def content = queue.toList
@@ -142,6 +165,30 @@ class Scheduler extends react.runtime.Scheduler {
 }
 
 object Scheduler {
+
+  /** cach for whole schedule */
+  private val cache = new Cache[List[ScheduledTask]](2)
+
+  private def normalize(sch: List[ScheduledTask]) = {
+    def compare(a: ScheduledTask, b: ScheduledTask) = {
+      if  (a.period == b.period) {
+        a.hashCode < b.hashCode
+      } else {
+        a.period < b.period
+      }
+    }
+    sch.sortWith(compare)
+  }
+
+  def scheduleIdx(sch: List[ScheduledTask]): Short = {
+    val s = normalize(sch)
+    cache.idx(s).toShort
+  }
+
+  def scheduleVal(idx: Short): List[ScheduledTask] = { 
+    //println("scheduleVal: " + idx)
+    cache.value(idx)
+  }
 
   /** return the LCM of the period of all task in the queue (empty queue has period 1) */
   def computePeriod(tasks: Iterable[ScheduledTask]) = {

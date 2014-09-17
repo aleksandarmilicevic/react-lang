@@ -91,6 +91,7 @@ trait Controller {
 
   def register(exec: Executor) {
     for(t <- tasks) {
+      t.expires = -1
       exec.schedule(t)
     }
     for(s <- sensors) {

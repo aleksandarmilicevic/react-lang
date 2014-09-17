@@ -7,7 +7,7 @@ import org.ros.namespace.GraphName
 import org.ros.node.{Node, NodeMain, ConnectedNode}
 import org.ros.concurrent.CancellableLoop
 
-abstract class McExecutor extends NodeMain with Executor {
+abstract class McExecutor extends NodeMain with Executor with McOptions {
 
   val world: World
   
@@ -85,6 +85,8 @@ abstract class McExecutor extends NodeMain with Executor {
 
   def removeCanceledTask: Unit = scheduler.removeCanceled
 
+  def getMcOptions: McOptions = this
+
   ///////////////////
   // The ROS stuff //
   ///////////////////
@@ -99,7 +101,7 @@ abstract class McExecutor extends NodeMain with Executor {
     node = n
     node.executeCancellableLoop(new CancellableLoop {
 
-    mc = new ModelChecker(world, scheduler)
+    mc = new ModelChecker(world, scheduler, getMcOptions)
 
       override def setup() {
         super.setup()
