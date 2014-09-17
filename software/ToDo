@@ -25,8 +25,6 @@ current part
 ------------
 
 -rounding of orientation (any fp var in general ?)
--more robust handling of the scheduler in the case of FSM: make sure the task are (de)registered properly
--frontend support for the model checker options
 
 Done:
 Compared to a normal model-checking algorithm, we want two separate state-spaces:

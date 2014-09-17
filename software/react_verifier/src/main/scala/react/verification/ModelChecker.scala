@@ -28,6 +28,8 @@ trait McOptions {
   var timeBound = -1
   var keepTrace = false
   var bfs = true
+  var keepTransient = false
+  var periodCoeff = 1
 }
 
 
@@ -198,12 +200,16 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
   //first, it generates all the reachable states by ghost perturbations (simulates user inputs, etc...)
   //then, we do the periodic controller update
   def innerLoop(s: State): Iterable[State] = {
+    val local = new HashStateStore()
     var cnt = 1
     //the ghost steps
-    transientStates.clear()
+    if (!opts.keepTransient) {
+      transientStates.clear()
+    }
     restoreStateCompact(s)
     val s2 = saveState
     transientStates += s2
+    local += s2
     transientStatesStored += 1
     putT(s2)
     while(!frontierT.isEmpty) {
@@ -217,13 +223,14 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       for (x <- s2) {
         if (!transientStates.contains(x)) {
           transientStates += x
+          local += x
           transientStatesStored += 1
           putT(x)
         }
       }
     }
     //the controller step
-    transientStates foreach (rs => putT(rs.state))
+    local foreach (rs => putT(rs.state))
     while(!frontierT.isEmpty) {
       Logger("ModelChecker", LogDebug, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
       if (cnt % 1000 == 0) {
@@ -235,13 +242,16 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       for (x <- s2) {
         if (!transientStates.contains(x)) {
           transientStates += x
+          local += x
           transientStatesStored += 1
           putT(x)
         }
       }
     }
-    val stateLst = transientStates.toList.map(_.state)
-    transientStates.clear
+    if (!opts.keepTransient) {
+      transientStates.clear
+    }
+    val stateLst = local.toList.map(_.state)
     stateLst.flatMap[State, List[State]]( s => {
       restoreState(s)
       //keep only those at the period
@@ -297,7 +307,8 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
     Logger("ModelChecker", LogNotice, "initializing model-checker.")
     Logger("ModelChecker", LogNotice, world.stateSpaceDescription)
     val allTasks = scheduler.content ++ world.robots.flatMap(_.getAllTasks)
-    period = Scheduler.computePeriod(allTasks)
+    period = opts.periodCoeff * Scheduler.computePeriod(allTasks)
+    assert(period > 0)
     Logger("ModelChecker", LogNotice, "period = " + period)
     Logger("ModelChecker", LogNotice, scheduler.toString)
     val initState = saveStateCompact

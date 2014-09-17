@@ -60,10 +60,12 @@ object Main extends Options with react.verification.McOptions {
   newOption("-v", Arg.Unit(() => Logger.moreVerbose), "increase the verbosity level.")
   newOption("-q", Arg.Unit(() => Logger.lessVerbose), "decrease the verbosity level.")
 
-  newOption("-bfs", Arg.Unit(() => bfs = true), "")
-  newOption("-dfs", Arg.Unit(() => bfs = false), "")
-  newOption("-tb", Arg.Int(l => timeBound = l), "")
-  newOption("-trace", Arg.Unit(() => keepTrace = true), "")
+  newOption("-bfs", Arg.Unit(() => bfs = true), "BFS state-space exploration")
+  newOption("-dfs", Arg.Unit(() => bfs = false), "DFS space-space exploration")
+  newOption("-tb", Arg.Int(l => timeBound = l), "bound the time horizon (in milliseconds)")
+  newOption("-trace", Arg.Unit(() => keepTrace = true), "keep the error trace (requires more memory)")
+  newOption("-transient", Arg.Unit(() => keepTransient = true), "keep the transient states (faster for small systems, requires more memory)")
+  newOption("-pc", Arg.Int( i => periodCoeff = i), "coefficient to multiply the period used when building the time quotient")
 
   val usage = "..."
 

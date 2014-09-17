@@ -74,36 +74,6 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
           nextState('turning)
     }
 
-
-  //every(100){
-  //  //decide what to do next
-  //  val (x,y,o) = currentIntegralPosition
-  //  (scala.util.Random.nextInt % 4) match {
-  //    case 0 =>
-  //      targetO = Angle.normalize(o.rad + math.Pi / 2)
-  //      state = sOrientation
-  //      println("turn left")
-  //      nextState('turning)
-  //    case 1 =>
-  //      targetO = Angle.normalize(o.rad - math.Pi / 2)
-  //      println("turn right")
-  //      nextState('turning)
-  //    case _ =>
-  //      if (frontDistance > 1.5) {
-  //        o match {
-  //          case North => targetX = x; targetY = y + 1
-  //          case South => targetX = x; targetY = y - 1
-  //          case East  => targetX = x + 1; targetY = y
-  //          case West  => targetX = x - 1; targetY = y
-  //        }
-  //        println("move forward")
-  //        nextState('moving)
-  //      } else {
-  //        println("too close")
-  //      }
-  //  }
-  //}
-
   }
 
   state('moving) {

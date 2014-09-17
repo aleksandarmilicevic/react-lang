@@ -18,4 +18,7 @@ trait Playground {
   /** should we consider the boundaries as walls (for the sensors), or just discard anything beyond */
   val enclosed: Boolean
 
+  /** float/double rounding (var different from x/y) */
+  val fpDiscretization: Double
+
 }

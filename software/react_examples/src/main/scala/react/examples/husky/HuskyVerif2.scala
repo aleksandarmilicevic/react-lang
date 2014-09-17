@@ -17,6 +17,8 @@ class HuskyVerif2 extends World {
   val yDiscretization = 1.0
 
   val enclosed = true
+
+  val fpDiscretization = 0.05
   
   /////////
 

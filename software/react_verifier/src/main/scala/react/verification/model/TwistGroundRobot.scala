@@ -41,6 +41,9 @@ class TwistGroundRobot( bBox: Box2D,
       vx = 0.0
       vo = 0.0
     }
+  //println("x = " + x)
+  //println("y = " + y)
+  //println("Θ = " + orientation)
   }
 
   val listener = new org.ros.message.MessageListener[geometry_msgs.Twist]{
@@ -49,7 +52,7 @@ class TwistGroundRobot( bBox: Box2D,
       try {
         commandTimeLeft = cmdTime
         vx = message.getLinear.getX
-        vo = message.getAngular.getX
+        vo = message.getAngular.getZ
       } finally lock.unlock
     }
   }

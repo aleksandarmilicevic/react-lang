@@ -76,7 +76,7 @@ class ExplorableMacros(val c: Context) extends Types
     }
     
     val rounding = for (f <- permanentFields) yield {
-      def r(f: TermSymbol) = {
+      def rc(f: TermSymbol) = {
         val set = fieldSetter(f)
         val get = fieldGetter(f)
         val name = get.name.toString
@@ -86,8 +86,25 @@ class ExplorableMacros(val c: Context) extends Types
         //c.echo(world.tree.pos, "rounding " + name + " in " + f.owner)
         q"$set(react.verification.Stateful.round($get, $min, $max, $step))"
       }
+      def r(f: TermSymbol) = {
+        val set = fieldSetter(f)
+        val get = fieldGetter(f)
+        val name = get.name.toString
+        val step = Select(world.tree, TermName("fpDiscretization"))
+        //c.echo(world.tree.pos, "rounding " + name + " in " + f.owner)
+        val t1 = q"react.verification.Stateful.round($get, Double.MinValue, Double.MaxValue, $step)"
+        if (f.typeSignature =:= definitions.FloatTpe) {
+          q"$set($t1.toFloat)"
+        } else {
+          q"$set($t1)"
+        }
+      }
       fieldGetter(f).name.toString match {
-        case "x" | "y" if f.typeSignature =:= definitions.DoubleTpe  => r(f) //TODO somthing more robust
+        case "x" | "y" if f.typeSignature =:= definitions.DoubleTpe =>
+          rc(f) //TODO somthing more robust
+        case _ if f.typeSignature =:= definitions.DoubleTpe ||
+                  f.typeSignature =:= definitions.FloatTpe =>
+          r(f)
         case _ =>
           //c.echo(world.tree.pos, "ignoring " + f + " in " + f.owner)
           q"()"
