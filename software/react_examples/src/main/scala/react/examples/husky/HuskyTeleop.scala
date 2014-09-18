@@ -51,7 +51,9 @@ class HuskyTeleop(_id: String) extends GroundRobot(_id) {
   
   //husky expect a message every 100ms
   every(period){
-    publish("husky/cmd_vel", Command.setSpeed(vLinear, vAngular/10.0))
+    val cmd = Command.setSpeed(vLinear, vAngular/10.0)
+    println("sending " + cmd)
+    publish("husky/cmd_vel", cmd)
   }
 
 }

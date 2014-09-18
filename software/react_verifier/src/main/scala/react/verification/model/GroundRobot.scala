@@ -26,6 +26,10 @@ class GroundRobot( bBox: Box2D,
   var vx = 0.0
   var vo = 0.0
 
+  override def toString = {
+    "robot model: x = " + x + ", y = " + y + ", Θ = " + orientation + ", vx = " + vx + ", vΘ = " + vo
+  }
+
   @ignore
   var robotId = ""
 
@@ -73,7 +77,26 @@ class GroundRobot( bBox: Box2D,
     sensors.foreach(_._1.update(restOfTheWorld))
   }
 
+  protected def moveFor(t: Int) = {
+    val dt = t / 1000.0
+    if (vo == 0.0) {
+      x += dt * vx * cos(orientation)
+      y += dt * vx * sin(orientation)
+    } else {
+      val r = vx / vo
+      val dx = r * cos(vo*dt)
+      val dy = r * sin(vo*dt)
+      x += dx * cos(orientation) - dy * sin(orientation)
+      y += dx * sin(orientation) + dy * cos(orientation)
+    }
+    orientation += vo * dt
+  //println("x = " + x)
+  //println("y = " + y)
+  //println("Θ = " + orientation)
+  }
+
   def elapse(t: Int) {
+    moveFor(t)
     updateChildrenPose
   }
 

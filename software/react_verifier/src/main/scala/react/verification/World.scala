@@ -58,7 +58,7 @@ abstract class World extends Playground {
 
   def allBoxes = {
     val b = models.map(_.boundingBox) ++ boxes
-    enclosure ::: b
+    b ::: enclosure //returns the model BB first!
   }
 
   def dispatchBoxes {

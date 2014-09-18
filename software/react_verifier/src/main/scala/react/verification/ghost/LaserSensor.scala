@@ -2,6 +2,7 @@ package react.verification.ghost
 
 import react.message._
 import react.verification.model._
+import react.verification.Stateful
 import math._
 
 //this is horizontal only
@@ -28,8 +29,9 @@ class LaserSensor(minAngle: Float,
       val a = pose.theta + minAngle + i * da
       val intersections = world.flatMap(_.intersectLine((pose.x, pose.y), (cos(a), sin(a))).filter(_ > 0))
       val closest = if (!intersections.isEmpty) intersections.min else maxRange
-      rays(i) = min(maxRange, max(closest, minRange)).toFloat //TODO round to resolution
-      intensities(i) = 1
+      val r = Stateful.round(closest, minRange, maxRange, resolution).toFloat
+      rays(i) = r
+      intensities(i) = 1.0f / r / r
     }
 
     val msg = LaserScan(

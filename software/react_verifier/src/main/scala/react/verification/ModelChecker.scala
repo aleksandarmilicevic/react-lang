@@ -108,9 +108,12 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
     val full = w ++ s
     full
   }
+  
+  def restoreWorldOnly(s: State) {
+    world.restoreState(s)
+  }
 
   def restoreState(s: State) {
-    //Logger("ModelChecker", LogNotice, scheduler.toString)
     world.restoreState(s)
     scheduler.restoreState(getSchedulerState(s))
   }
@@ -296,7 +299,11 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
           Logger("ModelChecker", LogError, "last known state: " + world)
           if (opts.keepTrace) {
             val trace = makeTrace(s.suffix.head) ::: s.suffix.tail
-            Logger("ModelChecker", LogError, "trace:\n  " + trace.mkString("\n  ")) //TODO decent printing
+            for ( (s, i) <- trace.zipWithIndex) {
+              restoreWorldOnly(s)
+              Logger("ModelChecker", LogError, "\nstep: "+i+"\n" + world)
+            }
+            Logger("ModelChecker", LogError, "\n")
           }
         }
         false

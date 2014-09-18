@@ -20,30 +20,18 @@ class TwistGroundRobot( bBox: Box2D,
   
   override def elapse(t: Int) {
     val mt = min(t, commandTimeLeft)
-    val dt = mt / 1000.0
 
-    if (vo == 0.0) {
-      x += dt * vx * cos(orientation)
-      y += dt * vx * sin(orientation)
-    } else {
-      val r = vx / vo
-      val dx = r * cos(vo*dt)
-      val dy = r * sin(vo*dt)
-      x += dx * cos(orientation) - dy * sin(orientation)
-      y += dx * sin(orientation) + dy * cos(orientation)
-    }
-    orientation += vo * dt
-
-    super.elapse(t)
+    super.elapse(mt)
 
     commandTimeLeft -= mt
     if (commandTimeLeft <= 0) {
       vx = 0.0
       vo = 0.0
     }
-  //println("x = " + x)
-  //println("y = " + y)
-  //println("Θ = " + orientation)
+    
+    if (mt < t) {
+      super.elapse(t - mt)
+    }
   }
 
   val listener = new org.ros.message.MessageListener[geometry_msgs.Twist]{

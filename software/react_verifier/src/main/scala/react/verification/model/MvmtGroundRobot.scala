@@ -24,38 +24,29 @@ class MvmtGroundRobot( bBox: Box2D,
 
     var left = t
     while (left > 0) {
-      if (commandTimeLeft == 0 && !cmdQueue.isEmpty) {
-        val (t, s, a) = cmdQueue.head
-        commandTimeLeft = t
-        vx = s
-        vo = a
-        cmdQueue = cmdQueue.tail
+      if (commandTimeLeft == 0) {
+        if (!cmdQueue.isEmpty) {
+          val (t, s, a) = cmdQueue.head
+          commandTimeLeft = t
+          vx = s
+          vo = a
+          cmdQueue = cmdQueue.tail
+        } else {
+          commandTimeLeft = left
+          vx = 0.0
+          vo = 0.0
+        }
       }
-
       val mt = min(left, commandTimeLeft)
-      val dt = mt / 1000.0
-     
-      if (vo == 0.0) {
-        x += dt * vx * cos(orientation)
-        y += dt * vx * sin(orientation)
-      } else {
-        val r = vx / vo
-        val dx = r * cos(vo*dt)
-        val dy = r * sin(vo*dt)
-        x += dx * cos(orientation) - dy * sin(orientation)
-        y += dx * sin(orientation) + dy * cos(orientation)
-      }
-      orientation += vo * dt
-
+      super.elapse(mt)
       commandTimeLeft -= mt
       left -= mt
     }
-    
-    super.elapse(t)
      
     if (commandTimeLeft <= 0) {
       vx = 0.0
       vo = 0.0
+      super.elapse(0)
     }
 
   }

@@ -70,6 +70,9 @@ class Box2D(val x: Double,
 
   /** compute the intersections of this cube with a line */
   def intersectLine(point: (Double,Double), direction: (Double, Double), error: Double = 1e-6): List[Double] = {
+    //println("intersecting " + toString + " with ")
+    //println("  x = " + point._1 + " + " + direction._1 + " * k ")
+    //println("  y = " + point._2 + " + " + direction._2 + " * k ")
     cartesianEqs.flatMap{ case (a,b,c) =>
       // a * (p.x + k*d.x) + b * (p.y + k*d.y) + c = 0
       // k = (-c -a*p.x -b*p.y) / (a*d.x + b*d.y)
@@ -83,8 +86,10 @@ class Box2D(val x: Double,
         val ix = point._1 + k * direction._1
         val iy = point._2 + k * direction._2
         if ( contains(ix, iy, error) ) {
+          //println("  k = " + k)
           Some(k)
         } else {
+          //println("  ---")
           None
         }
       }

@@ -81,6 +81,8 @@ object Main extends Options with react.verification.McOptions {
       else {
         (input(1), input(0))
       }
+    println("topic = " + topic)
+    this.topic = topic
     cls match {
       case "teleop" =>
         org.ros.RosRun.main(Array(classOf[RunTurtleTeleop].getName))

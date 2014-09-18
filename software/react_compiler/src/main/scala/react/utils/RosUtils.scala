@@ -3,6 +3,8 @@ package react.utils
 object RosUtils {
 
   def mayAddPrefix(prefix: String, topicName: String) = {
+    //println("prefix " + prefix)
+    //println("topic " + topicName)
     if (topicName startsWith "/") topicName
     else prefix + "/" + topicName
   }
