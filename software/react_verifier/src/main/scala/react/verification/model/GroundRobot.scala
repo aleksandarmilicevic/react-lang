@@ -79,25 +79,25 @@ class GroundRobot( bBox: Box2D,
 
   protected def moveFor(t: Int) = {
     val dt = t / 1000.0
+    val da = vo * dt
     if (vo == 0.0) {
       x += dt * vx * cos(orientation)
       y += dt * vx * sin(orientation)
     } else {
-      //TODO this is wrong !!
-      val r = vx / vo
-      val dx = r * cos(vo*dt)
-      val dy = r * sin(vo*dt)
+      val r = (vx / vo).abs
+      val dx = r * sin(da) * vx.signum
+      val dy = r * (1 - cos(da)) * vx.signum * vo.signum
       x += dx * cos(orientation) - dy * sin(orientation)
       y += dx * sin(orientation) + dy * cos(orientation)
     }
-    orientation += vo * dt
+    orientation += da
   }
 
   def elapse(t: Int) {
-    println(this.toString)
+    //println(this.toString)
     moveFor(t)
     updateChildrenPose
-    println("--> " + this.toString)
+    //println("--"+t+"--> " + this.toString)
   }
 
   val boxOffsetX = bBox.x //- x
