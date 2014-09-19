@@ -63,6 +63,24 @@ trait FsmController extends Robot {
     getCurrentState.deregister(exec)
     super.deregister(exec)
   }
+
+  override def enable {
+    super.enable
+    getCurrentState.enable
+  }
+  
+  override def disable {
+    super.disable
+    getCurrentState.disable
+  }
+  
+  override def restored {
+    super.restored
+    for( (k,v) <- statesMap ) {
+      if (k == currentState) v.enable
+      else v.disable
+    }
+  }
   
   ////////////////////
   // fixing symbols //

@@ -96,8 +96,8 @@ trait Controller {
     }
     for(s <- sensors) {
       s.register(exec)
-      s.enable
     }
+    enable
   }
 
   def deregister(exec: Executor) {
@@ -105,9 +105,24 @@ trait Controller {
       t.cancel
     }
     exec.removeCanceledTask
+    disable
+  }
+
+  def enable {
+    for(s <- sensors) {
+      s.enable
+    }
+  }
+
+  def disable {
     for(s <- sensors) {
       s.disable
     }
   }
+  
+  def restored {
+    enable
+  }
+
 
 }

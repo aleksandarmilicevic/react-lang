@@ -178,6 +178,9 @@ abstract class World extends Playground {
   def restoreState(s: State) {
     val buffer = ByteBuffer.wrap(s) 
     for(s <- statefulObj) s.deserilize(buffer)
+    for(r <- robots) {
+      r.restored //make the state consistent again
+    }
     for(m <- models) {
       m.restored //make the state consistent again
     }

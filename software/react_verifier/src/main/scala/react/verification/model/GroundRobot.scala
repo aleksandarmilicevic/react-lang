@@ -83,6 +83,7 @@ class GroundRobot( bBox: Box2D,
       x += dt * vx * cos(orientation)
       y += dt * vx * sin(orientation)
     } else {
+      //TODO this is wrong !!
       val r = vx / vo
       val dx = r * cos(vo*dt)
       val dy = r * sin(vo*dt)
@@ -90,14 +91,13 @@ class GroundRobot( bBox: Box2D,
       y += dx * sin(orientation) + dy * cos(orientation)
     }
     orientation += vo * dt
-  //println("x = " + x)
-  //println("y = " + y)
-  //println("Θ = " + orientation)
   }
 
   def elapse(t: Int) {
+    println(this.toString)
     moveFor(t)
     updateChildrenPose
+    println("--> " + this.toString)
   }
 
   val boxOffsetX = bBox.x //- x
