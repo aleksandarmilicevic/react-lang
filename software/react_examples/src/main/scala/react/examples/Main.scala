@@ -74,6 +74,7 @@ object Main extends Options with react.verification.McOptions {
   newOption("-transient", Arg.Unit(() => keepTransient = true), "keep the transient states (faster for small systems, requires more memory)")
   newOption("-pc", Arg.Int( i => periodCoeff = i), "coefficient to multiply the period used when building the time quotient")
   newOption("-tf", Arg.String( s => traceFile = s), "save the trace as an SVG image")
+  newOption("-cf", Arg.String( s => coverageFile = s), "save the coverage as an SVG image")
 
   val usage = "..."
 

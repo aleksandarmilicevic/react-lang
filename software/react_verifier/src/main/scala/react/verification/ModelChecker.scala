@@ -31,6 +31,7 @@ trait McOptions {
   var keepTransient = false
   var periodCoeff = 1
   var traceFile = ""
+  var coverageFile = ""
 }
 
 
@@ -365,10 +366,23 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
 
   def printTraceAsSVG(fileName: String, trace: List[State]) =
     react.utils.IO.writeInFile(fileName, writeTraceAsSVG(_, trace))
-  
-  private val colors = Array("blue", "red", "yellow", "green", "cyan", "magenta")
 
-  def writeTraceAsSVG(writer: java.io.BufferedWriter, trace: List[State]) = {
+  def writeModelsAsSVG(writer: java.io.BufferedWriter, s: State) = {
+    restoreWorldOnly(s)
+    for ( (m,i) <- world.models.zipWithIndex) {
+      val c = colors(i % colors.length)
+      m.boundingBox.writeAsSVG(writer, c)
+      writer.newLine
+      val x1 = m.x
+      val y1 = m.y
+      val x2 = x1 + 0.5 * math.cos(m.orientation)
+      val y2 = y1 + 0.5 * math.sin(m.orientation)
+      writer.write("<line x1=\""+x1+"\" y1=\""+y1+"\" x2=\""+x2+"\" y2=\""+y2+"\" stroke-width=\"0.1\" stroke=\""+c+"\"/>")
+      writer.newLine
+    }
+  }
+
+  def svgHeader(writer: java.io.BufferedWriter) {
     val _w = world.xMax - world.xMin
     val _h = world.yMax - world.yMin
     val w = "width=\""+ _w * 50 +"\""
@@ -380,23 +394,21 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       b.writeAsSVG(writer)
       writer.newLine
     }
-    for (s <- trace) {
-      restoreWorldOnly(s)
-      for ( (m,i) <- world.models.zipWithIndex) {
-        val c = colors(i % colors.length)
-        m.boundingBox.writeAsSVG(writer, c)
-        writer.newLine
-        val x1 = m.x
-        val y1 = m.y
-        val x2 = x1 + 0.5 * math.cos(m.orientation)
-        val y2 = y1 + 0.5 * math.sin(m.orientation)
-        writer.write("<line x1=\""+x1+"\" y1=\""+y1+"\" x2=\""+x2+"\" y2=\""+y2+"\" stroke-width=\"0.1\" stroke=\""+c+"\"/>")
-        writer.newLine
-      }
-    }
+  }
+
+  def svgFooter(writer: java.io.BufferedWriter) {
     writer.write("</svg>")
     writer.newLine
+  }
+  
+  private val colors = Array("blue", "red", "yellow", "green", "cyan", "magenta")
 
+  def writeTraceAsSVG(writer: java.io.BufferedWriter, trace: List[State]) = {
+    svgHeader(writer)
+    for (s <- trace) {
+      writeModelsAsSVG(writer, s)
+    }
+    svgFooter(writer)
   }
 
 
@@ -423,10 +435,20 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       val max = ts.max * period
       Logger("ModelChecker", LogNotice, "  time horizon for the frontier ∈ [" + min + ", " + max + "]")
     }
+    printCoverage
   }
 
   def printCoverage {
-    // TODO enumerate state from the StateStore ...
+    if (opts.coverageFile != "") {
+      def print(writer: java.io.BufferedWriter) {
+        svgHeader(writer)
+        for (s <- predMap.keys) writeModelsAsSVG(writer, s.state)
+        for (s <- transientStates) writeModelsAsSVG(writer, s.state)
+        // TODO enumerate state from the StateStore ?
+        svgFooter(writer)
+      }
+      react.utils.IO.writeInFile(opts.coverageFile, print(_))
+    }
   }
 
 }
