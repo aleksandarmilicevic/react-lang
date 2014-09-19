@@ -25,6 +25,13 @@ class RunHuskyTeleop extends RosExecutor {
   new Remote(robot)
 }
 
+class RunHuskyTeleopMvmt extends RosExecutor {
+  //define the robot we are working on
+  val robot = new HuskyTeleopMvmt(Main.topic)
+  //start the gui to control the robot
+  new Remote(robot)
+}
+
 class RunHuskyGrid extends RosExecutor {
   //define the robot we are working on
   val robot = new HuskyGrid(Main.topic)
@@ -63,9 +70,10 @@ object Main extends Options with react.verification.McOptions {
   newOption("-bfs", Arg.Unit(() => bfs = true), "BFS state-space exploration")
   newOption("-dfs", Arg.Unit(() => bfs = false), "DFS space-space exploration")
   newOption("-tb", Arg.Int(l => timeBound = l), "bound the time horizon (in milliseconds)")
-  newOption("-trace", Arg.Unit(() => keepTrace = true), "keep the error trace (requires more memory)")
+  newOption("-trace", Arg.Unit(() => keepTrace = true), "keeps a partial error trace (requires more memory)")
   newOption("-transient", Arg.Unit(() => keepTransient = true), "keep the transient states (faster for small systems, requires more memory)")
   newOption("-pc", Arg.Int( i => periodCoeff = i), "coefficient to multiply the period used when building the time quotient")
+  newOption("-tf", Arg.String( s => traceFile = s), "save the trace as an SVG image")
 
   val usage = "..."
 
@@ -90,6 +98,8 @@ object Main extends Options with react.verification.McOptions {
         org.ros.RosRun.main(Array(classOf[RunTurtleRandom].getName))
       case "husky" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyTeleop].getName))
+      case "mvmt" =>
+        org.ros.RosRun.main(Array(classOf[RunHuskyTeleopMvmt].getName))
       case "huskyG" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyGrid].getName))
       case "huskyA" =>

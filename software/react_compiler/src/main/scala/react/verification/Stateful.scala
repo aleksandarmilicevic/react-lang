@@ -16,6 +16,7 @@ trait Stateful {
   def serialize(out: ByteBuffer): Unit
   def deserilize(in: ByteBuffer): Unit
   def description: String
+  def longDescription: String
 }
 
 object Stateful {
@@ -25,7 +26,7 @@ object Stateful {
   def round(value: Double, min: Double, max: Double, step: Double): Double = {
     val stepped = (value / step).round * step
     val res = math.min(max, math.max(min, stepped))
-    //Console.println("rounding " + value + " to " + res)
+    //println("rounding " + value + " to " + res + " ("+min+", "+max+","+step+")")
     res
   }
 

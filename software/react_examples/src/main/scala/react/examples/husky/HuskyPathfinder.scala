@@ -71,12 +71,11 @@ class HuskyPathfinder(_id: String) extends HuskyRobot(_id) with FsmController {
           actions = actions.tail
           var actionFailed = false
           op match {
-            case TURN_LEFT   => turnLeft();  println("<--")
-            case TURN_RIGHT  => turnRight(); println("-->")
+            case TURN_LEFT   => turnLeft();  //println("<--")
+            case TURN_RIGHT  => turnRight(); //println("-->")
             case GO_STRAIGHT =>
               if (distanceUpdated && frontDistance > safeDistance) {
-                goStraightBy(1)
-                println("^^^")
+                goStraightBy(1); //println("^^^")
               } else {
                 actionFailed = true
               }

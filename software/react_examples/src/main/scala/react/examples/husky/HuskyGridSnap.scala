@@ -8,7 +8,7 @@ import react.examples.husky._
 
 class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
 
-  val tmpWait = getEnvI("REACT_STEP_WAIT", 1)
+  val tmpWait = getEnvI("REACT_STEP_WAIT", 5)
   val steps = getEnvI("REACT_STEPS", 20)
   var stepCnt = 0
   var dX = 0.0
@@ -44,7 +44,7 @@ class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
           initMoving()
           nextState('moving)
         } else {
-          println("too close")
+          //println("too close")
         }
       case Key.LEFT  => targetO = turnLeft()
       case Key.RIGHT => targetO = turnRight()
@@ -61,7 +61,7 @@ class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
         x += dX
         y += dY
         orientation += dO
-        println("micro step " + stepCnt + " to (" + x + ", " + y + ", " + orientation + ")")
+        //println("micro step " + stepCnt + " to (" + x + ", " + y + ", " + orientation + ")")
         snapTo(x, y, orientation)
       }
     }

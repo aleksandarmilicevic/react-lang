@@ -26,30 +26,18 @@ class ExplorableMacros(val c: Context) extends Types
     val getters = permanentFields.map(fieldGetter).map(_.name).mkString(", ")
     c.Expr[String](Literal(Constant(tpe + ": " + getters)))
   }
-
-  def round[T: c.WeakTypeTag](world: c.Expr[Playground]): c.Expr[Unit] = {
-    val rounding = for (f <- permanentFields) yield {
-      def r(f: TermSymbol) = {
-        val set = fieldSetter(f)
-        val get = fieldGetter(f)
-        val name = get.name.toString
-        val min = Select(world.tree, TermName(name+"Min"))
-        val max = Select(world.tree, TermName(name+"Max"))
-        val step = Select(world.tree, TermName(name+"Discretization"))
-        //c.echo(world.tree.pos, "rounding " + name + " in " + f.owner)
-        q"$set(react.verification.Stateful.round($get, $min, $max, $step))"
-      }
-      fieldGetter(f).name.toString match {
-        case "x" | "y" if f.typeSignature =:= definitions.DoubleTpe  => r(f)
-        case _ =>
-          //c.echo(world.tree.pos, "ignoring " + f + " in " + f.owner)
-          q"()"
-      }
-    }
-    val tree = q"{ ..$rounding }"
-    c.Expr[Unit](tree)
-  }
   
+  def longDescr[T: c.WeakTypeTag]: c.Expr[String] = {
+    val tpe = weakTypeOf[T].toString
+    val getters = permanentFields.map(fieldGetter)//.map(_.name).mkString(", ")
+    val gettersStr = getters.map(g => {
+      val gs = g.name.toString
+      q"""$gs + " = " + $g.toString + ", " """
+    })
+    val t = gettersStr.foldLeft(q""" $tpe + ": " """ )( (acc, t) => q"$acc + $t" )
+    c.Expr[String](t)
+  }
+
   def makeStateful[M: c.WeakTypeTag](robot: c.Expr[M], world: c.Expr[Playground]): c.Expr[Stateful] = {
 
     val caches = for (f <- permanentFields if !isNative(f) ) yield {
@@ -83,16 +71,17 @@ class ExplorableMacros(val c: Context) extends Types
         val min = Select(world.tree, TermName(name+"Min"))
         val max = Select(world.tree, TermName(name+"Max"))
         val step = Select(world.tree, TermName(name+"Discretization"))
-        //c.echo(world.tree.pos, "rounding " + name + " in " + f.owner)
-        q"$set(react.verification.Stateful.round($get, $min, $max, $step))"
+        val t1 = q"$set(react.verification.Stateful.round($get, $min, $max, $step))"
+        //c.echo(world.tree.pos, "rounding " + name + " in " + f.owner + " with " + t1)
+        t1
       }
       def r(f: TermSymbol) = {
         val set = fieldSetter(f)
         val get = fieldGetter(f)
         val name = get.name.toString
         val step = Select(world.tree, TermName("fpDiscretization"))
-        //c.echo(world.tree.pos, "rounding " + name + " in " + f.owner)
         val t1 = q"react.verification.Stateful.round($get, Double.MinValue, Double.MaxValue, $step)"
+        //c.echo(world.tree.pos, "rounding " + name + " in " + f.owner + " with " + t1)
         if (f.typeSignature =:= definitions.FloatTpe) {
           q"$set($t1.toFloat)"
         } else {
@@ -112,6 +101,7 @@ class ExplorableMacros(val c: Context) extends Types
     }
     
     val descr = fieldsSaved[M]
+    val lDescr = longDescr[M]
     val tree = q"""
     new Stateful {
       import Stateful._
@@ -129,6 +119,7 @@ class ExplorableMacros(val c: Context) extends Types
         ..$havoced
       }
       def description: String = $descr
+      def longDescription: String = $lDescr
     }
     """
     c.Expr[Stateful](tree)

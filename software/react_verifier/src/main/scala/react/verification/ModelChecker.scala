@@ -30,6 +30,7 @@ trait McOptions {
   var bfs = true
   var keepTransient = false
   var periodCoeff = 1
+  var traceFile = ""
 }
 
 
@@ -149,7 +150,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       //execute the next action
       val bp = scheduler.nextBP
       val s2 = saveState
-      for (i <- 0 until bp.alternatives) yield {
+      (0 until bp.alternatives).flatMap( i => {
         restoreState(s2)
         assert(bp.expiration == scheduler.now)
         step(bp, i)
@@ -157,10 +158,12 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
         if (!world.safe) {
           Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
           throw new SafetyError("controller step", List(s2,s3))
+        } else if (world.inBounds) {
+          Some(s3)
         } else {
-          s3
+          None
         }
-      }
+      })
     }
   }
 
@@ -171,7 +174,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
     val alt = bp.alternatives
     //Logger("ModelChecker", LogNotice, "ghost steps (|branching point| = " + alt + ")")
     //Logger("ModelChecker", LogNotice, "s  = " + new RichState(s))
-    for(i <- 0 until alt) yield {
+    (0 until alt).flatMap( i => {
       restoreState(s)
       step(bp, i)
       val s2 = saveState
@@ -179,10 +182,12 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       if (!world.safe) {
         Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
         throw new SafetyError("ghost step", List(s2))
+      } else if (world.inBounds) {
+        Some(s2)
       } else {
-        s2
+        None
       }
-    }
+    })
   }
 
   def safeExec[A](suffix: List[State], fct: => A ) = {
@@ -217,7 +222,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
     putT(s2)
     while(!frontierT.isEmpty) {
       Logger("ModelChecker", LogDebug, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
-      if (cnt % 100 == 0) {
+      if (cnt % 500 == 0) {
         Logger("ModelChecker", LogInfo, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
       }
       cnt += 1 
@@ -236,7 +241,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
     local foreach (rs => putT(rs.state))
     while(!frontierT.isEmpty) {
       Logger("ModelChecker", LogDebug, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
-      if (cnt % 1000 == 0) {
+      if (cnt % 500 == 0) {
         Logger("ModelChecker", LogInfo, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
       }
       cnt += 1 
@@ -299,11 +304,11 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
           Logger("ModelChecker", LogError, "last known state: " + world)
           if (opts.keepTrace) {
             val trace = makeTrace(s.suffix.head) ::: s.suffix.tail
-            for ( (s, i) <- trace.zipWithIndex) {
-              restoreWorldOnly(s)
-              Logger("ModelChecker", LogError, "\nstep: "+i+"\n" + world)
-            }
             Logger("ModelChecker", LogError, "\n")
+            Logger("ModelChecker", LogError, traceToString(trace))
+            if (opts.traceFile != "") {
+              printTraceAsSVG(opts.traceFile, trace)
+            }
           }
         }
         false
@@ -345,6 +350,53 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       }
     }
     process(s, Nil)
+  }
+
+  def traceToString(trace: List[State]) = {
+    val buffer = new StringBuilder
+    for ( (s, i) <- trace.zipWithIndex) {
+      restoreWorldOnly(s)
+      buffer.append("step: "+i+"\n")
+      buffer.append(world.toString)
+      buffer.append("\n\n")
+    }
+    buffer.toString
+  }
+
+  def printTraceAsSVG(fileName: String, trace: List[State]) =
+    react.utils.IO.writeInFile(fileName, writeTraceAsSVG(_, trace))
+  
+  private val colors = Array("blue", "red", "yellow", "green", "cyan", "magenta")
+
+  def writeTraceAsSVG(writer: java.io.BufferedWriter, trace: List[State]) = {
+    val _w = world.xMax - world.xMin
+    val _h = world.yMax - world.yMin
+    val w = "width=\""+ _w * 50 +"\""
+    val h = "height=\""+ _h * 50 +"\""
+    val vb = "viewBox=\""+(world.xMin-1)+" "+(world.yMin-1)+" "+(_w+2)+" "+(_h+2)+"\""
+    writer.write("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" "+w+" "+h+" "+vb+" >")
+    writer.newLine
+    for (b <- world.envBoxes) {
+      b.writeAsSVG(writer)
+      writer.newLine
+    }
+    for (s <- trace) {
+      restoreWorldOnly(s)
+      for ( (m,i) <- world.models.zipWithIndex) {
+        val c = colors(i % colors.length)
+        m.boundingBox.writeAsSVG(writer, c)
+        writer.newLine
+        val x1 = m.x
+        val y1 = m.y
+        val x2 = x1 + 0.5 * math.cos(m.orientation)
+        val y2 = y1 + 0.5 * math.sin(m.orientation)
+        writer.write("<line x1=\""+x1+"\" y1=\""+y1+"\" x2=\""+x2+"\" y2=\""+y2+"\" stroke-width=\"0.1\" stroke=\""+c+"\"/>")
+        writer.newLine
+      }
+    }
+    writer.write("</svg>")
+    writer.newLine
+
   }
 
 

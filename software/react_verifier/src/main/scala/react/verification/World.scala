@@ -43,7 +43,7 @@ abstract class World extends Playground {
   var ghosts: List[Ghost] = Nil
   var boxes: List[Box2D] = Nil
 
-  protected def enclosure = {
+  def enclosure = {
     val wall = 0.1
     if (enclosed) {
       List(
@@ -56,10 +56,9 @@ abstract class World extends Playground {
     else Nil
   }
 
-  def allBoxes = {
-    val b = models.map(_.boundingBox) ++ boxes
-    b ::: enclosure //returns the model BB first!
-  }
+  lazy val envBoxes = boxes ::: enclosure
+  def modelBoxes = models.map(_.boundingBox)
+  def allBoxes = envBoxes ::: envBoxes //returns the model BB first!
 
   def dispatchBoxes {
     val bbs = allBoxes
@@ -88,7 +87,7 @@ abstract class World extends Playground {
     buffer.append("  models:\n")
     for (m <- models) {
       buffer.append("    " + m + "\n")
-      buffer.append("      bounding boxe: " + m.boundingBox + "\n")
+      buffer.append("      bounding box: " + m.boundingBox + "\n")
     }
     buffer.append("  ghosts:\n")
     for (g <- ghosts) {
@@ -100,6 +99,10 @@ abstract class World extends Playground {
     }
     for (b <- boxes) {
       buffer.append("    " + b + "\n")
+    }
+    buffer.append("  state saved by MC:\n")
+    for (s <- statefulObj) {
+      buffer.append("    " + s.longDescription + "\n" )
     }
     buffer.append("}\n")
     buffer.toString
@@ -118,6 +121,10 @@ abstract class World extends Playground {
 
   def round {
     for (s <- statefulObj) s.round
+  }
+
+  def inBounds = {
+    models.forall( m => m.x >= xMin && m.x <= xMax && m.y >= yMin && m.y <= yMax )
   }
   
   

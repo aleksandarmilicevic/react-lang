@@ -13,6 +13,10 @@ class Box2D(val x: Double,
     "Box2D(" + x + ", " + y + ", " + orientation + ", " + width + ", " + depth + ")"
   }
 
+  def writeAsSVG(writer: java.io.BufferedWriter, color: String = "rgb(0, 0, 0)") = {
+    writer.write("<rect x=\""+x+"\" y=\""+y+"\" width=\""+width+"\" height=\""+depth+"\" transform=\"rotate("+math.toDegrees(orientation)+" "+ x +" "+ y + ")\" stroke-width=\"0.1\" stroke=\""+color+"\" />")
+  }
+
   override def equals(obj: Any) = {
     if (obj.isInstanceOf[Box2D]) {
       //TODO account for rounding error ??

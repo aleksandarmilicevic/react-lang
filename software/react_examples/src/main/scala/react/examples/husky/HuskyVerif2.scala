@@ -36,20 +36,40 @@ class HuskyVerif2 extends World {
 
   /////////
 
-  def addHuskyPathfinder(id: String, x: Int, y: Int) = {
-    val husky1 = new HuskyPathfinder("/" + id)
-    val m1 = new GroundRobot(new Box2D(-0.5, -0.5, 0, 1, 1), Some(("/gazebo/set_model_state", id)))
-    val ls1 = new LaserSensor(-0.78f, 0.78f, 90, 0.1f, 5, 0.01f, m1, "/" + id + "/laser", 20)
-    val os1 = new OdometrySensor(id, m1, "/" + id + "/p3d", 20)
+  def huskyModel(id: String, x: Int, y: Int) = {
+    val sensorFreq = 20
+    val m1 = new GroundRobot(new Box2D(-0.4, -0.4, 0, 0.8, 0.8), Some(("/gazebo/set_model_state", id)))
+    //val ls1 = new LaserSensor(-0.2f, 0.2f, 90, 0.1f, 5, 0.01f, m1, "/" + id + "/laser", sensorFreq)
+    val ls1 = new LaserSensor(-0.78f, 0.78f, 90, 0.1f, 5, 0.01f, m1, "/" + id + "/laser", sensorFreq)
+    val os1 = new OdometrySensor(id, m1, "/" + id + "/p3d", sensorFreq)
     m1.setPosition(x, y)
     m1.addSensor(ls1, Pose2D(0,0,0))
     m1.addSensor(os1, Pose2D(0,0,0))
-    robot(husky1, m1)
+    m1
   }
 
-  addHuskyPathfinder("husky1", 0, 0)
+  def addPathfinder(id: String, x: Int, y: Int) = {
+    val husky1 = new HuskyPathfinder("/" + id)
+    val model = huskyModel(id, x, y)
+    robot(husky1, model)
+  }
+
+  def addRandom(id: String, x: Int, y: Int) = {
+    val husky1 = new HuskySearchBot("/" + id)
+    val model = huskyModel(id, x, y)
+    robot(husky1, model)
+  }
   
-  addHuskyPathfinder("husky2", -2, 3)
+  def addSnap(id: String, x: Int, y: Int) = {
+    val husky1 = new HuskyGridSnap("/" + id)
+    val model = huskyModel(id, x, y)
+    robot(husky1, model)
+    ghost(new UserInput(husky1))
+  }
+
+  addSnap("husky1", 0, 0)
+  
+  //addSnap("husky2", 1, -1)
 
 
 }

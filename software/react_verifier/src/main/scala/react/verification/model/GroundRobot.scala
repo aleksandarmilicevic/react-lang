@@ -21,7 +21,12 @@ class GroundRobot( bBox: Box2D,
 
   var x = 0.0
   var y = 0.0
-  var orientation = 0.0
+  var _orientation = 0.0
+
+  def orientation = _orientation
+  def orientation_=(d: Double) {
+    _orientation = Angle.normalize(d)
+  }
   
   var vx = 0.0
   var vo = 0.0
@@ -58,7 +63,7 @@ class GroundRobot( bBox: Box2D,
   protected def setChildPose(s: Sensor, offset: Pose2D) {
     val cx = x + cos(orientation) * offset.x - sin(orientation) * offset.y
     val cy = y + sin(orientation) * offset.x + cos(orientation) * offset.y
-    val co = orientation + offset.theta
+    val co = Angle.normalize(orientation + offset.theta)
     s.pose = Pose2D(cx, cy, co)
   }
 
