@@ -11,19 +11,19 @@ import math._
 /** Model for an ideal (execute command perfectly) robot moving on the ground */
 class TwistGroundRobot( bBox: Box2D,
                         val topic: String,
-                        cmdTime: Int,
+                        cmdTime: Short,
                         snap: Option[(String,String)] = None
                       ) extends GroundRobot(bBox, snap) {
 
   /* what to execute */
-  var commandTimeLeft = 0
+  var commandTimeLeft: Short = 0
   
   override def elapse(t: Int) {
     val mt = min(t, commandTimeLeft)
 
     super.elapse(mt)
 
-    commandTimeLeft -= mt
+    commandTimeLeft = (commandTimeLeft - mt).toShort
     if (commandTimeLeft <= 0) {
       vx = 0.0
       vo = 0.0

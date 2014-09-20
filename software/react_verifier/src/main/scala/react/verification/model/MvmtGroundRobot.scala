@@ -17,8 +17,8 @@ class MvmtGroundRobot( bBox: Box2D,
                      ) extends GroundRobot(bBox, snap) {
 
   /* what to execute */
-  var commandTimeLeft = 0
-  var cmdQueue = List[(Int, Double, Double)]()
+  var commandTimeLeft: Short = 0
+  var cmdQueue = List[(Short, Double, Double)]()
   
   override def elapse(t: Int) {
 
@@ -32,14 +32,15 @@ class MvmtGroundRobot( bBox: Box2D,
           vo = a
           cmdQueue = cmdQueue.tail
         } else {
-          commandTimeLeft = left
+          commandTimeLeft = left.toShort
+          assert(commandTimeLeft >= 0)
           vx = 0.0
           vo = 0.0
         }
       }
       val mt = min(left, commandTimeLeft)
       super.elapse(mt)
-      commandTimeLeft -= mt
+      commandTimeLeft = (commandTimeLeft - mt).toShort
       left -= mt
     }
      
@@ -58,7 +59,8 @@ class MvmtGroundRobot( bBox: Box2D,
         vx = message.getSpeed
         vo = message.getAngularSpeed
         val d = message.getD
-        commandTimeLeft = d.secs * 1000 + d.nsecs / 1000
+        commandTimeLeft = (d.secs * 1000 + d.nsecs / 1000).toShort
+        assert(commandTimeLeft >= 0)
       } finally lock.unlock
     }
   }

@@ -84,7 +84,7 @@ class GroundRobot( bBox: Box2D,
 
   protected def moveFor(t: Int) = {
     val dt = t / 1000.0
-    val da = vo * dt
+    val da = (vo * dt).abs
     if (vo == 0.0) {
       x += dt * vx * cos(orientation)
       y += dt * vx * sin(orientation)
@@ -94,15 +94,22 @@ class GroundRobot( bBox: Box2D,
       val dy = r * (1 - cos(da)) * vx.signum * vo.signum
       x += dx * cos(orientation) - dy * sin(orientation)
       y += dx * sin(orientation) + dy * cos(orientation)
+    //println("Θ  = " + orientation)
+    //println("dΘ = " + da)
+    //println("dx = " + dx)
+    //println("dy = " + dy)
+    //println("cos(Θ) = " + cos(orientation))
+    //println("sin(Θ) = " + sin(orientation))
     }
     orientation += da
   }
 
   def elapse(t: Int) {
-    //println(this.toString)
+    assert(t >= 0)
+  //println(this.toString)
     moveFor(t)
     updateChildrenPose
-    //println("--"+t+"--> " + this.toString)
+  //println("--"+t+"--> " + this.toString)
   }
 
   val boxOffsetX = bBox.x //- x

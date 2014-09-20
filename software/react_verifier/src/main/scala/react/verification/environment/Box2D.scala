@@ -59,7 +59,7 @@ class Box2D(val x: Double,
 
   /** for each side, returns (a,b,c) such that ax + by + c = 0 */
   def cartesianEqs: List[(Double,Double,Double)] = {
-    def mkEq(x: Double, y: Double, dx: Double, dy: Double) = (-dy, dx, dx*y - dy*x)
+    def mkEq(x: Double, y: Double, dx: Double, dy: Double) = (-dy, dx, - dx*y + dy*x)
     val wx = width * cos(orientation)
     val wy = width * sin(orientation)
     val dx = -depth * sin(orientation)
@@ -74,26 +74,30 @@ class Box2D(val x: Double,
 
   /** compute the intersections of this cube with a line */
   def intersectLine(point: (Double,Double), direction: (Double, Double), error: Double = 1e-6): List[Double] = {
-    //println("intersecting " + toString + " with ")
-    //println("  x = " + point._1 + " + " + direction._1 + " * k ")
-    //println("  y = " + point._2 + " + " + direction._2 + " * k ")
+  //println("intersecting " + toString + " with ")
+  //println("  x = " + point._1 + " + " + direction._1 + " * k ")
+  //println("  y = " + point._2 + " + " + direction._2 + " * k ")
     cartesianEqs.flatMap{ case (a,b,c) =>
+  //  println("  a = " + a + ", b = " + b + ", c = " + c)
       // a * (p.x + k*d.x) + b * (p.y + k*d.y) + c = 0
       // k = (-c -a*p.x -b*p.y) / (a*d.x + b*d.y)
       val num = -c  - a * point._1  - b * point._2
       val den = a * direction._1 + b * direction._2
+  //  println("  num = " + num + ", den = " + den)
       //look for the degenrated case and ignore them
-      if (den >= -error && den <= -error) {
+      if (den >= -error && den <= error) {
+  //    println("  XXX")
         None
       } else {
         val k = num/den
         val ix = point._1 + k * direction._1
         val iy = point._2 + k * direction._2
+  //    println("  k = " + k + ", x = " + ix + ", iy = " + iy)
         if ( contains(ix, iy, error) ) {
-          //println("  k = " + k)
+  //      println("  k = " + k)
           Some(k)
         } else {
-          //println("  ---")
+  //      println("  ---")
           None
         }
       }

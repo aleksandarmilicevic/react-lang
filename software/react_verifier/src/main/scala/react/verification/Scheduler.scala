@@ -152,7 +152,7 @@ class Scheduler extends react.runtime.Scheduler {
 
   def content = queue.toList
 
-  val cache = new Cache[ScheduledTask](bytePerTask)
+  val cache = new Cache[ScheduledTask]
 
   def shift(t: Long) = {
     _now = _now - t
@@ -167,7 +167,7 @@ class Scheduler extends react.runtime.Scheduler {
 object Scheduler {
 
   /** cach for whole schedule */
-  private val cache = new Cache[List[ScheduledTask]](2)
+  private val cache = new Cache[List[ScheduledTask]]
 
   private def normalize(sch: List[ScheduledTask]) = {
     def compare(a: ScheduledTask, b: ScheduledTask) = {

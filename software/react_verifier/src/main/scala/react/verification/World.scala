@@ -58,7 +58,7 @@ abstract class World extends Playground {
 
   lazy val envBoxes = boxes ::: enclosure
   def modelBoxes = models.map(_.boundingBox)
-  def allBoxes = envBoxes ::: envBoxes //returns the model BB first!
+  def allBoxes = modelBoxes ::: envBoxes //returns the model BB first!
 
   def dispatchBoxes {
     val bbs = allBoxes

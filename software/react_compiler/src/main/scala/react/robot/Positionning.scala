@@ -33,6 +33,8 @@ object Angle {
     val a2 = angle % (math.Pi * 2)
     if (a2 > math.Pi) {
       a2 - (math.Pi * 2)
+    } else if (a2 <= -math.Pi)  {
+      a2 + (math.Pi * 2)
     } else {
       a2
     }

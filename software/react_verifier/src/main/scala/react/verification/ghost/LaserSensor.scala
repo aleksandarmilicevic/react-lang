@@ -21,14 +21,16 @@ class LaserSensor(minAngle: Float,
   val dummyHeader = Header(0, Time(0, 0), frameName)
 
   def act {
+    //println(frameName + ": " + pose + ", |world| = " + world.size)
     val rays = Array.ofDim[Float](samples)
     val intensities = Array.ofDim[Float](samples)
 
     val da = (maxAngle - minAngle) / samples
     for(i <- 0 until samples) {
       val a = pose.theta + minAngle + i * da
-      val intersections = world.flatMap(_.intersectLine((pose.x, pose.y), (cos(a), sin(a))).filter(_ > 0))
-      val closest = if (!intersections.isEmpty) intersections.min else maxRange
+      val intersections = world.flatMap(_.intersectLine((pose.x, pose.y), (cos(a), sin(a))))
+      val pos = intersections.filter(_ > 0)
+      val closest = if (!pos.isEmpty) pos.min else maxRange
       val r = Stateful.round(closest, minRange, maxRange, resolution).toFloat
       rays(i) = r
       intensities(i) = 1.0f / r / r

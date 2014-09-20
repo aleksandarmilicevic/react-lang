@@ -24,7 +24,7 @@ object Stateful {
   def makeStateful[M](robot: M, world: Playground): Stateful = macro ExplorableMacros.makeStateful[M]
 
   def round(value: Double, min: Double, max: Double, step: Double): Double = {
-    val stepped = (value / step).round * step
+    val stepped = math.rint(value / step) * step
     val res = math.min(max, math.max(min, stepped))
     //println("rounding " + value + " to " + res + " ("+min+", "+max+","+step+")")
     res

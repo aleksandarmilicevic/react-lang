@@ -7,18 +7,41 @@ import scala.reflect.ClassTag
 //TODO make size increase on the fly
 
 /** A class to store/restore _immutable_ values of an arbitrary type */
-class Cache[T: ClassTag](nbrByte: Int) {
-  assert(nbrByte > 0 && nbrByte <= 4)
+class Cache[T: ClassTag] {
 
-  val maxNbrElt = 1 << (8*nbrByte)
+  val chunkSize = 256
+  val chunks = Array.ofDim[Array[T]](256)
+  val maxNbrElt = 256 * 256
 
   protected val cnt = new AtomicInteger()
   protected val map = new ConcurrentHashMap[T,Int]()
-  protected val arr = Array.ofDim[T](maxNbrElt)
+  protected val lck = new java.util.concurrent.locks.ReentrantLock()
 
-  protected def mkIdx(idx: Int) =
-    if (idx < 0) idx + 2*maxNbrElt
-    else idx
+  private def read(idx: Int): T = {
+    assert(idx < maxNbrElt)
+    val a1 = chunks(idx >> 8)
+    if (a1 == null) sys.error("Cache: element at " + idx + "not found")
+    else a1(idx & 0xff)
+  }
+
+  private def write(idx: Int, elt: T) {
+    assert(idx < maxNbrElt)
+    val i1 = idx >> 8
+    val i2 = idx & 0xff
+    val a1 = chunks(idx >> 8)
+    if (a1 == null) {
+      lck.lock
+      try {
+        val a = Array.ofDim[T](256)
+        chunks(i1) = a
+        a(i2) = elt
+      } finally {
+        lck.unlock
+      }
+    } else {
+      a1(i2) = elt
+    }
+  }
 
   def idx(value: T): Int = {
     if (map containsKey value) {
@@ -27,20 +50,18 @@ class Cache[T: ClassTag](nbrByte: Int) {
       val j = cnt.getAndIncrement
       val i = map.putIfAbsent(value, j)
       val index = if (i != 0) i else j
-      arr(index) = value
+      write(index, value)
       index
     }
   }
 
-  def value(idx: Int): T = {
-    arr(mkIdx(idx))
-  }
+  def value(idx: Int): T = read(idx)
 
   def returnSome: T = {
     assert(cnt.get > 0)
     do {
       val i = util.Random.nextInt % cnt.get
-      val v = arr(i)
+      val v = read(i)
       if (v != null) {
         return v
       }
@@ -50,10 +71,10 @@ class Cache[T: ClassTag](nbrByte: Int) {
 
 }
 
-object SymbolCache extends Cache[Symbol](1) {
+object SymbolCache extends Cache[Symbol] {
 }
 
-object OrientationCache extends Cache[react.robot.Orientation](1) {
+object OrientationCache extends Cache[react.robot.Orientation] {
   import react.robot._
   idx(North)
   idx(South)

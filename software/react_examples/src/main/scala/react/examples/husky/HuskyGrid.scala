@@ -9,8 +9,8 @@ import react.examples._
 class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
 
   def currentIntegralPosition = {
-    val pX = math.round(x)
-    val pY = math.round(y)
+    val pX = math.round(x).toInt
+    val pY = math.round(y).toInt
     val pO = Orientation.closest(orientation)
     (pX, pY, pO)
   }
@@ -23,7 +23,6 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
       orientation = pT
   }
 
-  var frontDistance = 1.0
   sensor[LaserScan]("laser"){
     case GetRange(distance) =>
       frontDistance = distance
@@ -80,8 +79,8 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
     
     every(100){
       //moving the frame at the robot position
-      val dx = targetX - x
-      val dy = targetY - y
+      val dx: Double = targetX - x
+      val dy: Double = targetY - y
       //normal to the line on which the robot currently moves
       val nx = math.sin(orientation)
       val ny = math.cos(orientation)
@@ -126,8 +125,9 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
   val vMaxLinear = 1.0
   def clamp(v: Double, vMin: Double, vMax: Double) = math.min(vMax, math.max(v, vMin))
 
-  var targetX = 0.0
-  var targetY = 0.0
+  var frontDistance = 1.0f
+  var targetX = 0
+  var targetY = 0
   var targetO = 0.0
 
 ////print some debug every 5 second

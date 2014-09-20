@@ -77,6 +77,11 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
   protected def getT: State =
     if (opts.bfs) frontierT.removeLast()
     else frontierT.removeFirst()
+  protected def frontierContentT: Array[State] = {
+    val a1 = frontierT.toArray( Array(Array[Byte]()) )
+    val a2 = if (a1 == null) Array[State]() else a1
+    a2.filter(_ != null)
+  }
 
 
   ////////////////////////////////
@@ -209,7 +214,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
   //first, it generates all the reachable states by ghost perturbations (simulates user inputs, etc...)
   //then, we do the periodic controller update
   def innerLoop(s: State): Iterable[State] = {
-    val local = new HashStateStore()
+    var local: List[State] = Nil
     var cnt = 1
     //the ghost steps
     if (!opts.keepTransient) {
@@ -218,7 +223,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
     restoreStateCompact(s)
     val s2 = saveState
     transientStates += s2
-    local += s2
+    local = s2 :: local
     transientStatesStored += 1
     putT(s2)
     while(!frontierT.isEmpty) {
@@ -232,7 +237,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       for (x <- s2) {
         if (!transientStates.contains(x)) {
           transientStates += x
-          local += x
+          local = x :: local
           transientStatesStored += 1
           putT(x)
         }
@@ -251,27 +256,34 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       for (x <- s2) {
         if (!transientStates.contains(x)) {
           transientStates += x
-          local += x
+          local = x :: local
           transientStatesStored += 1
           putT(x)
         }
       }
     }
-    if (!opts.keepTransient) {
-      transientStates.clear
-    }
-    val stateLst = local.toList.map(_.state)
-    stateLst.flatMap[State, List[State]]( s => {
-      restoreState(s)
+    val rounded = local.flatMap( s => {
+      restoreState(s.state)
       //keep only those at the period
       if (scheduler.now >= period) {
         //shift everything back to 0
         scheduler.shift(scheduler.now)
         world.round
-        // minimize scheduler state
-        Some(saveStateCompact)
+        //minimize scheduler state
+        val x = saveStateCompact
+        //check if there after rounding
+        if (!transientStates.contains(x)) {
+          transientStates += x
+          Some(x)
+        } else {
+          None
+        }
       } else None
     })
+    if (!opts.keepTransient) {
+      transientStates.clear
+    }
+    rounded
   }
   
   def oneStep = {
@@ -444,6 +456,8 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
         svgHeader(writer)
         for (s <- predMap.keys) writeModelsAsSVG(writer, s.state)
         for (s <- transientStates) writeModelsAsSVG(writer, s.state)
+        for (s <- frontierContent) writeModelsAsSVG(writer, s._2)
+        for (s <- frontierContentT) writeModelsAsSVG(writer, s)
         // TODO enumerate state from the StateStore ?
         svgFooter(writer)
       }
