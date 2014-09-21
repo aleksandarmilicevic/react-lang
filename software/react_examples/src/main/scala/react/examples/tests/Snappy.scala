@@ -13,7 +13,7 @@ class Snappy(_id: String) extends GroundRobot(_id) {
 
   sensor[Odometry]("p3d"){
     case GetPose(pX, pY, pT) =>
-      //println("p3d")
+      //println(id + " p3d")
       x = pX
       y = pY
       orientation = pT
@@ -23,7 +23,7 @@ class Snappy(_id: String) extends GroundRobot(_id) {
   var frontDistance = 1.0f
   sensor[LaserScan]("laser"){
     case GetRange(distance) =>
-      //println("laser")
+      //println(id + " laser")
       frontDistance = distance.toFloat
       distanceUpdated = true
   }
@@ -31,7 +31,7 @@ class Snappy(_id: String) extends GroundRobot(_id) {
   //input from keyboard
   on {
     case Key.UP =>
-      //println("up")
+      //println(id + " up")
       if (poseUpdated && distanceUpdated && frontDistance >= 2) {
         Orientation.closest(orientation) match {
           case North => y += 1
@@ -42,7 +42,7 @@ class Snappy(_id: String) extends GroundRobot(_id) {
         snapTo(x, y, orientation)
       }
     case Key.LEFT  =>
-      //println("left")
+      //println(id + " left")
       if (poseUpdated) {
         Orientation.closest(orientation) match {
           case North => orientation = West.rad
@@ -53,7 +53,7 @@ class Snappy(_id: String) extends GroundRobot(_id) {
         snapTo(x, y, orientation)
       }
     case Key.RIGHT =>
-      //println("right")
+      //println(id + " right")
       if (poseUpdated) {
         Orientation.closest(orientation) match {
           case North => orientation = East.rad

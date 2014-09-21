@@ -35,7 +35,7 @@ trait McOptions {
 }
 
 
-class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
+class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: McOptions) {
 
 
   ///////////////////////////
@@ -136,8 +136,11 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
   //////////////////
 
   def step(bp: BranchingPoint, i: Int) {
+    assert(world.safe, "world unsafe before taking a step!")
+    Logger("ModelChecker", LogDebug, "## start step")
     bp.act(i) //TODO add a timeout for infinite loops 
-    world.waitUntilStable
+    exec.waitUntilDelivered
+    Logger("ModelChecker", LogDebug, "## end step")
     statesGenerated += 1
   }
 
@@ -162,7 +165,6 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
         step(bp, i)
         val s3 = saveState
         if (!world.safe) {
-          Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
           throw new SafetyError("controller step", List(s2,s3))
         } else if (world.inBounds) {
           Some(s3)
@@ -186,7 +188,6 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       val s2 = saveState
       //Logger("ModelChecker", LogNotice, "s2 = " + new RichState(s2))
       if (!world.safe) {
-        Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
         throw new SafetyError("ghost step", List(s2))
       } else if (world.inBounds) {
         Some(s2)
@@ -317,7 +318,9 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
         if (!s.suffix.isEmpty) {
           val last = s.suffix.last
           restoreState(last)
-          Logger("ModelChecker", LogError, "last known state: " + world)
+          Logger("ModelChecker", LogError, "last known state:")
+          Logger("ModelChecker", LogError, world.toString)
+          Logger("ModelChecker", LogError, world.currentState)
           if (opts.keepTrace) {
             val trace = makeTrace(s.suffix.head) ::: s.suffix.tail
             Logger("ModelChecker", LogError, "\n")
@@ -347,7 +350,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
       Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
       throw new SafetyError("initial state", List(initState))
     }
-    world.grabAllLocks
+    //world.grabAllLocks
     startTime = java.lang.System.currentTimeMillis()
   }
 
@@ -373,7 +376,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
     for ( (s, i) <- trace.zipWithIndex) {
       restoreWorldOnly(s)
       buffer.append("step: "+i+"\n")
-      buffer.append(world.toString)
+      buffer.append(world.currentState)
       buffer.append("\n\n")
     }
     buffer.toString
@@ -386,14 +389,7 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
     restoreWorldOnly(s)
     for ( (m,i) <- world.models.zipWithIndex) {
       val c = colors(i % colors.length)
-      m.boundingBox.writeAsSVG(writer, c)
-      writer.newLine
-      val x1 = m.x
-      val y1 = m.y
-      val x2 = x1 + 0.5 * math.cos(m.orientation)
-      val y2 = y1 + 0.5 * math.sin(m.orientation)
-      writer.write("<line x1=\""+x1+"\" y1=\""+y1+"\" x2=\""+x2+"\" y2=\""+y2+"\" stroke-width=\"0.1\" stroke=\""+c+"\"/>")
-      writer.newLine
+      m.writeAsSVG(writer, c)
     }
   }
 

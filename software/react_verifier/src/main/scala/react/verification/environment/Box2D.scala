@@ -31,7 +31,7 @@ class Box2D(val x: Double,
     }
   }
 
-  def corners: Array[(Double, Double)] = {
+  lazy val corners: Array[(Double, Double)] = {
     val wx = width * cos(orientation)
     val wy = width * sin(orientation)
     val dx = -depth * sin(orientation)
@@ -44,7 +44,7 @@ class Box2D(val x: Double,
     )
   }
 
-  def contains(x: Double, y: Double, error: Double = 1e-6) = {
+  def contains(x: Double, y: Double, error: Double = 1e-6): Boolean = {
     val dx = x - this.x
     val dy = y - this.y
     //val a = atan2(dy, dx) - orientation
@@ -52,9 +52,26 @@ class Box2D(val x: Double,
     val dy2 = dx * sin(-orientation) + dy * cos(-orientation)
     dx2 >= -error && dx2 <= width + error && dy2 >= -error && dy2 <= depth + error
   }
+  def contains(p: (Double, Double)): Boolean = {
+    contains(p._1, p._2)
+  }
 
+  def center = {
+    var x4 = 0.0
+    var y4 = 0.0
+    for( (x,y) <- corners ) {
+      x4 += x
+      y4 += y
+    }
+    (x4 / 4.0, y4 / 4.0)
+  }
+
+  //TODO this is wrong! (fix when have more time)
   def collides(b: Box2D): Boolean = {
-    b.corners exists ( p => contains(p._1, p._2) )
+    def c(a: Box2D, b: Box2D) = {
+      b.corners.exists( p => a.contains(p._1, p._2) ) || a.contains(b.center)
+    }
+    c(this, b) || c(b, this)
   }
 
   /** for each side, returns (a,b,c) such that ax + by + c = 0 */

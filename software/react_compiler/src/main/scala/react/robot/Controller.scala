@@ -31,20 +31,21 @@ trait Controller {
       import org.ros.message.MessageListener
       val topic: String = source
       val rosType: String = msgType
-      val listener = new MessageListener[T]{
-        def onNewMessage(message: T) {
-          if (enabled) {
-            lock.lock()
-            try {
-              handler(message)
-            } finally {
-              lock.unlock
-            }
-          }
-        }
-      }
       def register(exec: Executor) {
         registered = true
+        val listener = new MessageListener[T]{
+          def onNewMessage(message: T) {
+            if (enabled) {
+              lock.lock()
+              try {
+                handler(message)
+              } finally {
+                lock.unlock
+              }
+            }
+            exec.messageDelivered
+          }
+        }
         val sub = exec.getSubscriber[T](topic, rosType)
         sub.addMessageListener(listener)
       }

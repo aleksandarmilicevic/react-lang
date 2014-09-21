@@ -7,6 +7,7 @@ import react.verification.environment._
 import react.verification.ghost._
 import react.verification._
 import math._
+import react.utils._
 
 //TODO uncertainty according rounding
 
@@ -33,6 +34,15 @@ class GroundRobot( bBox: Box2D,
 
   override def toString = {
     "robot model: x = " + x + ", y = " + y + ", Θ = " + orientation + ", vx = " + vx + ", vΘ = " + vo
+  }
+  
+  def writeAsSVG(writer: java.io.BufferedWriter, color: String = "black") {
+    boundingBox.writeAsSVG(writer, color)
+    writer.newLine
+    val x2 = x + 0.5 * math.cos(orientation)
+    val y2 = y + 0.5 * math.sin(orientation)
+    writer.write("<line x1=\""+x+"\" y1=\""+y+"\" x2=\""+x2+"\" y2=\""+y2+"\" stroke-width=\"0.1\" stroke=\""+color+"\"/>")
+    writer.newLine
   }
 
   @ignore
@@ -131,7 +141,7 @@ class GroundRobot( bBox: Box2D,
       val listener2 = new org.ros.message.MessageListener[gazebo_msgs.ModelState]{
         val name = snap.get._2
         def onNewMessage(message: gazebo_msgs.ModelState) {
-          //println(name + " -> " + message.getModelName)
+          Logger("GroundRobot", LogDebug, name + " -> " + message.getModelName)
           lock.lock
           try {
             if (message.getModelName == name) {
@@ -142,6 +152,7 @@ class GroundRobot( bBox: Box2D,
               vo = message.getTwist.getAngular.getX
             }
           } finally lock.unlock
+          exec.messageDelivered
         }
       }
       val sub = exec.getSubscriber[gazebo_msgs.ModelState](snap.get._1, gazebo_msgs.ModelState._TYPE)

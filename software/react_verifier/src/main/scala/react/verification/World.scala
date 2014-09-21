@@ -100,11 +100,15 @@ abstract class World extends Playground {
     for (b <- boxes) {
       buffer.append("    " + b + "\n")
     }
-    buffer.append("  state saved by MC:\n")
+    buffer.toString
+  }
+
+  def currentState = {
+    val buffer = new StringBuilder(1024)
+    buffer.append("state saved by MC:\n")
     for (s <- statefulObj) {
-      buffer.append("    " + s.longDescription + "\n" )
+      buffer.append("  " + s.longDescription + "\n" )
     }
-    buffer.append("}\n")
     buffer.toString
   }
 
@@ -128,43 +132,6 @@ abstract class World extends Playground {
   }
   
   
-  ////////////////
-  // sync & co. //
-  ////////////////
-  
-  //TODO not complete unless very strong assumptions on the scheduler
-
-  def grabAllLocks {
-    for (r <- robots) {
-      val acquired = r.lock.tryLock(1000, java.util.concurrent.TimeUnit.MILLISECONDS)
-      if (!acquired) {
-        sys.error("Robot " + r + "has been busy for more than 1000ms. infinite loop ?!?")
-      }
-    }
-    for (r <- models) {
-      val acquired = r.lock.tryLock(1000, java.util.concurrent.TimeUnit.MILLISECONDS)
-      if (!acquired) {
-        sys.error("Model " + r + "has been busy for more than 1000ms. infinite loop ?!?")
-      }
-    }
-  }
-
-  def releaseAllLock {
-    for (r <- robots) {
-      r.lock.unlock()
-    }
-    for (r <- models) {
-      r.lock.unlock()
-    }
-  }
-
-  def waitUntilStable {
-    releaseAllLock
-    Thread.`yield`()
-    Thread.sleep(10)
-    grabAllLocks
-  }
-  
   ////////////////////////////////
   // save/load the system state //
   ////////////////////////////////
@@ -175,14 +142,12 @@ abstract class World extends Playground {
   
   lazy val totalLength = statefulObj.foldLeft(0)(_ + _.length)
 
-  //TODO round using discretisation
   def getCurrentState: State = {
     val buffer = ByteBuffer.allocate(totalLength) 
     for(s <- statefulObj) s.serialize(buffer)
     buffer.array
   }
 
-  //TODO round using discretisation
   def restoreState(s: State) {
     val buffer = ByteBuffer.wrap(s) 
     for(s <- statefulObj) s.deserilize(buffer)

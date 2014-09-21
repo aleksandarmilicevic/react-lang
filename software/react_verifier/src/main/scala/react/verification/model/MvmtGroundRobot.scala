@@ -52,21 +52,22 @@ class MvmtGroundRobot( bBox: Box2D,
 
   }
 
-  val listener = new org.ros.message.MessageListener[react_msgs.Mvmt]{
-    def onNewMessage(message: react_msgs.Mvmt) {
-      lock.lock
-      try {
-        vx = message.getSpeed
-        vo = message.getAngularSpeed
-        val d = message.getD
-        commandTimeLeft = (d.secs * 1000 + d.nsecs / 1000).toShort
-        assert(commandTimeLeft >= 0)
-      } finally lock.unlock
-    }
-  }
 
   override def register(exec: Executor) {
     super.register(exec)
+    val listener = new org.ros.message.MessageListener[react_msgs.Mvmt]{
+      def onNewMessage(message: react_msgs.Mvmt) {
+        lock.lock
+        try {
+          vx = message.getSpeed
+          vo = message.getAngularSpeed
+          val d = message.getD
+          commandTimeLeft = (d.secs * 1000 + d.nsecs / 1000).toShort
+          assert(commandTimeLeft >= 0)
+        } finally lock.unlock
+        exec.messageDelivered
+      }
+    }
     val sub = exec.getSubscriber[react_msgs.Mvmt](topic, react_msgs.Mvmt._TYPE)
     sub.addMessageListener(listener)
   }

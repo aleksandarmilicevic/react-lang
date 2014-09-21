@@ -25,6 +25,12 @@ class Verif extends World {
   /////////
 
   def safe = {
+    consistent && noCollision
+  }
+
+  obstacle( new Box2D(1, 2, 0, 2, 1) )
+
+  def noCollision = {
     val bxs = allBoxes
     bxs.forall( b =>
       models.forall( r => {
@@ -34,7 +40,10 @@ class Verif extends World {
     )
   }
 
-  obstacle( new Box2D(1, 2, 0, 2, 1) )
+  def consistent = {
+    (!r1.poseUpdated || (r1.x == m1.x && r1.y == m1.y)) &&
+    (!r2.poseUpdated || (r2.x == m2.x && r2.y == m2.y))
+  }
 
   /////////
   
@@ -59,12 +68,17 @@ class Verif extends World {
     m1
   }
 
-  val id = "robot1"
-  val r1 = new Snappy("/" + id)
-  val m1 = twistModel(id, 0, 0, true) 
-
+  val i1 = "robot1"
+  val r1 = new Snappy("/" + i1)
+  val m1 = twistModel(i1, 0, 0, true) 
   robot(r1, m1)
   ghost(new UserInput(r1))
+
+  val i2 = "robot2"
+  val r2 = new Snappy("/" + i2)
+  val m2 = twistModel(i2, 1, -2, true) 
+  robot(r2, m2)
+  ghost(new UserInput(r2))
 
 }
 

@@ -10,6 +10,7 @@ trait Executor {
   def delayedPublish[T](delay: Int, topic: String, typeName: String, message: T)
   
   def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T]
+  def messageDelivered: Unit = {}
   
   /* conversion between REACT and ROS messages */
   def convertMessage[N](msg: Message): N

@@ -59,7 +59,7 @@ class Scheduler extends react.runtime.Scheduler {
       //println(toString)
       //println(same)
       assert(old == queue.size + same.size, "nextTasks: queue sizes do not agree (" + old + " ≠ " + (queue.size + same.size) +")")
-      same
+      Scheduler.normalize(same)
     }
   }
 

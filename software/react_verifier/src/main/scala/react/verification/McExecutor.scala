@@ -5,7 +5,33 @@ import react.message._
 import react.runtime._
 import org.ros.namespace.GraphName
 import org.ros.node.{Node, NodeMain, ConnectedNode}
+import org.ros.node.topic._
+import org.ros.message.MessageListener
 import org.ros.concurrent.CancellableLoop
+import react.utils._
+import java.util.concurrent.{Semaphore,TimeUnit}
+import java.util.concurrent.atomic.AtomicInteger
+
+class MySubscriber[T](sub: Subscriber[T]) extends Subscriber[T] {
+  import org.ros.node.topic._
+  val cnt = new AtomicInteger()
+  def addMessageListener(listener: MessageListener[T], limit: Int) {
+    sub.addMessageListener(listener, limit)
+    cnt.incrementAndGet
+  }
+  def addMessageListener(listener: MessageListener[T]) {
+    sub.addMessageListener(listener)
+    cnt.incrementAndGet
+  }
+  def getLatchMode = sub.getLatchMode
+  def addSubscriberListener(listener: SubscriberListener[T]) {
+    sub.addSubscriberListener(listener)
+  }
+  def shutdown = sub.shutdown
+  def shutdown(timeout: Long, unit: TimeUnit) = sub.shutdown(timeout, unit) 
+  def getTopicMessageType = sub.getTopicMessageType
+  def getTopicName = sub.getTopicName
+}
 
 abstract class McExecutor extends NodeMain with Executor with McOptions {
 
@@ -41,10 +67,33 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
     def schedule(t: react.runtime.ScheduledTask) = McExecutor.this.schedule(t)
 
     def removeCanceledTask: Unit = McExecutor.this.removeCanceledTask
+  
+    override def messageDelivered: Unit = McExecutor.this.messageDelivered
 
   }
 
   private val registrationSleep = 100
+
+  private val cnt = new AtomicInteger()
+  private val pending = new Semaphore(1000)
+  pending.drainPermits()
+
+  def waitUntilDelivered {
+    val toDeliver = cnt.get
+    cnt.set(0)
+    val done = pending.tryAcquire(toDeliver, 500, TimeUnit.MILLISECONDS)
+    val a = pending.availablePermits
+    if (!done) {
+      Logger("McExecutor", LogWarning, "could not make sure that all messages were delivered ("+a+" < " + toDeliver + ")")
+    } else if (a > 0) {
+      Logger("McExecutor", LogWarning, "delivered more than expected: "+a)
+    }
+    pending.drainPermits()
+  }
+  override def messageDelivered {
+    //println("messageDelivered")
+    pending.release()
+  }
   
   private val publishers = scala.collection.mutable.Map[String, Any]()
   def getPublisher[T](topic: String, typeName: String): org.ros.node.topic.Publisher[T] = {
@@ -60,6 +109,9 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
   
   def publish[T](topic: String, typeName: String, message: T) = {
     val pub = getPublisher[T](topic, typeName)
+    val ns = getSubscribed[T](topic, typeName) //messages to deliver
+    Logger("McExecutor", LogDebug, "publishing on " + topic + "[" + typeName + "](" + ns + ")")
+    cnt.addAndGet(ns)
     pub.publish(message)
   }
 
@@ -69,14 +121,21 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
   }
 
   private val subscribers = scala.collection.mutable.Map[String, Any]()
-  def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T] = {
+  def getSubscriber[T](topic: String, typeName: String): Subscriber[T] = {
     if (subscribers contains topic) {
-      subscribers(topic).asInstanceOf[org.ros.node.topic.Subscriber[T]]
+      subscribers(topic).asInstanceOf[MySubscriber[T]]
     } else {
-      val p = node.newSubscriber[T](topic, typeName)
+      val p = new MySubscriber[T](node.newSubscriber[T](topic, typeName))
       Thread.sleep(registrationSleep)
       subscribers += (topic -> p)
       p
+    }
+  }
+  def getSubscribed[T](topic: String, typeName: String): Int = {
+    if (subscribers contains topic) {
+      subscribers(topic).asInstanceOf[MySubscriber[T]].cnt.get
+    } else {
+      0
     }
   }
 
@@ -104,7 +163,7 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
     node = n
     node.executeCancellableLoop(new CancellableLoop {
 
-    mc = new ModelChecker(world, scheduler, getMcOptions)
+    mc = new ModelChecker(world, McExecutor.this, scheduler, getMcOptions)
 
       override def setup() {
         super.setup()
@@ -121,6 +180,7 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
         if (!somethingNew) {
           if (mc != null)
             mc.printStats
+          Main.shutdownCore
           System.exit(0)
         }
       }

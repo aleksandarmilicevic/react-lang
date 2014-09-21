@@ -34,19 +34,20 @@ class TwistGroundRobot( bBox: Box2D,
     }
   }
 
-  val listener = new org.ros.message.MessageListener[geometry_msgs.Twist]{
-    def onNewMessage(message: geometry_msgs.Twist) {
-      lock.lock
-      try {
-        commandTimeLeft = cmdTime
-        vx = message.getLinear.getX
-        vo = message.getAngular.getZ
-      } finally lock.unlock
-    }
-  }
 
   override def register(exec: Executor) {
     super.register(exec)
+    val listener = new org.ros.message.MessageListener[geometry_msgs.Twist]{
+      def onNewMessage(message: geometry_msgs.Twist) {
+        lock.lock
+        try {
+          commandTimeLeft = cmdTime
+          vx = message.getLinear.getX
+          vo = message.getAngular.getZ
+        } finally lock.unlock
+        exec.messageDelivered
+      }
+    }
     val sub = exec.getSubscriber[geometry_msgs.Twist](topic, geometry_msgs.Twist._TYPE)
     sub.addMessageListener(listener)
   }
