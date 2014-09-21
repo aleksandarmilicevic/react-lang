@@ -161,6 +161,7 @@ abstract class World extends Playground {
   def waitUntilStable {
     releaseAllLock
     Thread.`yield`()
+    Thread.sleep(10)
     grabAllLocks
   }
   

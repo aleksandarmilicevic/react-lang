@@ -272,7 +272,10 @@ class ModelChecker(world: World, scheduler: Scheduler, opts: McOptions) {
         //minimize scheduler state
         val x = saveStateCompact
         //check if there after rounding
-        if (!transientStates.contains(x)) {
+        if (!world.safe) {
+          Logger("ModelChecker", LogInfo, "Rounding made a safe state unsafe, discarding. You should increase precision.")
+          None
+        } else if (!transientStates.contains(x)) {
           transientStates += x
           Some(x)
         } else {

@@ -131,6 +131,7 @@ class GroundRobot( bBox: Box2D,
       val listener2 = new org.ros.message.MessageListener[gazebo_msgs.ModelState]{
         val name = snap.get._2
         def onNewMessage(message: gazebo_msgs.ModelState) {
+          //println(name + " -> " + message.getModelName)
           lock.lock
           try {
             if (message.getModelName == name) {

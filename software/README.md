@@ -51,4 +51,5 @@ Alternatively, instead of the `husky` controller, you can use `huskyG` which tri
 
 Misc
 ====
+To give more memory to the JVM: `export JAVA_OPTS="-Xms1G -Xmx4G"`
 For scala syntax highlight in vim, I recommend [https://github.com/derekwyatt/vim-scala.git](https://github.com/derekwyatt/vim-scala.git).

@@ -44,6 +44,7 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
 
   }
 
+  private val registrationSleep = 100
   
   private val publishers = scala.collection.mutable.Map[String, Any]()
   def getPublisher[T](topic: String, typeName: String): org.ros.node.topic.Publisher[T] = {
@@ -51,6 +52,7 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
       publishers(topic).asInstanceOf[org.ros.node.topic.Publisher[T]]
     } else {
       val p = node.newPublisher[T](topic, typeName)
+      Thread.sleep(registrationSleep)
       publishers += (topic -> p)
       p
     }
@@ -72,6 +74,7 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
       subscribers(topic).asInstanceOf[org.ros.node.topic.Subscriber[T]]
     } else {
       val p = node.newSubscriber[T](topic, typeName)
+      Thread.sleep(registrationSleep)
       subscribers += (topic -> p)
       p
     }
