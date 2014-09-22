@@ -13,13 +13,14 @@ class SchedulingPoint(tasks: List[ScheduledTask], scheduler: Scheduler) extends 
 
   def alternatives = perms.length
 
-  def act(alt: Int) {
-    for (t <- perms(alt)) {
+  def act(alt: Int) = {
+    for (t <- perms(alt)) yield {
       t.expires = expiration //reset the expirations since the tasks are not in the scheduler.
       t.fct()
       if (t.isPeriodic && !t.cancelled) {
         scheduler.schedule(t)
       }
+      t.descr
     }
   }
 

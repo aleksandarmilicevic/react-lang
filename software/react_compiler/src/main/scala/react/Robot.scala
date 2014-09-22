@@ -73,7 +73,7 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
         val msg = exec.convertMessage[geometry_msgs.PoseStamped](PoseStamped(h, p))
         exec.publish[geometry_msgs.PoseStamped]("/react/pose", geometry_msgs.PoseStamped._TYPE, msg)
       }
-      n.schedule(new ScheduledTask(posePublishPeriod, publish))
+      n.schedule(new ScheduledTask("publishPose("+id+")", posePublishPeriod, publish))
     }
 
   }

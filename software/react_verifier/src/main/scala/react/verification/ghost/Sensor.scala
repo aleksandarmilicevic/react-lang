@@ -31,7 +31,7 @@ abstract class Sensor(parent: react.verification.model.GroundRobot,
   //produce a value
   def act: Unit
 
-  val task = new react.runtime.ScheduledTask(period, () => act )
+  val task = new react.runtime.ScheduledTask("sensor("+_topic+")", period, () => act )
 
   override def register(e: Executor) {
     super.register(e)

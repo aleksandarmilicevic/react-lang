@@ -18,7 +18,7 @@ import HashStateStore._
 //import java.util.concurrent.ConcurrentHashMap
 //import java.util.Collections
 
-class SafetyError(val cause: String, val suffix: List[Array[Byte]]) extends Exception("safety violation (" + cause + ")") {
+class SafetyError(val cause: String, val suffix: Trace) extends Exception("safety violation (" + cause + ")") {
 }
 
 /** Model checker options */
@@ -72,15 +72,18 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
   //to represent the transient states between the round
   protected val transientStates = new HashStateStore()
 
-  protected val frontierT = new java.util.ArrayDeque[State]()
-  protected def putT(s: State) = frontierT.addFirst(s)
-  protected def getT: State =
+  protected val frontierT = new java.util.ArrayDeque[(List[String],State)]()
+  protected def putT(prefix: List[String], s: State) = frontierT.addFirst(prefix -> s)
+  protected def getT: (List[String], State) =
     if (opts.bfs) frontierT.removeLast()
     else frontierT.removeFirst()
   protected def frontierContentT: Array[State] = {
-    val a1 = frontierT.toArray( Array(Array[Byte]()) )
-    val a2 = if (a1 == null) Array[State]() else a1
-    a2.filter(_ != null)
+    val a1: Array[(List[String],State)] =
+      frontierT.toArray( Array(Nil -> Array[Byte]()) )
+    val a2: Array[(List[String],State)] =
+      if (a1 == null) Array[(List[String],State)]()
+      else a1
+    a2.filter(_ != null).map(_._2)
   }
 
 
@@ -135,17 +138,18 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
   // taking steps //
   //////////////////
 
-  def step(bp: BranchingPoint, i: Int) {
+  def step(bp: BranchingPoint, i: Int): List[String] = {
     assert(world.safe, "world unsafe before taking a step!")
     Logger("ModelChecker", LogDebug, "## start step")
-    bp.act(i) //TODO add a timeout for infinite loops 
+    val descr = bp.act(i) //TODO add a timeout for infinite loops 
     exec.waitUntilDelivered
     Logger("ModelChecker", LogDebug, "## end step")
     statesGenerated += 1
+    descr
   }
 
   /** executes until to next period */
-  def controllerStep(s: State): Iterable[State] = {
+  def controllerStep(s: State): Iterable[(List[String], State)] = {
     restoreState(s)
     if (scheduler.now >= period) {
       Nil
@@ -162,12 +166,12 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
       (0 until bp.alternatives).flatMap( i => {
         restoreState(s2)
         assert(bp.expiration == scheduler.now)
-        step(bp, i)
+        val descr = step(bp, i)
         val s3 = saveState
         if (!world.safe) {
-          throw new SafetyError("controller step", List(s2,s3))
+          throw new SafetyError("controller step", Trace(s2, (descr -> s3)))
         } else if (world.inBounds) {
-          Some(s3)
+          Some(descr -> s3)
         } else {
           None
         }
@@ -176,7 +180,7 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
   }
 
   /** saturates the systems with ghosts inputs */
-  def ghostStep(s: State): Iterable[State] = {
+  def ghostStep(s: State): Iterable[(List[String], State)] = {
     restoreState(s)
     val bp = new BranchingPoints(world.ghosts)
     val alt = bp.alternatives
@@ -184,27 +188,27 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
     //Logger("ModelChecker", LogNotice, "s  = " + new RichState(s))
     (0 until alt).flatMap( i => {
       restoreState(s)
-      step(bp, i)
+      val descr = step(bp, i)
       val s2 = saveState
       //Logger("ModelChecker", LogNotice, "s2 = " + new RichState(s2))
       if (!world.safe) {
-        throw new SafetyError("ghost step", List(s2))
+        throw new SafetyError("ghost step: " + descr.mkString(", "), Trace(s, descr->s2))
       } else if (world.inBounds) {
-        Some(s2)
+        Some(descr -> s2)
       } else {
         None
       }
     })
   }
 
-  def safeExec[A](suffix: List[State], fct: => A ) = {
+  def safeExec[A](suffix: Trace, fct: => A ) = {
     try {
       fct
     } catch {
       case i: java.lang.InterruptedException =>
         throw i
       case s: SafetyError =>
-        throw new SafetyError(s.cause, suffix ::: s.suffix)
+        throw new SafetyError(s.cause, suffix concat s.suffix)
       case exn: Throwable =>
         exn.printStackTrace
         throw new SafetyError(exn.toString, suffix) //TODO stack trace ?
@@ -214,8 +218,8 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
   //the inner loop proceeds into two steps.
   //first, it generates all the reachable states by ghost perturbations (simulates user inputs, etc...)
   //then, we do the periodic controller update
-  def innerLoop(s: State): Iterable[State] = {
-    var local: List[State] = Nil
+  def innerLoop(s: State): Iterable[(List[String], State)] = {
+    var local: List[(List[String],State)] = Nil
     var cnt = 1
     //the ghost steps
     if (!opts.keepTransient) {
@@ -224,47 +228,49 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
     restoreStateCompact(s)
     val s2 = saveState
     transientStates += s2
-    local = s2 :: local
+    local = (Nil -> s2) :: local
     transientStatesStored += 1
-    putT(s2)
+    putT(Nil, s2)
     while(!frontierT.isEmpty) {
       Logger("ModelChecker", LogDebug, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
       if (cnt % 500 == 0) {
         Logger("ModelChecker", LogInfo, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
       }
       cnt += 1 
-      val st = getT
-      val s2 = safeExec(List(s, st), ghostStep(st))
-      for (x <- s2) {
+      val (prefix, st) = getT
+      val s2 = safeExec(Trace(s, prefix -> st), ghostStep(st))
+      for ( (descr, x) <- s2) {
         if (!transientStates.contains(x)) {
           transientStates += x
-          local = x :: local
+          val p = descr ::: prefix
+          local = (p, x) :: local
           transientStatesStored += 1
-          putT(x)
+          putT(p, x)
         }
       }
     }
     //the controller step
-    local foreach (rs => putT(rs.state))
+    local foreach (rs => putT(rs._1, rs._2))
     while(!frontierT.isEmpty) {
       Logger("ModelChecker", LogDebug, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
       if (cnt % 500 == 0) {
         Logger("ModelChecker", LogInfo, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
       }
       cnt += 1 
-      val st = getT
-      val s2 = safeExec(List(s, st), controllerStep(st))
-      for (x <- s2) {
+      val (prefix, st) = getT
+      val s2 = safeExec(Trace(s, prefix -> st), controllerStep(st))
+      for ( (descr,x) <- s2) {
         if (!transientStates.contains(x)) {
           transientStates += x
-          local = x :: local
+          val p = descr ::: prefix
+          local = (p, x) :: local
           transientStatesStored += 1
-          putT(x)
+          putT(p, x)
         }
       }
     }
     val rounded = local.flatMap( s => {
-      restoreState(s.state)
+      restoreState(s._2)
       //keep only those at the period
       if (scheduler.now >= period) {
         //shift everything back to 0
@@ -278,7 +284,7 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
           None
         } else if (!transientStates.contains(x)) {
           transientStates += x
-          Some(x)
+          Some(s._1, x)
         } else {
           None
         }
@@ -296,15 +302,15 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
       if (!frontier.isEmpty) {
         val (p, s) = get
         val post = innerLoop(s).par
-        val asState = post.map( s => (s -> StateStore.stateToWord(s)) )
+        val asState = post.map( s => (s -> StateStore.stateToWord(s._2)) )
         val news = asState.filterNot{ case (s, w) => permanentStates.contains(w) }
         val (newStates, newWords) = news.unzip
         addToPermanent(newWords)
         for (s2 <- newStates.seq) {
            if (opts.timeBound <= 0 || (p+1) * period <= opts.timeBound) {
-             put(p+1, s2)
+             put(p+1, s2._2)
              if (opts.keepTrace) {
-               predMap(s2) = s
+               predMap(s2._2) = (s2._1, s)
              }
            }
         }
@@ -316,13 +322,13 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
       case s: SafetyError =>
         Logger("ModelChecker", LogError, "Error found: " + s.cause)
         if (!s.suffix.isEmpty) {
-          val last = s.suffix.last
+          val last = s.suffix.stop
           restoreState(last)
           Logger("ModelChecker", LogError, "last known state:")
           Logger("ModelChecker", LogError, world.toString)
           Logger("ModelChecker", LogError, world.currentState)
           if (opts.keepTrace) {
-            val trace = makeTrace(s.suffix.head) ::: s.suffix.tail
+            val trace = makeTrace(s.suffix.start).concat(s.suffix)
             Logger("ModelChecker", LogError, "\n")
             Logger("ModelChecker", LogError, traceToString(trace))
             if (opts.traceFile != "") {
@@ -348,7 +354,7 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
     put(0, initState)
     if(!world.safe) {
       Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
-      throw new SafetyError("initial state", List(initState))
+      throw new SafetyError("initial state", Trace(initState))
     }
     //world.grabAllLocks
     startTime = java.lang.System.currentTimeMillis()
@@ -358,32 +364,36 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
   // trace //
   ///////////
 
-  val predMap = collection.mutable.HashMap[RichState,RichState]()
+  val predMap = collection.mutable.HashMap[RichState,(List[String],RichState)]()
 
-  def makeTrace(s: State) = {
-    def process(curr: State, suffix: List[State]): List[State] = {
+  def makeTrace(s: State): Trace = {
+    def process(curr: State, suffix: Trace): Trace = {
       if (predMap contains curr) {
-        process(predMap(curr).state, curr :: suffix)
+        val (t,s) = predMap(curr)
+        process(s.state, suffix.prepend(s.state, t))
       } else {
-        curr :: suffix
+        suffix
       }
     }
-    process(s, Nil)
+    process(s, Trace(s))
   }
 
-  def traceToString(trace: List[State]) = {
+  def traceToString(trace: Trace) = {
     val buffer = new StringBuilder
-    for ( (s, i) <- trace.zipWithIndex) {
+    restoreWorldOnly(trace.start)
+    buffer.append("initial state\n")
+    buffer.append(world.currentState)
+    for ( ((t,s), i) <- trace.zipWithIndex) {
       restoreWorldOnly(s)
-      buffer.append("step: "+i+"\n")
+      buffer.append("step "+i+": " + t.mkString(", ") + "\n")
       buffer.append(world.currentState)
       buffer.append("\n\n")
     }
     buffer.toString
   }
 
-  def printTraceAsSVG(fileName: String, trace: List[State]) =
-    react.utils.IO.writeInFile(fileName, writeTraceAsSVG(_, trace))
+  def printTraceAsSVG(fileName: String, trace: Trace) =
+    react.utils.IO.writeInFile(fileName, writeTraceAsSVG(_, trace.states))
 
   def writeModelsAsSVG(writer: java.io.BufferedWriter, s: State) = {
     restoreWorldOnly(s)

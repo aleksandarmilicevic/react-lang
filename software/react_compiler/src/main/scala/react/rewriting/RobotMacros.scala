@@ -37,7 +37,7 @@ class RobotMacros(val c: Context) extends Handlers
   }
 
   def every(period: c.Expr[Int])(body: c.Expr[Unit]): c.Expr[Unit] = {
-    val tree = q"addTask(new react.runtime.ScheduledTask($period, (() => $body)))"
+    val tree = q"addTask(new react.runtime.ScheduledTask(id, $period, (() => $body)))"
     val tree2 = c.untypecheck(tree)
     c.Expr[Unit](tree2)
   }

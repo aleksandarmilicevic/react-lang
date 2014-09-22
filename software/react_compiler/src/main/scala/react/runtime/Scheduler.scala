@@ -3,13 +3,14 @@ package react.runtime
 import scala.collection.mutable.PriorityQueue
 import scala.math.Ordering.Implicits
 
-class ScheduledTask(val period: Int,
+class ScheduledTask(val descr: String,
+                    val period: Int,
                     val fct: () => Unit,
                     var expires: Long = -1,
                     var cancelled: Boolean = false
                    ) extends java.lang.Comparable[ScheduledTask] {
 
-  override def toString = "ScheduledTask(period = "+period+", expires = "+expires+", cancelled = "+cancelled+", " + fct + ")"
+  override def toString = "ScheduledTask["+descr+"](period = "+period+", expires = "+expires+", cancelled = "+cancelled+")"
 
   def compareTo(other: ScheduledTask) = other.expires.compareTo(expires)
 
@@ -31,8 +32,8 @@ class Scheduler {
 
   protected def now = java.lang.System.currentTimeMillis()
 
-  def addSingleTask(delay: Int, fct: () => Unit) {
-    val task = new ScheduledTask(-1, fct, now + delay)
+  def addSingleTask(descr: String, delay: Int, fct: () => Unit) {
+    val task = new ScheduledTask(descr, -1, fct, now + delay)
     queue.enqueue(task)
   }
   

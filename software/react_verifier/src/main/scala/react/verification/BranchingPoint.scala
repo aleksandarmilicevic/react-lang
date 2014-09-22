@@ -7,7 +7,7 @@ trait BranchingPoint {
   def alternatives: Int
 
   /* execute the given alternative, alt ∈ [0,alternatives) */
-  def act(alt: Int): Unit
+  def act(alt: Int): List[String]
 
 }
 
@@ -18,7 +18,7 @@ class BranchingPoints(points: List[BranchingPoint]) extends BranchingPoint {
   def alternatives = points.foldLeft(0)(_ + _.alternatives)
 
   def act(alt: Int) = {
-    def traverse(alt: Int, points: List[BranchingPoint]) {
+    def traverse(alt: Int, points: List[BranchingPoint]): List[String] = {
       val a = points.head.alternatives
       if (alt >= a) {
         traverse(alt - a, points.tail)

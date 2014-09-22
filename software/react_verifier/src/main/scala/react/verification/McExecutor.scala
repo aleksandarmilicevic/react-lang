@@ -117,7 +117,7 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
 
   def delayedPublish[T](delay: Int, topic: String, typeName: String, message: T) = {
     val pub = getPublisher[T](topic, typeName)
-    scheduler.addSingleTask(delay, () => pub.publish(message))
+    scheduler.addSingleTask("delayed publish on " + topic, delay, () => pub.publish(message))
   }
 
   private val subscribers = scala.collection.mutable.Map[String, Any]()
