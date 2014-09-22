@@ -105,18 +105,18 @@ object Main extends Options with react.verification.McOptions {
         org.ros.RosRun.main(Array(classOf[RunHuskyGrid].getName))
       case "huskyA" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyGrid2].getName))
-      case "huskyV" =>
-        org.ros.RosRun.main(Array(classOf[RunHuskyVerif].getName))
-      case "huskyV2" =>
-        org.ros.RosRun.main(Array(classOf[RunHuskyVerif2].getName))
       case "huskyS" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyGridSnap].getName))
       case "huskyB" =>
         org.ros.RosRun.main(Array(classOf[RunHuskySearchBot].getName))
       case "huskyP" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyPathfinder].getName))
+      case "huskyV" =>
+        react.verification.Main.runVerifier(new RunHuskyVerif)
+      case "huskyV2" =>
+        react.verification.Main.runVerifier(new RunHuskyVerif2)
       case "tests" =>
-        react.verification.Main.runVerifier(new tests.RunVerif)
+        react.verification.Main.runVerifier(new tests.RunVerif(topic))
       case other =>
         throw new RuntimeException("Unknown robot: " + other)
     }

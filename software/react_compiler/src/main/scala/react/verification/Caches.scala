@@ -3,6 +3,7 @@ package react.verification
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.ConcurrentHashMap
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe.TypeTag
 
 //TODO make size increase on the fly
 
@@ -82,3 +83,22 @@ object OrientationCache extends Cache[react.robot.Orientation] {
   idx(West)
 }
 
+object MetaCache {
+  private val map = new ConcurrentHashMap[String,Any]()
+
+  private def getCache[T: ClassTag](id: String): Cache[T] = {
+    if (map containsKey id) {
+      (map get id).asInstanceOf[Cache[T]]
+    } else {
+      val c = new Cache[T]
+      val cOld = map.putIfAbsent(id, c)
+      if (cOld != null) cOld.asInstanceOf[Cache[T]] else c
+    }
+  }
+
+  def getCache[T : TypeTag : ClassTag]: Cache[T] = {
+    val id = implicitly[TypeTag[T]].tpe.toString
+    getCache[T](id)
+  }
+
+}

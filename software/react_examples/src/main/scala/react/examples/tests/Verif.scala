@@ -62,16 +62,10 @@ abstract class VerifTemplate extends World {
 
 class Verif0 extends VerifTemplate {
 
-  def safe = {
-    consistent && noCollision
-  }
+  def safe = consistent && noCollision
 
-  def consistent = {
-    (!r1.poseUpdated || (r1.x == m1.x && r1.y == m1.y))
-  }
+  def consistent = (!r1.poseUpdated || (r1.x == m1.x && r1.y == m1.y))
 
-  /////////
-  
   val i1 = "robot1"
   val r1 = new Snappy("/" + i1)
   val m1 = twistModel(i1, 0, 0, true) 
@@ -82,9 +76,7 @@ class Verif0 extends VerifTemplate {
 
 class Verif1s extends VerifTemplate {
 
-  def safe = {
-    consistent && noCollision
-  }
+  def safe = consistent && noCollision
 
   def consistent = {
     (!r1.poseUpdated || (r1.x == m1.x && r1.y == m1.y)) &&
@@ -109,9 +101,7 @@ class Verif1s extends VerifTemplate {
 
 class Verif1u extends VerifTemplate {
 
-  def safe = {
-    consistent && noCollision
-  }
+  def safe = consistent && noCollision
 
   def consistent = {
     (!r1.poseUpdated || (r1.x == m1.x && r1.y == m1.y)) &&
@@ -195,8 +185,17 @@ class Verif4s extends VerifTemplate {
 
 }
 
-class RunVerif extends McExecutor {
-  val world = new Verif4s
+class RunVerif(what: String) extends McExecutor {
+  val world = what match {
+    case "0" => new Verif0
+    case "1s" => new Verif1s
+    case "1u" => new Verif1u
+    case "2" => new Verif2
+    case "3" => new Verif3
+    case "4s" => new Verif4s
+    case "4u" => new Verif4u
+    case _ => new Verif0
+  }
   override def getMcOptions = react.examples.Main
 }
   

@@ -42,8 +42,8 @@ class ExplorableMacros(val c: Context) extends Types
 
     val caches = for (f <- permanentFields if !isNative(f) ) yield {
       val cid = cacheId(f)
-      val t = f.typeSignature
-      q"val $cid = new react.verification.Cache[$t]"
+      val t = getCache(f.typeSignature)
+      q"val $cid = $t"
     }
 
     var length = wordLength[M]
@@ -100,14 +100,26 @@ class ExplorableMacros(val c: Context) extends Types
       }
     }
     
-    val descr = fieldsSaved[M]
+    val wa = permanentFields forall worldAgnostic
+    val descr = {
+      val l = fieldsSaved[M]
+      if (wa) {
+        l
+      } else {
+        val internalized = permanentFields filterNot worldAgnostic
+        val iStr = Literal(Constant(internalized.map(_.name).mkString(", ")))
+        c.Expr[String](q"""$l + " [internalized: " + $iStr + "]" """)
+      }
+    }
     val lDescr = longDescr[M]
+
     val tree = q"""
     new Stateful {
       import Stateful._
       val robot = $robot
       ..$caches
       def length: Int = $length
+      def worldAgnostic: Boolean = $wa
       def round: Unit = {
         ..$rounding
       }

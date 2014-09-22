@@ -17,6 +17,7 @@ trait Stateful {
   def deserilize(in: ByteBuffer): Unit
   def description: String
   def longDescription: String
+  def worldAgnostic: Boolean
 }
 
 object Stateful {

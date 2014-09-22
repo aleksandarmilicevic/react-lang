@@ -60,7 +60,7 @@ class Scheduler extends react.runtime.Scheduler {
       //println(toString)
       //println(same)
       assert(old == queue.size + same.size, "nextTasks: queue sizes do not agree (" + old + " ≠ " + (queue.size + same.size) +")")
-      Scheduler.normalize(same)
+      normalize(same)
     }
   }
 
@@ -154,6 +154,17 @@ class Scheduler extends react.runtime.Scheduler {
   def content = queue.toList
 
   val cache = new Cache[ScheduledTask]
+
+  protected def normalize(sch: List[ScheduledTask]) = {
+    def compare(a: ScheduledTask, b: ScheduledTask) = {
+      if  (a.period == b.period) {
+        cache.idx(a) < cache.idx(b)
+      } else {
+        a.period < b.period
+      }
+    }
+    sch.sortWith(compare)
+  }
 
   def shift(t: Long) = {
     _now = _now - t
