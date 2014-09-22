@@ -6,7 +6,7 @@ import react.message._
 import react.examples._
 
 
-class Griddy(_id: String) extends GroundRobot(_id) with FsmController {
+class Griddy(_id: String, safeDistance: Float = 1.6f) extends GroundRobot(_id) with FsmController {
 
   //update the position with the info from the robot
   sensor[Odometry]("p3d"){
@@ -42,7 +42,7 @@ class Griddy(_id: String) extends GroundRobot(_id) with FsmController {
     on {
       case Key.UP =>
           val (x,y,o) = currentIntegralPosition
-          if (frontDistance > 1.5) {
+          if (frontDistance > safeDistance) {
             o match {
               case North => targetX = x; targetY = y + 1
               case South => targetX = x; targetY = y - 1

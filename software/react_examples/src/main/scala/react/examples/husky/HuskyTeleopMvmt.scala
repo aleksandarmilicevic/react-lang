@@ -53,7 +53,7 @@ class HuskyTeleopMvmt(_id: String) extends GroundRobot(_id) {
   every(period){
     val cmd = Mvmt(nextHeader, vLinear, vAngular/10.0, Message.duration(100))
     println("sending " + cmd)
-    publish("husky/cmd_vel", cmd)
+    publish("husky/cmd_mvmt", cmd)
   }
 
 }

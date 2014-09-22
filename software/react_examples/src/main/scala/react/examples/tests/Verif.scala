@@ -157,8 +157,46 @@ class Verif3 extends VerifTemplate {
 
 }
 
+class Verif4u extends VerifTemplate {
+  
+  def safe = noCollision
+
+  val i1 = "robot1"
+  val r1 = new Griddy("/" + i1, 1.5f)
+  val m1 = twistModel(i1, 0, 0, true) 
+  robot(r1, m1)
+  ghost(new UserInput(r1))
+
+  val i2 = "robot2"
+  val r2 = new Griddy("/" + i2, 1.5f)
+  val m2 = twistModel(i2, 2, 0, true) 
+  m2.setOrientation(West.rad)
+  robot(r2, m2)
+  ghost(new UserInput(r2))
+
+}
+
+class Verif4s extends VerifTemplate {
+  
+  def safe = noCollision
+
+  val i1 = "robot1"
+  val r1 = new Griddy("/" + i1, 2.6f)
+  val m1 = twistModel(i1, 0, 0, true) 
+  robot(r1, m1)
+  ghost(new UserInput(r1))
+
+  val i2 = "robot2"
+  val r2 = new Griddy("/" + i2, 2.6f)
+  val m2 = twistModel(i2, 2, 0, true) 
+  m2.setOrientation(West.rad)
+  robot(r2, m2)
+  ghost(new UserInput(r2))
+
+}
+
 class RunVerif extends McExecutor {
-  val world = new Verif3
+  val world = new Verif4s
   override def getMcOptions = react.examples.Main
 }
   
