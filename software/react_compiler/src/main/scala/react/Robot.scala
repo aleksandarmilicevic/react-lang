@@ -62,6 +62,13 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
   def orientation = _orientation
   def orientation_=(d: Double) { _orientation = Angle.normalize(d) }
 
+  def currentIntegralPosition = {
+    val pX = math.round(x).toInt
+    val pY = math.round(y).toInt
+    val pO = Orientation.closest(orientation)
+    (pX, pY, pO)
+  }
+
   override def setExec(n: Executor) {
     super.setExec(n)
 

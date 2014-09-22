@@ -24,7 +24,13 @@ Verification
 current part
 ------------
 
--rounding of orientation (any fp var in general ?)
+-make the model checker:
+    -run many isolated ROS core
+    -get copies of the world
+    -sync the states across the world/exec:
+        -scheduler (how to make sure the cached schedule are the 'same' ?)
+        -cached values (for safe types, e.g., List[Int], we can share the cache)
+-model takes account rounding went moving (to be on the safe side)
 
 Done:
 Compared to a normal model-checking algorithm, we want two separate state-spaces:

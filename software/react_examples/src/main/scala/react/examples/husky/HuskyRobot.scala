@@ -36,13 +36,6 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
   var poseUpdated     = false
   var distanceUpdated = false
 
-  def currentIntegralPosition = {
-    val pX = math.round(x)
-    val pY = math.round(y)
-    val pO = Orientation.closest(orientation)
-    (pX, pY, pO)
-  }
-
   def modelName() = {
     _id.substring(1)
   }
@@ -93,7 +86,7 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
   def turnRight() = rotate(-math.Pi / 2)
   def turnLeft()  = rotate(math.Pi / 2)
 
-  def toOps(from: (Long,Long), to: (Long,Long)): List[Int] = {
+  def toOps(from: (Int,Int), to: (Int,Int)): List[Int] = {
     val dx = to._1 - from._1
     val dy = to._2 - from._2
     assert(dx == 0 || dy == 0)
@@ -101,7 +94,7 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
     //println("from: " + from)
     //println("to: " + to)
     
-    def opsAsIfNorth(dx: Long, dy: Long): List[Int] = {
+    def opsAsIfNorth(dx: Int, dy: Int): List[Int] = {
       if (dx == 0 && dy == 0) {
         //println("  should stay")
         List(STAY_PUT)

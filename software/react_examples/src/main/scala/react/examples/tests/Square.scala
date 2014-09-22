@@ -1,4 +1,4 @@
-package react.examples.husky
+package react.examples.tests
 
 import react._
 import react.robot._
@@ -6,7 +6,7 @@ import react.message._
 import react.examples._
 
 
-class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
+class Square(_id: String) extends GroundRobot(_id) with FsmController {
 
   //update the position with the info from the robot
   sensor[Odometry]("p3d"){
@@ -22,48 +22,34 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
   }
 
 
-  initialState('init)
+  initialState('loop)
 
-  state('init){
+  var wentStraight = true
 
+  state('loop) {
+
+    //input from keyboard
     every(100){
       val (x,y,o) = currentIntegralPosition
       targetX = x
       targetY = y
       targetO = o.rad
-      nextState('loop)
-    }
-
-  }
-
-  state('loop) {
-
-    //input from keyboard
-    on {
-      case Key.UP =>
-          val (x,y,o) = currentIntegralPosition
-          if (frontDistance > 1.5) {
-            o match {
-              case North => targetX = x; targetY = y + 1
-              case South => targetX = x; targetY = y - 1
-              case East  => targetX = x + 1; targetY = y
-              case West  => targetX = x - 1; targetY = y
-            }
-            println("move forward")
-            nextState('moving)
-          } else {
-            println("too close")
-          }
-      case Key.LEFT => 
-          val (x,y,o) = currentIntegralPosition
-          targetO = Angle.normalize(o.rad + math.Pi / 2)
-          println("turn left")
-          nextState('turning)
-      case Key.RIGHT =>
-          val (x,y,o) = currentIntegralPosition
-          targetO = Angle.normalize(o.rad - math.Pi / 2)
-          println("turn right")
-          nextState('turning)
+      if (frontDistance > 1.5 && !wentStraight) {
+        o match {
+          case North => targetY += 1
+          case South => targetY -= 1
+          case East  => targetX += 1
+          case West  => targetX -= 1
+        }
+        println("move forward")
+        wentStraight = true
+        nextState('moving)
+      } else {
+        targetO = Angle.normalize(o.rad + math.Pi / 2)
+        println("turn left")
+        wentStraight = false
+        nextState('turning)
+      }
     }
 
   }
@@ -92,7 +78,7 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
       val scale = math.min(rawScale, 10)
       //
       val cmd = Command.setSpeed(scale * lin, scale * ang)
-      publish("husky/cmd_vel", cmd)
+      publish("cmd_vel", cmd)
       if(rawScale >= 10) {
         nextState('turning)
       }
@@ -106,7 +92,7 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
       val delta = Angle.normalize(targetO - orientation)
       val da = clamp(10 * delta, -vMaxAngle, vMaxAngle)
       val cmd = Command.setSpeed(0, da)
-      publish("husky/cmd_vel", cmd)
+      publish("cmd_vel", cmd)
       if(da < vMaxAngle && da > -vMaxAngle) {
         nextState('loop)
       }
@@ -115,25 +101,12 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
   }
 
   val vMaxAngle  = 1.0
-  val vMaxLinear = 1.0
+  val vMaxLinear = 2.0
   def clamp(v: Double, vMin: Double, vMax: Double) = math.min(vMax, math.max(v, vMin))
 
   var frontDistance = 1.0f
   var targetX = 0
   var targetY = 0
   var targetO = 0.0
-
-////print some debug every 5 second
-//every(5000){
-//  println("info:")
-//  println("  x: " + x)
-//  println("  y: " + y)
-//  println("  θ: " + orientation)
-//  val (_x,_y,_o) = currentIntegralPosition
-//  println(" integral:")
-//  println("  x: " + _x)
-//  println("  y: " + _y)
-//  println("  θ: " + _o)
-//}
 
 }

@@ -8,13 +8,6 @@ import react.examples._
 
 class Griddy(_id: String) extends GroundRobot(_id) with FsmController {
 
-  def currentIntegralPosition = {
-    val pX = math.round(x).toInt
-    val pY = math.round(y).toInt
-    val pO = Orientation.closest(orientation)
-    (pX, pY, pO)
-  }
-
   //update the position with the info from the robot
   sensor[Odometry]("p3d"){
     case GetPose(pX, pY, pT) =>
@@ -99,7 +92,7 @@ class Griddy(_id: String) extends GroundRobot(_id) with FsmController {
       val scale = math.min(rawScale, 10)
       //
       val cmd = Command.setSpeed(scale * lin, scale * ang)
-      publish("husky/cmd_vel", cmd)
+      publish("cmd_vel", cmd)
       if(rawScale >= 10) {
         nextState('turning)
       }
@@ -122,7 +115,7 @@ class Griddy(_id: String) extends GroundRobot(_id) with FsmController {
   }
 
   val vMaxAngle  = 1.0
-  val vMaxLinear = 1.0
+  val vMaxLinear = 2.0
   def clamp(v: Double, vMin: Double, vMax: Double) = math.min(vMax, math.max(v, vMin))
 
   var frontDistance = 1.0f

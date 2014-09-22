@@ -92,6 +92,7 @@ abstract class McExecutor extends NodeMain with Executor with McOptions {
   }
   override def messageDelivered {
     //println("messageDelivered")
+    Logger("McExecutor", LogDebug, "message delivered")
     pending.release()
   }
   

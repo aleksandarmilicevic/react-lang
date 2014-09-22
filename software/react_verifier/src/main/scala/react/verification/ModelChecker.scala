@@ -158,6 +158,7 @@ class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: M
       val dt = scheduler.timeToNext.toInt
       //Logger("ModelChecker", LogNotice, "controller step: Δt = " + dt + ", t = " + scheduler.now)
       //Logger("ModelChecker", LogNotice, scheduler.toString)
+      Logger("ModelChecker", LogDebug, "elapse " + dt)
       scheduler.elapse(dt)
       world.elapse(dt)
       //execute the next action
