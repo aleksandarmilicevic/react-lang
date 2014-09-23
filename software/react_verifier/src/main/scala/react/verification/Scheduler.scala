@@ -44,10 +44,6 @@ class Scheduler extends react.runtime.Scheduler {
     _now += t
   }
 
-  def warmUpCache(task: ScheduledTask) {
-    cache.idx(task)
-  }
-
   def nextBP: SchedulingPoint = new SchedulingPoint(nextTasks, this)
 
   //all the tasks that expire at the same time
@@ -114,7 +110,8 @@ class Scheduler extends react.runtime.Scheduler {
 
   def compactState = {
     removeCanceled
-    val idx = Scheduler.scheduleIdx(content)
+    val ts = content.map(cache.idx)
+    val idx = Scheduler.scheduleIdx(ts)
     val buffer = ByteBuffer.allocate(2)
     buffer.putShort(idx)
     buffer.array
@@ -155,12 +152,18 @@ class Scheduler extends react.runtime.Scheduler {
   def restoreCompact(in: State) {
     val buffer = ByteBuffer.wrap(in)
     val ts = Scheduler.scheduleVal(buffer.getShort)
-    restoreTasks(0, ts)
+    val tts = ts.map(cache.value)
+    restoreTasks(0, tts)
   }
 
-  def content = queue.toList //TODO normalize
+  def content = normalize(queue.toList)
 
   val cache = new Cache[ScheduledTask]
+  
+  def warmUpCache(task: ScheduledTask) {
+    cache.idx(task)
+  }
+
 
   protected def normalize(sch: List[ScheduledTask]) = {
     def compare(a: ScheduledTask, b: ScheduledTask) = {
@@ -186,26 +189,13 @@ class Scheduler extends react.runtime.Scheduler {
 object Scheduler {
 
   /** cach for whole schedule */
-  private val cache = new Cache[List[ScheduledTask]]
+  private val cache = new Cache[List[Int]]
 
-  private def normalize(sch: List[ScheduledTask]) = {
-    def compare(a: ScheduledTask, b: ScheduledTask) = {
-      if  (a.period == b.period) {
-        a.hashCode < b.hashCode
-      } else {
-        a.period < b.period
-      }
-    }
-    sch.sortWith(compare)
+  def scheduleIdx(sch: List[Int]): Short = {
+    cache.idx(sch).toShort
   }
 
-  def scheduleIdx(sch: List[ScheduledTask]): Short = {
-    val s = normalize(sch)
-    cache.idx(s).toShort
-  }
-
-  def scheduleVal(idx: Short): List[ScheduledTask] = { 
-    //println("scheduleVal: " + idx)
+  def scheduleVal(idx: Short): List[Int] = { 
     cache.value(idx)
   }
 

@@ -29,6 +29,7 @@ trait McOptions {
   var periodCoeff = 1
   var traceFile = ""
   var coverageFile = ""
+  var nbrWorlds = 4
 }
 
 
@@ -38,9 +39,27 @@ object ModelChecker {
 }
 
 //class ModelChecker(world: World, exec: McExecutor, scheduler: Scheduler, opts: McOptions) {
-class ModelChecker(world: WorldProxy, opts: McOptions) {
+class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
 
   import ModelChecker._
+
+  val world = worlds(0) //use this on when no concurrency
+
+  private val qW = new java.util.concurrent.ArrayBlockingQueue[WorldProxy](worlds.length)
+  for( w <- worlds ) qW.add(w)
+
+  def isolated[A](fct: WorldProxy => A): Either[A, Throwable] = {
+    val w = qW.take()
+    try {
+      Left(fct(w))
+    } catch {
+      case t: Throwable =>
+        Logger("ModelChecker", LogInfo, "isolated: caught " + t)
+        Right(t)
+    } finally {
+      qW.add(w)
+    }
+  }
 
   //most compact representation of the state: automaton
   protected var permanentStates = new StateStore()
@@ -91,26 +110,36 @@ class ModelChecker(world: WorldProxy, opts: McOptions) {
   //////////////////
 
   /** executes until to next period */
-  def controllerStep(s: State): Iterable[Trace] = {
+  def controllerStep(t: Trace): Iterable[Trace] = {
+    val s = t.stop
     world.restoreState(s)
     if (world.now >= period) {
       Nil
     } else {
       val dt = world.timeToNext.toInt
-      val t = Trace(s)
       val alts = world.controllerAlernatives
+      Logger("ModelChecker", LogDebug, "|controller step| = " + alts)
       statesGenerated += alts
-      (0 until alts).flatMap( i => world.controllerStep(dt, t, i) )
+      val successors = (0 until alts).par.map( i => isolated( w => w.controllerStep(dt, t, i) ) ).seq
+      successors.flatMap{
+        case Left(l) => l
+        case Right(t) => throw t
+      }
     }
   }
 
   /** saturates the systems with ghosts inputs */
-  def ghostStep(s: State): Iterable[Trace] = {
+  def ghostStep(t: Trace): Iterable[Trace] = {
+    val s = t.stop
     world.restoreState(s)
-    val t = Trace(s)
     val alts = world.ghostsAlternatives
+    Logger("ModelChecker", LogDebug, "|ghost step| = " + alts)
     statesGenerated += alts
-    (0 until alts).flatMap( i => world.ghostStep(t, i) )
+    val successors = (0 until alts).par.map( i => isolated( w => w.ghostStep(t, i)) ).seq
+    successors.flatMap{
+      case Left(l) => l
+      case Right(t) => throw t
+    }
   }
 
   //the inner loop proceeds into two steps.
@@ -137,16 +166,14 @@ class ModelChecker(world: WorldProxy, opts: McOptions) {
       }
       cnt += 1 
       val tr = getT
-      val st = tr.stop
-      val s2 = ghostStep(st)
-      for ( t2 <- s2) {
+      val s2 = ghostStep(tr)
+      for (t2 <- s2) {
         val x = t2.stop
         if (!transientStates.contains(x)) {
           transientStates += x
-          val t3 = tr concat t2
-          local = t3 :: local
+          local = t2 :: local
           transientStatesStored += 1
-          putT(t3)
+          putT(t2)
         }
       }
     }
@@ -159,16 +186,14 @@ class ModelChecker(world: WorldProxy, opts: McOptions) {
       }
       cnt += 1 
       val tr = getT
-      val st = tr.stop
-      val s2 = controllerStep(st)
+      val s2 = controllerStep(tr)
       for ( t2 <- s2) {
         val x = t2.stop
         if (!transientStates.contains(x)) {
           transientStates += x
-          val t3 = tr concat t2
-          local = t3 :: local
+          local = t2 :: local
           transientStatesStored += 1
-          putT(t3)
+          putT(t2)
         }
       }
     }
@@ -182,7 +207,7 @@ class ModelChecker(world: WorldProxy, opts: McOptions) {
         val t = s.append(List("compact"), x)
         //check if there after rounding
         if (!world.safe) {
-          Logger("ModelChecker", LogInfo, "Rounding made a safe state unsafe, discarding. You should increase precision.")
+          Logger("ModelChecker", LogWarning, "Rounding made a safe state unsafe, discarding. You should increase precision.")
           None
         } else if (!transientStates.contains(x)) {
           transientStates += x
@@ -231,7 +256,7 @@ class ModelChecker(world: WorldProxy, opts: McOptions) {
           Logger("ModelChecker", LogError, world.toString)
           Logger("ModelChecker", LogError, world.currentState)
           if (opts.keepTrace) {
-            val trace = makeTrace(s.suffix.start).concat(s.suffix)
+            val trace = makeTrace(s.suffix)
             Logger("ModelChecker", LogError, "\n")
             Logger("ModelChecker", LogError, traceToString(trace))
             if (opts.traceFile != "") {
@@ -240,6 +265,9 @@ class ModelChecker(world: WorldProxy, opts: McOptions) {
           }
         }
         false
+      case t: Throwable =>
+        Logger("ModelChecker", LogCritical, "internal model checker error: " + t)
+        throw t
     }
   }
 
@@ -259,6 +287,16 @@ class ModelChecker(world: WorldProxy, opts: McOptions) {
       Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
       throw new SafetyError("initial state", Trace(initState))
     }
+    val ri = new RichState(initState)
+    for (i <- 0 until opts.nbrWorlds) {
+      isolated(w => {
+        val rs = new RichState(w.saveStateCompact)
+        Logger.assert(ri == rs, "ModelChecker", "initial state different accross worlds\n" + ri + "\n" + rs)
+      }) match {
+        case Right(t) => throw t
+        case _ => ()
+      }
+    }
     startTime = java.lang.System.currentTimeMillis()
   }
 
@@ -268,16 +306,13 @@ class ModelChecker(world: WorldProxy, opts: McOptions) {
 
   val predMap = collection.mutable.HashMap[RichState,(Label,RichState)]()
 
-  def makeTrace(s: State): Trace = {
-    def process(curr: State, suffix: Trace): Trace = {
-      if (predMap contains curr) {
-        val (t,s) = predMap(curr)
-        process(s.state, suffix.prepend(s.state, t))
-      } else {
-        suffix
-      }
+  def makeTrace(tr: Trace): Trace = {
+    if (predMap contains tr.start) {
+      val (l,s) = predMap(tr.start)
+      makeTrace(tr.prepend(s.state, l))
+    } else {
+      tr
     }
-    process(s, Trace(s))
   }
 
   def traceToString(trace: Trace) = world.traceToString(trace)

@@ -33,8 +33,9 @@ class WorldProxy(val world: World) {
         Logger.logAndThrow("WorldProxy", LogError, "Wait for ROS executor to start timed out")
       }
     }
-    allTasks.foreach(scheduler.warmUpCache)
     exec.register
+    allTasks.foreach(scheduler.warmUpCache)
+    Logger("WorldProxy", LogInfo, "scheduler cache = " + scheduler.cache.size)
   }
 
   init
@@ -71,7 +72,7 @@ class WorldProxy(val world: World) {
   }
 
   protected def step(bp: BranchingPoint, i: Int): Label = {
-    assert(world.safe, "world unsafe before taking a step!")
+    assert(world.safe, "world unsafe before taking a step!\n" + world.currentState)
     Logger("ModelChecker", LogDebug, "## start step")
     val descr = bp.act(i)
     exec.waitUntilDelivered
@@ -113,6 +114,9 @@ class WorldProxy(val world: World) {
     val s = prefix.stop
     restoreState(s)
     elapse(dt)
+    if (!world.safe) {
+      throw new SafetyError("elapse : " + dt, prefix.append(List("elapse : " + dt), saveState))
+    }
     val bp = scheduler.nextBP
     assert(bp.expiration == now, "bp.expiration = " + bp.expiration + ", now = " + now)
     val descr = safeExec(prefix, step(bp, i))
@@ -157,9 +161,7 @@ class WorldProxy(val world: World) {
   def timeToNext = scheduler.timeToNext
     
   def allTasks = {
-    val tasks = scheduler.content ++ world.robots.flatMap(_.getAllTasks)
-    //println(tasks.mkString("\n"))
-    tasks
+    scheduler.content ++ world.robots.flatMap(_.getAllTasks)
   }
 
   def schedulerToString = scheduler.toString

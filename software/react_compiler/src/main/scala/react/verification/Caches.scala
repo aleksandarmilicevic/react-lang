@@ -21,7 +21,7 @@ class Cache[T: ClassTag] {
   private def read(idx: Int): T = {
     assert(idx < maxNbrElt)
     val a1 = chunks(idx >> 8)
-    if (a1 == null) sys.error("Cache: element at " + idx + "not found")
+    if (a1 == null) sys.error("Cache: element at " + idx + " not found")
     else a1(idx & 0xff)
   }
 
@@ -69,6 +69,8 @@ class Cache[T: ClassTag] {
     } while(true)
     sys.error("unreachable")
   }
+
+  def size = map.size
 
 }
 

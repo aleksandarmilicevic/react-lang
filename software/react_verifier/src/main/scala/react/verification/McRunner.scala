@@ -11,10 +11,16 @@ class McRunner(opts: McOptions, newWorld: () => World) {
 
   def run: Nothing = {
     val pr = mkProxy
-    mc = new ModelChecker(pr, opts)
+    val prs =
+      if (pr.worldAgnostic) {
+        pr +: (for (i <- 1 until opts.nbrWorlds) yield mkProxy).toArray
+      } else {
+        Array(pr)
+      }
+    mc = new ModelChecker(prs, opts)
     mc.init
     while(mc.oneStep) {}
-    pr.shutdown
+    prs.foreach(_.shutdown)
     mc.printStats
     mc = null
     Runtime.getRuntime().halt(0)
