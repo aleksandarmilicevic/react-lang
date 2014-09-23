@@ -161,6 +161,8 @@ abstract class World extends Playground {
     dispatchBoxes  
   }
 
+  def worldAgnostic: Boolean = statefulObj.forall(_.worldAgnostic)
+
 }
 
 class WorldMacros(val c: Context) {

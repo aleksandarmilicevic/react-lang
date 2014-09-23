@@ -185,17 +185,20 @@ class Verif4s extends VerifTemplate {
 
 }
 
-class RunVerif(what: String) extends McExecutor {
-  val world = what match {
-    case "0" => new Verif0
-    case "1s" => new Verif1s
-    case "1u" => new Verif1u
-    case "2" => new Verif2
-    case "3" => new Verif3
-    case "4s" => new Verif4s
-    case "4u" => new Verif4u
-    case _ => new Verif0
+object RunVerif {
+  def apply(args: McOptions, what: String) {
+    val world = what match {
+      case "0" =>  (() => new Verif0)
+      case "1s" => (() => new Verif1s)
+      case "1u" => (() => new Verif1u)
+      case "2" =>  (() => new Verif2)
+      case "3" =>  (() => new Verif3)
+      case "4s" => (() => new Verif4s)
+      case "4u" => (() => new Verif4u)
+      case _ =>    (() => new Verif0)
+    }
+    val runner = new react.verification.McRunner(args, world)
+    runner.run
   }
-  override def getMcOptions = react.examples.Main
 }
   

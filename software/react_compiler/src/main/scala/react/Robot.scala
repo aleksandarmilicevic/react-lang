@@ -25,7 +25,7 @@ abstract class Robot(val id: String) extends Controller {
   /////////////////////
   
   //TODO move the lock to the executor ?
-  val lock = new java.util.concurrent.locks.ReentrantLock(true)
+  val lock = new java.util.concurrent.locks.ReentrantLock()
   
   protected var exec: Executor = null
   def setExec(n: Executor) {

@@ -7,7 +7,7 @@ trait Executor {
 
   def publish[T](topic: String, typeName: String, message: T)
 
-  def delayedPublish[T](delay: Int, topic: String, typeName: String, message: T)
+//def delayedPublish[T](delay: Int, topic: String, typeName: String, message: T)
   
   def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T]
   def messageDelivered: Unit = {}

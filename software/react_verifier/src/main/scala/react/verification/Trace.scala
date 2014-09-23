@@ -1,10 +1,9 @@
 package react.verification
 
-//Warning: the iterator skips the first location
-class Trace(val start: Array[Byte], val transitions: List[(List[String],Array[Byte])]) extends Iterable[(List[String],Array[Byte])] {
+import ModelChecker._
 
-  type A = Array[Byte]
-  type B = List[String]
+//Warning: the iterator skips the first location
+class Trace(val start: State, val transitions: List[(Label,State)]) extends Iterable[(Label,State)] {
 
   /** Returns the number of transition in the trace (#state -1) */
   def length = transitions.length
@@ -14,6 +13,8 @@ class Trace(val start: Array[Byte], val transitions: List[(List[String],Array[By
   def labels = transitions.map(_._1)
 
   def stop = if (transitions.length == 0) start else transitions.last._2
+
+  def compact = new Trace(start, List(labels.flatten -> stop))
 
   def step = {
     if (transitions.isEmpty) {
@@ -25,30 +26,30 @@ class Trace(val start: Array[Byte], val transitions: List[(List[String],Array[By
 
   override def iterator = transitions.iterator
 
-  private def mkTriple(acc: List[(A,B,A)], current: A, rest: List[(B,A)]): List[(A,B,A)] = rest match {
+  private def mkTriple(acc: List[(State,Label,State)], current: State, rest: List[(Label,State)]): List[(State,Label,State)] = rest match {
     case (b,a)::xs => mkTriple( (current,b,a)::acc, a, xs)
     case Nil => acc.reverse
   }
 
-  def extremities: (A,A) = (start, stop)
+  def extremities: (State,State) = (start, stop)
 
-  def innerStates: List[A] = transitions.map(_._2).dropRight(1)
+  def innerStates: List[State] = transitions.map(_._2).dropRight(1)
 
-  def triples: List[(A,B,A)] = mkTriple(Nil, start, transitions)
+  def triples: List[(State,Label,State)] = mkTriple(Nil, start, transitions)
 
-  def append(s: A, t: B) = new Trace(start, transitions ::: List((t,s)))
+  def append(t: Label, s: State) = new Trace(start, transitions ::: List((t,s)))
 
-  def concat(t: B, trc: Trace) = new Trace(start, transitions ::: List(t -> trc.start) ::: trc.transitions)
+  def concat(t: Label, trc: Trace) = new Trace(start, transitions ::: List(t -> trc.start) ::: trc.transitions)
   def concat(trc: Trace) = {
     assert(trc.start == stop)
     new Trace(start, transitions ::: trc.transitions)
   }
 
-  def prepend(s: A, t: B) = new Trace(s, (t,start) :: transitions )
+  def prepend(s: State, t: Label) = new Trace(s, (t,start) :: transitions )
 
   def reverse = new Trace(stop, triples.reverse map ( t => (t._2, t._1)))
 
-  def split(at: A => Boolean): List[Trace] = {
+  def split(at: State => Boolean): List[Trace] = {
     var acc: List[Trace] = Nil
     var current = this
     while (!current.transitions.isEmpty) {
@@ -66,7 +67,7 @@ class Trace(val start: Array[Byte], val transitions: List[(List[String],Array[By
     acc.reverse
   }
 
-  def split(at: A): List[Trace] = split(_ == at)
+  def split(at: State): List[Trace] = split(_ == at)
 
   def splitAfter(n: Int): (Trace,Trace) = {
     val (t1, t2) = transitions.splitAt(n)
@@ -85,5 +86,5 @@ class Trace(val start: Array[Byte], val transitions: List[(List[String],Array[By
 }
 
 object Trace {
-  def apply(start: Array[Byte], transitions: (List[String],Array[Byte])*) = new Trace(start, transitions.toList)
+  def apply(start: State, transitions: (Label,State)*) = new Trace(start, transitions.toList)
 }

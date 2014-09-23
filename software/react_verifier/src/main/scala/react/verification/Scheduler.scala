@@ -4,6 +4,9 @@ import java.nio.ByteBuffer
 import react.runtime.ScheduledTask
 import scala.collection.mutable.PriorityQueue
 
+import ModelChecker._
+
+
 class SchedulingPoint(tasks: List[ScheduledTask], scheduler: Scheduler) extends BranchingPoint {
 
   val expiration = tasks.head.expires
@@ -39,6 +42,10 @@ class Scheduler extends react.runtime.Scheduler {
 
   def elapse(t: Long) {
     _now += t
+  }
+
+  def warmUpCache(task: ScheduledTask) {
+    cache.idx(task)
   }
 
   def nextBP: SchedulingPoint = new SchedulingPoint(nextTasks, this)
@@ -127,7 +134,7 @@ class Scheduler extends react.runtime.Scheduler {
     }
   }
 
-  def restoreState(in: Array[Byte]) {
+  def restoreState(in: State) {
     val buffer = ByteBuffer.wrap(in)
     queue.clear
     val now = buffer.getShort
@@ -145,13 +152,13 @@ class Scheduler extends react.runtime.Scheduler {
     restoreTasks(now, ts)
   }
   
-  def restoreCompact(in: Array[Byte]) {
+  def restoreCompact(in: State) {
     val buffer = ByteBuffer.wrap(in)
     val ts = Scheduler.scheduleVal(buffer.getShort)
     restoreTasks(0, ts)
   }
 
-  def content = queue.toList
+  def content = queue.toList //TODO normalize
 
   val cache = new Cache[ScheduledTask]
 

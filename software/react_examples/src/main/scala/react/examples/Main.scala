@@ -112,11 +112,13 @@ object Main extends Options with react.verification.McOptions {
       case "huskyP" =>
         org.ros.RosRun.main(Array(classOf[RunHuskyPathfinder].getName))
       case "huskyV" =>
-        react.verification.Main.runVerifier(new RunHuskyVerif)
+        val runner = new react.verification.McRunner(this, (() => new HuskyVerif))
+        runner.run
       case "huskyV2" =>
-        react.verification.Main.runVerifier(new RunHuskyVerif2)
+        val runner = new react.verification.McRunner(this, (() => new HuskyVerif2))
+        runner.run
       case "tests" =>
-        react.verification.Main.runVerifier(new tests.RunVerif(topic))
+        tests.RunVerif(this, topic)
       case other =>
         throw new RuntimeException("Unknown robot: " + other)
     }
