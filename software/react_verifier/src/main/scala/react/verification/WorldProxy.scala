@@ -21,8 +21,9 @@ class WorldProxy(val world: World) {
   def init {
     val (co,cf) = WorldProxy.newRosCore
     core = co
+    //co.getMasterServer.setMaxThreads(10)
     config = cf
-    rosExec = DefaultNodeMainExecutor.newDefault()
+    rosExec = DefaultNodeMainExecutor.newDefault()//(WorldProxy.pool)
     rosExec.execute(exec, config)
     var to = 0
     while(!exec.ready) {
@@ -44,6 +45,7 @@ class WorldProxy(val world: World) {
     Logger("WorldProxy", LogNotice, "shuting down core")
     rosExec.shutdown
     core.shutdown
+    //pool.shutdownNow
     rosExec = null
     core = null
     config = null
@@ -228,7 +230,7 @@ class WorldProxy(val world: World) {
     buffer.append(currentState)
     for ( ((t,s), i) <- trace.zipWithIndex) {
       restoreWorldOnly(s)
-      buffer.append("step "+i+": " + t.mkString(", ") + "\n")
+      buffer.append("step "+i+":\n  " + t.mkString("\n  ") + "\n")
       buffer.append(currentState)
       buffer.append("\n\n")
     }
@@ -278,6 +280,8 @@ class WorldProxy(val world: World) {
 
 
 object WorldProxy {
+
+  //val pool = new org.ros.concurrent.DefaultScheduledExecutorService
 
   private val port = new java.util.concurrent.atomic.AtomicInteger(11111)
 

@@ -13,7 +13,7 @@ class McRunner(opts: McOptions, newWorld: () => World) {
     val pr = mkProxy
     val prs =
       if (pr.worldAgnostic) {
-        pr +: (for (i <- 1 until opts.nbrWorlds) yield mkProxy).toArray
+        pr +: (for (i <- (1 until opts.nbrWorlds).par) yield mkProxy).toArray
       } else {
         Array(pr)
       }

@@ -54,16 +54,16 @@ class Griddy(_id: String, safeDistance: Float = 1.6f) extends GroundRobot(_id) w
           } else {
             println("too close")
           }
-//    case Key.LEFT => 
-//        val (x,y,o) = currentIntegralPosition
-//        targetO = Angle.normalize(o.rad + math.Pi / 2)
-//        println("turn left")
-//        nextState('turning)
-//    case Key.RIGHT =>
-//        val (x,y,o) = currentIntegralPosition
-//        targetO = Angle.normalize(o.rad - math.Pi / 2)
-//        println("turn right")
-//        nextState('turning)
+      case Key.LEFT => 
+          val (x,y,o) = currentIntegralPosition
+          targetO = Angle.normalize(o.rad + math.Pi / 2)
+          println("turn left")
+          nextState('turning)
+      case Key.RIGHT =>
+          val (x,y,o) = currentIntegralPosition
+          targetO = Angle.normalize(o.rad - math.Pi / 2)
+          println("turn right")
+          nextState('turning)
     }
 
   }

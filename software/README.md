@@ -22,11 +22,11 @@ In Ubuntu system, `$ROS_HOME` is usually `/opt/ros/indigo/`.
 
 Directory Structure
 -------------------
-`react_compiler` and `react_examples` contains the sources of the projects.
+`react_compiler`, `react_verifier`, and `react_examples` contains the sources of the project.
 The other directories are created/needed by rosjava.
 `src` contains a top level `react_lang` projects.
-`react_lang` contains two gradle subprojects: `react_compiler` and `react_examples`.
-the two sub projects are links that points to the two folder at the root.
+`react_lang` contains three gradle subprojects for the compiler, verifier, and examples.
+the three sub projects are links that points to the corresponding folder at the root.
 
 Compiling
 ---------
@@ -48,6 +48,20 @@ for the husky example:
   * `./build/install/react_examples/bin/react_examples husky /husky1 &`
   * `./build/install/react_examples/bin/react_examples husky /husky2 &`
 Alternatively, instead of the `husky` controller, you can use `huskyG` which tries to move only along the grid axes.
+
+Verification
+============
+REACT comes with a built-in model-checker to verify safety properties.
+In order to use the model checker, one first need to create a verification scenario.
+The scenario specify the dimensions of the environment, any objects, and the robots.
+Each robot has two parts:
+- the controller (a REACT program)
+- a physical model
+Furthermore, the system needs to be closed.
+Any interaction with the environment, such as user input, needs to be simulated using a ghost element.
+
+An example of verification scenarios, can be found in: `react_examples/src/main/scala/react/examples/tests/Verif.scala`
+They can be run using `./react_examples/build/install/react_examples/bin/react_examples tests XXX 2>/dev/null` where XXX is the ID of one of the scenario as specified in the source file.
 
 Misc
 ====

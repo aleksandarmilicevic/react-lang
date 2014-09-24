@@ -11,6 +11,7 @@ import net.automatalib.words.impl.Alphabets
 import net.automatalib.words.{Word, WordBuilder}
 import scala.collection.mutable.HashSet
 import scala.collection.GenIterable
+import scala.collection.parallel._
 import java.nio.ByteBuffer
 
 import HashStateStore._
@@ -44,6 +45,8 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   import ModelChecker._
 
   val world = worlds(0) //use this on when no concurrency
+
+  val taskSupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(opts.nbrWorlds))
 
   private val qW = new java.util.concurrent.ArrayBlockingQueue[WorldProxy](worlds.length)
   for( w <- worlds ) qW.add(w)
@@ -120,7 +123,9 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
       val alts = world.controllerAlernatives
       Logger("ModelChecker", LogDebug, "|controller step| = " + alts)
       statesGenerated += alts
-      val successors = (0 until alts).par.map( i => isolated( w => w.controllerStep(dt, t, i) ) ).seq
+      val enum = (0 until alts).par
+      //enum.tasksupport = taskSupport
+      val successors = enum.map( i => isolated( w => w.controllerStep(dt, t, i) ) ).seq
       successors.flatMap{
         case Left(l) => l
         case Right(t) => throw t
@@ -135,7 +140,9 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
     val alts = world.ghostsAlternatives
     Logger("ModelChecker", LogDebug, "|ghost step| = " + alts)
     statesGenerated += alts
-    val successors = (0 until alts).par.map( i => isolated( w => w.ghostStep(t, i)) ).seq
+    val enum = (0 until alts).par
+    //enum.tasksupport = taskSupport
+    val successors = enum.map( i => isolated( w => w.ghostStep(t, i)) ).seq
     successors.flatMap{
       case Left(l) => l
       case Right(t) => throw t
