@@ -1,6 +1,7 @@
-package react.verification
+package react.verification.modelchecker
 
 import react._
+import react.verification._
 import react.message._
 import react.runtime._
 import org.ros.namespace.GraphName

@@ -1,4 +1,4 @@
-package react.verification
+package react.verification.modelchecker
 
 import org.apache.commons.codec.binary.Hex
 

@@ -8,7 +8,7 @@ import net.automatalib.words.impl.Alphabets;
 import net.automatalib.words.Word;
 import net.automatalib.words.WordBuilder;
 
-class StateStore {
+public class StateStore {
 
     Alphabet<Integer> alpha;
 

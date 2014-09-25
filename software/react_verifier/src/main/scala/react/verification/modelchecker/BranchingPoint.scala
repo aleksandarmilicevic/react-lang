@@ -1,4 +1,4 @@
-package react.verification
+package react.verification.modelchecker
 
 /* an interface for the places where the system might branch */
 trait BranchingPoint {

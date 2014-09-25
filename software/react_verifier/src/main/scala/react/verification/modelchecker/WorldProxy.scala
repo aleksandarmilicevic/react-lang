@@ -1,9 +1,10 @@
-package react.verification
+package react.verification.modelchecker
 
 import org.ros.RosCore
 import org.ros.RosRun
 import org.ros.node._
 import react.utils._
+import react.verification._
 
 import ModelChecker._
 

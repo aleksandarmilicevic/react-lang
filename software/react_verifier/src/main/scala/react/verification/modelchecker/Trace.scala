@@ -1,6 +1,7 @@
-package react.verification
+package react.verification.modelchecker
 
 import ModelChecker._
+import HashStateStore._
 
 //Warning: the iterator skips the first location
 class Trace(val start: State, val transitions: List[(Label,State)]) extends Iterable[(Label,State)] {
@@ -41,7 +42,7 @@ class Trace(val start: State, val transitions: List[(Label,State)]) extends Iter
 
   def concat(t: Label, trc: Trace) = new Trace(start, transitions ::: List(t -> trc.start) ::: trc.transitions)
   def concat(trc: Trace) = {
-    assert(trc.start == stop)
+    assert(new RichState(trc.start) == new RichState(stop))
     new Trace(start, transitions ::: trc.transitions)
   }
 

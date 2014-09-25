@@ -1,5 +1,6 @@
-package react.verification
+package react.verification.modelchecker
 
+import react.verification._
 import java.nio.ByteBuffer
 import react.runtime.ScheduledTask
 import scala.collection.mutable.PriorityQueue

@@ -1,6 +1,7 @@
-package react.verification
+package react.verification.modelchecker
 
 import react._
+import react.verification._
 import react.verification.ghost._
 import react.utils._
 
@@ -17,20 +18,6 @@ import java.nio.ByteBuffer
 import HashStateStore._
 
 class SafetyError(val cause: String, val suffix: Trace) extends Exception("safety violation (" + cause + ")") {
-}
-
-/** Model checker options */
-trait McOptions {
-  /* how many ghosts steps per period */
-  //var ghostSteps = 1
-  var timeBound = -1
-  var keepTrace = false
-  var bfs = true
-  var keepTransient = false
-  var periodCoeff = 1
-  var traceFile = ""
-  var coverageFile = ""
-  var nbrWorlds = 4
 }
 
 
@@ -243,10 +230,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
         for (s2 <- newStates.seq) {
            if (opts.timeBound <= 0 || (p+1) * period <= opts.timeBound) {
              put(p+1, s2.stop)
-             if (opts.keepTrace) {
-               val t2 = s2.compact
-               predMap(t2.stop) = (t2.labels.flatten, t2.start)
-             }
+             predMap.add(s2)
            }
         }
         true
@@ -262,13 +246,11 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
           Logger("ModelChecker", LogError, "last known state:")
           Logger("ModelChecker", LogError, world.toString)
           Logger("ModelChecker", LogError, world.currentState)
-          if (opts.keepTrace) {
-            val trace = makeTrace(s.suffix)
-            Logger("ModelChecker", LogError, "\n")
-            Logger("ModelChecker", LogError, traceToString(trace))
-            if (opts.traceFile != "") {
-              printTraceAsSVG(opts.traceFile, trace)
-            }
+          val trace = makeTrace(s.suffix)
+          Logger("ModelChecker", LogError, "\n")
+          Logger("ModelChecker", LogError, traceToString(trace))
+          if (opts.traceFile != "") {
+            printTraceAsSVG(opts.traceFile, trace)
           }
         }
         false
@@ -311,16 +293,9 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   // trace //
   ///////////
 
-  val predMap = collection.mutable.HashMap[RichState,(Label,RichState)]()
+  val predMap = new TraceStore
 
-  def makeTrace(tr: Trace): Trace = {
-    if (predMap contains tr.start) {
-      val (l,s) = predMap(tr.start)
-      makeTrace(tr.prepend(s.state, l))
-    } else {
-      tr
-    }
-  }
+  def makeTrace(tr: Trace): Trace = predMap.makeTrace(tr)
 
   def traceToString(trace: Trace) = world.traceToString(trace)
 
@@ -336,6 +311,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   var transientStatesStored = 0l
   var permanentStatesStored = 0l
 
+  /** this also free some resources, call only when you don't need the modelchecker anymore */
   def printStats {
     val dt = java.lang.System.currentTimeMillis() - startTime
     val sec = dt / 1000
@@ -351,13 +327,14 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
       Logger("ModelChecker", LogNotice, "  time horizon for the frontier ∈ [" + min + ", " + max + "]")
     }
     printCoverage
+    predMap.clean
   }
 
   def printCoverage {
     if (opts.coverageFile != "") {
       def print(writer: java.io.BufferedWriter) {
         world.svgHeader(writer)
-        for (s <- predMap.keys) world.writeModelsAsSVG(writer, s.state)
+        for (s <- predMap.states) world.writeModelsAsSVG(writer, s.state)
         for (s <- transientStates) world.writeModelsAsSVG(writer, s.state)
         for (s <- frontierContent) world.writeModelsAsSVG(writer, s._2)
         for (s <- frontierContentT) world.writeModelsAsSVG(writer, s)
