@@ -14,11 +14,12 @@ trait McOptions {
   var traceFile = ""
   var coverageFile = ""
   var nbrWorlds = 4
+  var bypassROS = false
 }
 
 class McRunner(opts: McOptions, newWorld: () => World) {
 
-  protected def mkProxy = new WorldProxy( newWorld() )
+  protected def mkProxy = new WorldProxy( newWorld(), opts )
 
   var mc: ModelChecker = null
   var prs: Array[WorldProxy] = null

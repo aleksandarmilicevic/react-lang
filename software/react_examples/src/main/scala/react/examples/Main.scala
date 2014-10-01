@@ -75,6 +75,7 @@ object Main extends Options with react.verification.McOptions {
   newOption("-tf", Arg.String( s => traceFile = s), "save the trace as an SVG image")
   newOption("-cf", Arg.String( s => coverageFile = s), "save the coverage as an SVG image")
   newOption("-t", Arg.Int( i => nbrWorlds = i), "how many world to run in parallel (default: 4, if possible)")
+  newOption("-noROS", Arg.Unit( () => bypassROS = true), "bypass ROS, less faithfull to actual program but faster")
 
   val usage = "..."
 

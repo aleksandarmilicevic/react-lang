@@ -12,17 +12,32 @@ import org.ros.concurrent.CancellableLoop
 import react.utils._
 import java.util.concurrent.{Semaphore,TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantLock
 
 class MySubscriber[T](sub: Subscriber[T]) extends Subscriber[T] {
   import org.ros.node.topic._
-  val cnt = new AtomicInteger()
+  val lock = new ReentrantLock()
+  var cnt = 0
+  var listeners: List[MessageListener[T]] = Nil
   def addMessageListener(listener: MessageListener[T], limit: Int) {
-    sub.addMessageListener(listener, limit)
-    cnt.incrementAndGet
+    lock.lock
+    try {
+      sub.addMessageListener(listener, limit)
+      listeners = listener :: listeners
+      cnt += 1
+    } finally {
+      lock.unlock
+    }
   }
   def addMessageListener(listener: MessageListener[T]) {
-    sub.addMessageListener(listener)
-    cnt.incrementAndGet
+    lock.lock
+    try {
+      sub.addMessageListener(listener)
+      listeners = listener :: listeners
+      cnt += 1
+    } finally {
+      lock.unlock
+    }
   }
   def getLatchMode = sub.getLatchMode
   def addSubscriberListener(listener: SubscriberListener[T]) {
@@ -34,7 +49,7 @@ class MySubscriber[T](sub: Subscriber[T]) extends Subscriber[T] {
   def getTopicName = sub.getTopicName
 }
 
-class WorldExecutor(world: World, scheduler: Scheduler) extends NodeMain with Executor {
+class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) extends NodeMain with Executor {
 
   protected var node: ConnectedNode = null 
 
@@ -73,14 +88,16 @@ class WorldExecutor(world: World, scheduler: Scheduler) extends NodeMain with Ex
   pending.drainPermits()
 
   def waitUntilDelivered {
-    val toDeliver = cnt.get
-    cnt.set(0)
-    val done = pending.tryAcquire(toDeliver, 500, TimeUnit.MILLISECONDS)
-    val a = pending.availablePermits
-    if (!done) {
-      Logger("WorldExecutor", LogWarning, "could not make sure that all messages were delivered ("+a+" < " + toDeliver + ")")
-    } else if (a > 0) {
-      Logger("WorldExecutor", LogWarning, "delivered more than expected: "+a)
+    if (!bypassROS) {
+      val toDeliver = cnt.get
+      cnt.set(0)
+      val done = pending.tryAcquire(toDeliver, 500, TimeUnit.MILLISECONDS)
+      val a = pending.availablePermits
+      if (!done) {
+        Logger("WorldExecutor", LogWarning, "could not make sure that all messages were delivered ("+a+" < " + toDeliver + ")")
+      } else if (a > 0) {
+        Logger("WorldExecutor", LogWarning, "delivered more than expected: "+a)
+      }
     }
     pending.drainPermits()
   }
@@ -104,10 +121,17 @@ class WorldExecutor(world: World, scheduler: Scheduler) extends NodeMain with Ex
   
   def publish[T](topic: String, typeName: String, message: T) = {
     val pub = getPublisher[T](topic, typeName)
-    val ns = getSubscribed[T](topic, typeName) //messages to deliver
-    Logger("WorldExecutor", LogDebug, "publishing on " + topic + "[" + typeName + "](" + ns + ")")
-    cnt.addAndGet(ns)
-    pub.publish(message)
+    Logger("WorldExecutor", LogDebug, "publishing on " + topic + "[" + typeName + "]")
+    if (!bypassROS) {
+      val ns = getSubscribed[T](topic, typeName) //messages to deliver
+      cnt.addAndGet(ns)
+      pub.publish(message)
+    } else {
+      val sub = getSubscriber[T](topic, typeName)
+      for (l <- sub.listeners) {
+        l.onNewMessage(message)
+      }
+    }
   }
 
 //def delayedPublish[T](delay: Int, topic: String, typeName: String, message: T) = {
@@ -116,7 +140,7 @@ class WorldExecutor(world: World, scheduler: Scheduler) extends NodeMain with Ex
 //}
 
   private val subscribers = scala.collection.mutable.Map[String, Any]()
-  def getSubscriber[T](topic: String, typeName: String): Subscriber[T] = {
+  def getSubscriber[T](topic: String, typeName: String): MySubscriber[T] = {
     if (subscribers contains topic) {
       subscribers(topic).asInstanceOf[MySubscriber[T]]
     } else {
@@ -128,7 +152,7 @@ class WorldExecutor(world: World, scheduler: Scheduler) extends NodeMain with Ex
   }
   def getSubscribed[T](topic: String, typeName: String): Int = {
     if (subscribers contains topic) {
-      subscribers(topic).asInstanceOf[MySubscriber[T]].cnt.get
+      subscribers(topic).asInstanceOf[MySubscriber[T]].cnt
     } else {
       0
     }

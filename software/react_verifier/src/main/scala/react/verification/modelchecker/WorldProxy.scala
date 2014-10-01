@@ -9,10 +9,10 @@ import react.verification._
 import ModelChecker._
 
 /** Encapsulate everything to explore states in parallel */
-class WorldProxy(val world: World) {
+class WorldProxy(val world: World, opts: McOptions) {
     
   val scheduler: Scheduler = new Scheduler
-  val exec: WorldExecutor = new WorldExecutor(world, scheduler)
+  val exec: WorldExecutor = new WorldExecutor(world, scheduler, opts.bypassROS)
 
   var core: RosCore = null
   var config: NodeConfiguration = null
