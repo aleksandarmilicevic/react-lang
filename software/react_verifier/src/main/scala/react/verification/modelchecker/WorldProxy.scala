@@ -113,7 +113,7 @@ class WorldProxy(val world: World, opts: McOptions) {
     new BranchingPoints(world.ghosts).alternatives
   }
 
-  def controllerStep(dt: Int, prefix: Trace, i: Int): Option[Trace] = {
+  def controllerStep(dt: Int, prefix: Trace, baseIndex: Int, period: Int): Iterable[Trace] = {
     val s = prefix.stop
     restoreState(s)
     elapse(dt)
@@ -122,8 +122,21 @@ class WorldProxy(val world: World, opts: McOptions) {
     }
     val bp = scheduler.nextBP
     assert(bp.expiration == now, "bp.expiration = " + bp.expiration + ", now = " + now)
-    val descr = safeExec(prefix, step(bp, i))
-    getState(prefix, "controller step " + i, descr)
+    val sDt = saveState
+    val alt = bp.alternatives
+    var i = baseIndex
+    var acc = List[Trace]()
+    while (i < alt) {
+      restoreState(sDt)
+      val descr = safeExec(prefix, step(bp, i))
+      getState(prefix, "controller step " + i, descr) match {
+        case Some(t) => 
+          acc = t :: acc
+        case None => ()
+      }
+      i += period
+    }
+    acc
   }
 
   def controllerAlernatives: Int = {

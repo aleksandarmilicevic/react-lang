@@ -15,7 +15,7 @@ class LaserSensor(minAngle: Float,
                   parent: GroundRobot,
                   _topic: String,
                   rate: Double
-                 ) extends Sensor(parent, _topic, rate) {
+                 ) extends Sensor(parent, _topic, sensor_msgs.LaserScan._TYPE, rate) {
 
   val frameName = "GhostLaserSensor" //TODO user defined name
   val dummyHeader = Header(0, Time(0, 0), frameName)

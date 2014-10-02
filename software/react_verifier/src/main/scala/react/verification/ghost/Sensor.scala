@@ -10,6 +10,7 @@ import react.utils.RosUtils
 //sensor are considered as stateless by the model checker (i.e. not saved/restored)
 abstract class Sensor(parent: react.verification.model.GroundRobot,
                       _topic: String,
+                      msgType: String,
                       rate: Double) extends Executed {
 
   def topic = RosUtils.mayAddPrefix(parent.robotId, _topic)
@@ -31,7 +32,13 @@ abstract class Sensor(parent: react.verification.model.GroundRobot,
   //produce a value
   def act: Unit
 
-  val task = new react.runtime.ScheduledTask("sensor("+_topic+")", period, () => act )
+  val task = new react.runtime.ScheduledTask( "sensor["+msgType+"]("+_topic+")",
+                                              period,
+                                              () => act,
+                                              -1,
+                                              false,
+                                              Some(List(_topic -> msgType))
+                                            )
 
   override def register(e: Executor) {
     super.register(e)

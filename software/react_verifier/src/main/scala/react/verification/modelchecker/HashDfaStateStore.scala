@@ -40,10 +40,12 @@ class HashDfaStateStore(hashTblSize: Int = 10000) {
   }
   
   protected def compact {
-    Logger("HashDfaStateStore", LogInfo, "compacting state store")
+    Logger("HashDfaStateStore", LogNotice, "compacting state store")
     def union(a: CompactDFA[Integer], b: CompactDFA[Integer]) = {
       val d = DFAs.or(a, b, dfa.alphabet)
-      //TODO intermediate minimization here ?
+      //println("d1: " + d.size)
+      StateStore.inPlaceMinimize(d) //TODO intermediate minimization here ?
+      //println("d2: " + d.size)
       d
     }
     val v1 = hash.view.par
@@ -51,6 +53,7 @@ class HashDfaStateStore(hashTblSize: Int = 10000) {
     val newDfa = v2.reduce( union )
     dfa.addDFA(newDfa)
     dfa.minimize()
+    Logger("HashDfaStateStore", LogInfo, "dfa size: " + dfa.size)
     hash.clear()
     hashCnt = 0
   }

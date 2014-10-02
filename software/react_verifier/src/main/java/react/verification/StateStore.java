@@ -14,8 +14,12 @@ public class StateStore {
 
     CompactDFA<Integer> states;
 
+    public static Alphabet<Integer> defaultAlphabet() {
+      return Alphabets.integers(0, 4);
+    }
+
     public StateStore() {
-        alpha = Alphabets.integers(0, 2);
+        alpha = defaultAlphabet();
         states = new CompactDFA(alpha);
     }
 
@@ -32,19 +36,19 @@ public class StateStore {
         Automata.invasiveMinimize(states, alpha);
     }
 
+    public static void inPlaceMinimize(CompactDFA<Integer> states) {
+        Automata.invasiveMinimize(states, defaultAlphabet());
+    }
+
     public static Word<Integer> stateToWord(byte[] bytes) {
         WordBuilder<Integer> builder = new WordBuilder();
 
         for (int i = 0; i < bytes.length; i++) {
             byte b = bytes[i];
-            if ((b & 0x1) != 0)  builder.add(1); else builder.add(0);
-            if ((b & 0x2) != 0)  builder.add(1); else builder.add(0);
-            if ((b & 0x4) != 0)  builder.add(1); else builder.add(0);
-            if ((b & 0x8) != 0)  builder.add(1); else builder.add(0);
-            if ((b & 0x10) != 0) builder.add(1); else builder.add(0);
-            if ((b & 0x20) != 0) builder.add(1); else builder.add(0);
-            if ((b & 0x40) != 0) builder.add(1); else builder.add(0);
-            if ((b & 0x80) != 0) builder.add(1); else builder.add(0);
+            builder.add( b & 0x3 );
+            builder.add( (b >> 2) & 0x3 );
+            builder.add( (b >> 4) & 0x3 );
+            builder.add( (b >> 6) & 0x3 );
         }
 
         return builder.toWord();

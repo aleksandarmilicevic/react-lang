@@ -45,14 +45,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   }
 
   //most compact representation of the state: automaton
-  protected var permanentStates = new HashDfaStateStore()
-
-  def addToPermanent(s: Iterable[Trace]) {
-    for (t <- s) {
-      permanentStates.add(t.stop)
-      permanentStatesStored += 1
-    }
-  }
+  protected var permanentStates = new HashDfaStateStore() //de we even need a DFA, currently seems much worse
 
   protected val frontier = new java.util.ArrayDeque[(Int, State)]()
   protected def put(p: Int, s: State) = frontier.addFirst(p -> s)
@@ -86,6 +79,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   // taking steps //
   //////////////////
 
+  //TODO elapsing way too many time ...
   /** executes until to next period */
   def controllerStep(t: Trace): Iterable[Trace] = {
     val s = t.stop
@@ -97,9 +91,8 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
       val alts = world.controllerAlernatives
       Logger("ModelChecker", LogDebug, "|controller step| = " + alts)
       statesGenerated += alts
-      val enum = (0 until alts).par
-      //enum.tasksupport = taskSupport
-      val successors = enum.map( i => isolated( w => w.controllerStep(dt, t, i) ) ).seq
+      val enum = (0 until opts.nbrWorlds).par
+      val successors = enum.map( i => isolated( w => w.controllerStep(dt, t, i, opts.nbrWorlds) ) ).seq
       successors.flatMap{
         case Left(l) => l
         case Right(t) => throw t
@@ -211,12 +204,13 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
         val (p, s) = get
         val post = innerLoop(s)
         val news = post.filterNot( trace => permanentStates.contains(trace.stop))
-        addToPermanent(news)
         for (s2 <- news) {
-           if (opts.timeBound <= 0 || (p+1) * period <= opts.timeBound) {
-             put(p+1, s2.stop)
-             predMap.add(s2)
-           }
+          permanentStates.add(s2.stop)
+          permanentStatesStored += 1
+          if (opts.timeBound <= 0 || (p+1) * period <= opts.timeBound) {
+            put(p+1, s2.stop)
+            predMap.add(s2)
+          }
         }
         true
       } else {

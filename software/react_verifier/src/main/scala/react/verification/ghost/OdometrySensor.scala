@@ -10,7 +10,7 @@ class OdometrySensor( bodyFrame: String, //the element we report on ...
                       parent: react.verification.model.GroundRobot,
                       _topic: String,
                       rate: Double
-                    ) extends Sensor(parent, _topic, rate)
+                    ) extends Sensor(parent, _topic, nav_msgs.Odometry._TYPE, rate)
 {
 
   val mapFrame = "map"

@@ -9,6 +9,46 @@ class RobotMacros(val c: Context) extends Handlers
 
   import c.universe._
 
+  class SymbolGetter extends Traverser {
+    var acc = List[Symbol]()
+    override def traverse(tree: Tree): Unit = tree match {
+      case Apply(fun, args) =>
+        acc = fun.symbol :: acc
+        super.traverse(tree)
+      case Assign(lhs, rhs) =>
+        acc = lhs.symbol :: acc
+        super.traverse(tree)
+      case id @ Ident(_) =>
+        acc = id.symbol :: acc
+        super.traverse(tree)
+      case _ =>
+        super.traverse(tree)
+    }
+  }
+
+  def getGetter(t: Tree): List[TermSymbol] = {
+    val sg = new SymbolGetter
+    sg.traverse(t)
+    val syms = sg.acc
+    val accessed = syms.collect{
+      case t: TermSymbol if t.isGetter =>
+        t.accessed.asInstanceOf[TermSymbol]
+    }
+    accessed.toList
+  }
+
+  def getSetter(t: Tree): List[TermSymbol] = {
+    val sg = new SymbolGetter
+    sg.traverse(t)
+    val accessed = sg.acc.collect{
+      case t: TermSymbol if t.isSetter =>
+        t.accessed.asInstanceOf[TermSymbol]
+    }
+    accessed.toList
+  }
+
+  def varSymToString(s: TermSymbol) = s.getter.name.toString
+
   def registerHandler[T <: react.message.Message : c.WeakTypeTag]
     (source: c.Expr[String])
     (handler: c.Expr[PartialFunction[T, Unit]]): c.Expr[Unit] =
@@ -16,9 +56,16 @@ class RobotMacros(val c: Context) extends Handlers
     val rosName = convertMsgName( weakTypeOf[T] )
     val rosType = convertMsgType( weakTypeOf[T] )
 
+    val readVars = getGetter(handler.tree) map varSymToString
+    val writtenVars = getSetter(handler.tree) map varSymToString
+    
+  //Console.err.println(show(handler))
+  //for (s <- readVars) Console.err.println("R-> " + s)
+  //for (s <- writtenVars) Console.err.println("W-> " + s)
+
     val tree = q"""{
       val h = $handler
-      subscribe[$rosType]($source, $rosName)( (message: $rosType) => {
+      subscribe[$rosType]($source, $rosName, Some(($readVars,$writtenVars)))( (message: $rosType) => {
         val msg = react.message.Message.from(message)
         if (h.isDefinedAt(msg)) { h.apply(msg) }
       })

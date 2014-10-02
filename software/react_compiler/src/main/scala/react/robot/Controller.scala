@@ -26,14 +26,19 @@ trait Controller {
   def sensor[T <: Message](source: String)(handler: PartialFunction[T, Unit]): Unit = macro RobotMacros.registerHandler[T]
  
   /** subscribe to a topic directly using ROS messages */
-  def subscribe[T](source: String, msgType: String)(handler: T => Unit) = {
+  def subscribe[T](source: String, msgType: String, rw: Option[(List[String],List[String])] = None)(handler: T => Unit) = {
     val wrapper = new react.runtime.MessageListenerWrapper{
-      import org.ros.message.MessageListener
       val topic: String = source
       val rosType: String = msgType
+      val (r,w) = rw match {
+        case Some((r,w)) => (Some(r), Some(w))
+        case None => (None, None)
+      }
       def register(exec: Executor) {
         registered = true
-        val listener = new MessageListener[T]{
+        val listener = new MessageListenerRW[T]{
+          override def read = r
+          override def written = w
           def onNewMessage(message: T) {
             if (enabled) {
               lock.lock()
