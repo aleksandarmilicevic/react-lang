@@ -5,15 +5,8 @@ import react.verification._
 import react.verification.ghost._
 import react.utils._
 
-import net.automatalib.util.automata.fsa.DFAs
-import net.automatalib.util.automata.Automata
-import net.automatalib.automata.fsa.impl.compact.CompactDFA
-import net.automatalib.words.impl.Alphabets
-import net.automatalib.words.{Word, WordBuilder}
-import scala.collection.mutable.HashSet
 import scala.collection.GenIterable
 import scala.collection.parallel._
-import java.nio.ByteBuffer
 
 import HashStateStore._
 
@@ -33,7 +26,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
 
   val world = worlds(0) //use this on when no concurrency
 
-  val taskSupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(opts.nbrWorlds))
+  //val taskSupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(opts.nbrWorlds))
 
   private val qW = new java.util.concurrent.ArrayBlockingQueue[WorldProxy](worlds.length)
   for( w <- worlds ) qW.add(w)
@@ -52,18 +45,12 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   }
 
   //most compact representation of the state: automaton
-  protected var permanentStates = new StateStore()
+  protected var permanentStates = new HashDfaStateStore()
 
-  def addToPermanent(s: GenIterable[Word[Integer]]) {
-    if (!s.isEmpty) {
-      def union(a: CompactDFA[Integer], b: CompactDFA[Integer]) = {
-        DFAs.or(a, b, permanentStates.alphabet)
-      }
-      val s2 = s.map(permanentStates.dfaFromWord)
-      val dfa = s2.reduce( union )
-      permanentStates.addDFA(dfa)
-      permanentStates.minimize()
-      permanentStatesStored += s.size
+  def addToPermanent(s: Iterable[Trace]) {
+    for (t <- s) {
+      permanentStates.add(t.stop)
+      permanentStatesStored += 1
     }
   }
 
@@ -222,12 +209,10 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
       Logger("ModelChecker", LogNotice, "outer loop: #permantent states = " + permanentStatesStored + ", frontier = " + frontier.size)
       if (!frontier.isEmpty) {
         val (p, s) = get
-        val post = innerLoop(s).par
-        val asState = post.map( s => (s -> StateStore.stateToWord(s.stop)) )
-        val news = asState.filterNot{ case (s, w) => permanentStates.contains(w) }
-        val (newStates, newWords) = news.unzip
-        addToPermanent(newWords)
-        for (s2 <- newStates.seq) {
+        val post = innerLoop(s)
+        val news = post.filterNot( trace => permanentStates.contains(trace.stop))
+        addToPermanent(news)
+        for (s2 <- news) {
            if (opts.timeBound <= 0 || (p+1) * period <= opts.timeBound) {
              put(p+1, s2.stop)
              predMap.add(s2)
@@ -269,7 +254,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
     Logger("ModelChecker", LogNotice, "period = " + period)
     Logger("ModelChecker", LogNotice, world.schedulerToString)
     val initState = world.saveStateCompact
-    permanentStates.addState(initState)
+    permanentStates.add(initState)
     permanentStatesStored += 1
     put(0, initState)
     if(!world.safe) {
