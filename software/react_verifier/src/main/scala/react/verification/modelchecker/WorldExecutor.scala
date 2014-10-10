@@ -12,42 +12,7 @@ import org.ros.concurrent.CancellableLoop
 import react.utils._
 import java.util.concurrent.{Semaphore,TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReentrantLock
 
-class MySubscriber[T](sub: Subscriber[T]) extends Subscriber[T] {
-  import org.ros.node.topic._
-  val lock = new ReentrantLock()
-  var cnt = 0
-  var listeners: List[MessageListener[T]] = Nil
-  def addMessageListener(listener: MessageListener[T], limit: Int) {
-    lock.lock
-    try {
-      sub.addMessageListener(listener, limit)
-      listeners = listener :: listeners
-      cnt += 1
-    } finally {
-      lock.unlock
-    }
-  }
-  def addMessageListener(listener: MessageListener[T]) {
-    lock.lock
-    try {
-      sub.addMessageListener(listener)
-      listeners = listener :: listeners
-      cnt += 1
-    } finally {
-      lock.unlock
-    }
-  }
-  def getLatchMode = sub.getLatchMode
-  def addSubscriberListener(listener: SubscriberListener[T]) {
-    sub.addSubscriberListener(listener)
-  }
-  def shutdown = sub.shutdown
-  def shutdown(timeout: Long, unit: TimeUnit) = sub.shutdown(timeout, unit) 
-  def getTopicMessageType = sub.getTopicMessageType
-  def getTopicName = sub.getTopicName
-}
 
 class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) extends NodeMain with Executor {
 
@@ -140,11 +105,11 @@ class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) exte
 //}
 
   private val subscribers = scala.collection.mutable.Map[String, Any]()
-  def getSubscriber[T](topic: String, typeName: String): MySubscriber[T] = {
+  def getSubscriber[T](topic: String, typeName: String): SubscriberWithBypass[T] = {
     if (subscribers contains topic) {
-      subscribers(topic).asInstanceOf[MySubscriber[T]]
+      subscribers(topic).asInstanceOf[SubscriberWithBypass[T]]
     } else {
-      val p = new MySubscriber[T](node.newSubscriber[T](topic, typeName))
+      val p = new SubscriberWithBypass[T](node.newSubscriber[T](topic, typeName))
       Thread.sleep(registrationSleep)
       subscribers += (topic -> p)
       p
@@ -152,9 +117,25 @@ class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) exte
   }
   def getSubscribed[T](topic: String, typeName: String): Int = {
     if (subscribers contains topic) {
-      subscribers(topic).asInstanceOf[MySubscriber[T]].cnt
+      subscribers(topic).asInstanceOf[SubscriberWithBypass[T]].cnt
     } else {
       0
+    }
+  }
+
+  def getSubscriberRW(topic: String): List[
+                                        Option[
+                                          (String,
+                                          Option[List[String]],
+                                          Option[List[String]])]] = {
+    if (subscribers contains topic) {
+      val listeners = subscribers(topic).asInstanceOf[SubscriberWithBypass[Any]].listeners
+      listeners.map( l => l match {
+        case s: MessageListenerRW[_] => Some((s.robotID, s.read, s.written))
+        case _ => None
+      })
+    } else {
+      Nil
     }
   }
 

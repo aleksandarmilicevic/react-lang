@@ -37,6 +37,7 @@ trait Controller {
       def register(exec: Executor) {
         registered = true
         val listener = new MessageListenerRW[T]{
+          def robotID = id
           override def read = r
           override def written = w
           def onNewMessage(message: T) {

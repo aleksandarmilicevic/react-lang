@@ -111,7 +111,7 @@ class GroundRobot( bBox: Box2D,
     //println("cos(Θ) = " + cos(orientation))
     //println("sin(Θ) = " + sin(orientation))
     }
-    orientation += da
+    orientation += da * vo.signum
   }
 
   def elapse(t: Int) {
