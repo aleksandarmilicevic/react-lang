@@ -8,12 +8,24 @@ import scala.collection.mutable.PriorityQueue
 import ModelChecker._
 
 
-class SchedulingPoint(tasks: List[ScheduledTask], scheduler: Scheduler) extends BranchingPoint {
+class SchedulingPoint(tasks: List[ScheduledTask], scheduler: Scheduler, exec: WorldExecutor) extends BranchingPoint {
+
+  //insert a filter function before toList in perms
 
   val expiration = tasks.head.expires
   assert(tasks.forall(_.expires == expiration))
 
-  val perms = tasks.permutations.toList
+  private val com = new CommutativityAnalysis(exec, tasks)
+  private def keep(lst : List[ScheduledTask]): Boolean = {
+    lst.sliding(2).forall( l => {
+      l.length != 2 ||
+      !com.commutes(l(0), l(1)) ||
+      l(0).hashCode <= l(1).hashCode
+    })
+  }
+
+  val perms = tasks.permutations.filter(keep).toList
+  //val perms = tasks.permutations.toList
 
   def alternatives = perms.length
 
@@ -45,7 +57,7 @@ class Scheduler extends react.runtime.Scheduler {
     _now += t
   }
 
-  def nextBP: SchedulingPoint = new SchedulingPoint(nextTasks, this)
+  def nextBP(exec: WorldExecutor): SchedulingPoint = new SchedulingPoint(nextTasks, this, exec)
 
   //all the tasks that expire at the same time
   def nextTasks: List[ScheduledTask] = {

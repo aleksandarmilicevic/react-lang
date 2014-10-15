@@ -32,12 +32,19 @@ abstract class Sensor(parent: react.verification.model.GroundRobot,
   //produce a value
   def act: Unit
 
-  val task = new react.runtime.ScheduledTask( "sensor["+msgType+"]("+_topic+")",
+  val id = "sensor["+msgType+"]("+_topic+")"
+  val rw = new react.runtime.RW {
+    def robotID = id
+    override def read = Some(Set())
+    override def written = Some(Set())
+    override def sendMsgsTo = Some(Set(_topic -> msgType))
+  }
+  val task = new react.runtime.ScheduledTask( id,
                                               period,
                                               () => act,
                                               -1,
                                               false,
-                                              Some(List(_topic -> msgType))
+                                              Some(rw)
                                             )
 
   override def register(e: Executor) {

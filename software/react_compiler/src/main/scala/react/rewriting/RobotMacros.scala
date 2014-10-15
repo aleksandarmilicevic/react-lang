@@ -56,16 +56,20 @@ class RobotMacros(val c: Context) extends Handlers
     val rosName = convertMsgName( weakTypeOf[T] )
     val rosType = convertMsgType( weakTypeOf[T] )
 
-    val readVars = getGetter(handler.tree) map varSymToString
-    val writtenVars = getSetter(handler.tree) map varSymToString
-    
-  //Console.err.println(show(handler))
-  //for (s <- readVars) Console.err.println("R-> " + s)
-  //for (s <- writtenVars) Console.err.println("W-> " + s)
+    val readVars = getGetter(handler.tree).map(varSymToString).toSet
+    val writtenVars = getSetter(handler.tree).map(varSymToString).toSet
 
+    //TODO we assume that handlers do not forward messages ...
+    
     val tree = q"""{
+      val rw = new react.runtime.RW {
+        def robotID = ???
+        override def read = Some($readVars)
+        override def written = Some($writtenVars)
+        override def sendMsgsTo = Some(Set())
+      }
       val h = $handler
-      subscribe[$rosType]($source, $rosName, Some(($readVars,$writtenVars)))( (message: $rosType) => {
+      subscribe[$rosType]($source, $rosName, Some(rw))( (message: $rosType) => {
         val msg = react.message.Message.from(message)
         if (h.isDefinedAt(msg)) { h.apply(msg) }
       })

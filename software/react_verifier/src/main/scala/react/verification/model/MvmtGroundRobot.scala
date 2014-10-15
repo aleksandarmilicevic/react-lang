@@ -3,6 +3,7 @@ package react.verification.model
 import react._
 import react.robot._
 import react.message._
+import react.runtime.MessageListenerRW
 import react.verification.environment._
 import react.verification.ghost._
 import react.verification._
@@ -55,7 +56,10 @@ class MvmtGroundRobot( bBox: Box2D,
 
   override def register(exec: Executor) {
     super.register(exec)
-    val listener = new org.ros.message.MessageListener[react_msgs.Mvmt]{
+    val listener = new MessageListenerRW[react_msgs.Mvmt]{
+      def robotID = MvmtGroundRobot.this.toString //TODO better
+      override def read = Some(Set())
+      override def written = Some(Set("vx" , "vo", "commandTimeLeft"))
       def onNewMessage(message: react_msgs.Mvmt) {
         lock.lock
         try {

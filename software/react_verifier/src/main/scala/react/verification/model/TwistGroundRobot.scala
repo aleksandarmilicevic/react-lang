@@ -3,6 +3,7 @@ package react.verification.model
 import react._
 import react.robot._
 import react.message._
+import react.runtime.MessageListenerRW
 import react.verification.environment._
 import react.verification.ghost._
 import react.verification._
@@ -37,7 +38,10 @@ class TwistGroundRobot( bBox: Box2D,
 
   override def register(exec: Executor) {
     super.register(exec)
-    val listener = new org.ros.message.MessageListener[geometry_msgs.Twist]{
+    val listener = new MessageListenerRW[geometry_msgs.Twist]{
+      def robotID = TwistGroundRobot.this.toString //TODO better
+      override def read = Some(Set[String]())
+      override def written = Some(Set("vx" , "vo", "commandTimeLeft"))
       def onNewMessage(message: geometry_msgs.Twist) {
         lock.lock
         try {

@@ -2,9 +2,13 @@ package react.runtime
 
 import org.ros.message.MessageListener
 
-abstract class MessageListenerRW[M] extends MessageListener[M] {
+trait RW {
   def robotID: String
-  def read: Option[List[String]] = None
-  def written: Option[List[String]] = None
+  def read: Option[Set[String]] = None
+  def written: Option[Set[String]] = None
+  def sendMsgsTo: Option[Set[(String,String)]] = None
+}
+
+abstract class MessageListenerRW[M] extends MessageListener[M] with RW {
 }
 

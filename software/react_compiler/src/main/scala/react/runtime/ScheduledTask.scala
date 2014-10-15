@@ -7,7 +7,7 @@ class ScheduledTask(val descr: String,
                     val fct: () => Unit,
                     var expires: Long = -1,
                     var cancelled: Boolean = false,
-                    val publish: Option[List[(String,String)]] = None
+                    val rw: Option[RW] = None
                    ) extends java.lang.Comparable[ScheduledTask] {
 
   override def toString = "ScheduledTask["+descr+"](period = "+period+", expires = "+expires+", cancelled = "+cancelled+")"

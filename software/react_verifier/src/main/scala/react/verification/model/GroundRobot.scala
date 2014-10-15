@@ -3,6 +3,7 @@ package react.verification.model
 import react._
 import react.robot._
 import react.message._
+import react.runtime.MessageListenerRW
 import react.verification.environment._
 import react.verification.ghost._
 import react.verification._
@@ -138,7 +139,10 @@ class GroundRobot( bBox: Box2D,
   override def register(exec: Executor) {
     super.register(exec)
     if (snap.isDefined) {
-      val listener2 = new org.ros.message.MessageListener[gazebo_msgs.ModelState]{
+      val listener2 = new MessageListenerRW[gazebo_msgs.ModelState]{
+        def robotID = GroundRobot.this.toString //TODO better
+        override def read = Some(Set())
+        override def written = Some(Set("x", "y", "orientation", "vx" , "vo"))
         val name = snap.get._2
         def onNewMessage(message: gazebo_msgs.ModelState) {
           Logger("GroundRobot", LogDebug, name + " -> " + message.getModelName)

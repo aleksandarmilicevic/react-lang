@@ -120,7 +120,7 @@ class WorldProxy(val world: World, opts: McOptions) {
     if (!world.safe) {
       throw new SafetyError("elapse : " + dt, prefix.append(List("elapse : " + dt), saveState))
     }
-    val bp = scheduler.nextBP
+    val bp = scheduler.nextBP(exec)
     assert(bp.expiration == now, "bp.expiration = " + bp.expiration + ", now = " + now)
     val sDt = saveState
     val alt = bp.alternatives
@@ -141,7 +141,7 @@ class WorldProxy(val world: World, opts: McOptions) {
 
   def controllerAlernatives: Int = {
     val s = scheduler.saveState
-    val bp = scheduler.nextBP
+    val bp = scheduler.nextBP(exec)
     val res = bp.alternatives
     scheduler.restoreState(s)
     res

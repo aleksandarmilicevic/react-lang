@@ -123,15 +123,11 @@ class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) exte
     }
   }
 
-  def getSubscriberRW(topic: String): List[
-                                        Option[
-                                          (String,
-                                          Option[List[String]],
-                                          Option[List[String]])]] = {
+  def getSubscriberRW(topic: String): List[Option[RW]] = {
     if (subscribers contains topic) {
       val listeners = subscribers(topic).asInstanceOf[SubscriberWithBypass[Any]].listeners
       listeners.map( l => l match {
-        case s: MessageListenerRW[_] => Some((s.robotID, s.read, s.written))
+        case s: MessageListenerRW[_] => Some(s)
         case _ => None
       })
     } else {
