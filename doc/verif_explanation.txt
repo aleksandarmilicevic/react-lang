@@ -1,0 +1,52 @@
+how react verification work
+---------------------------
+
+- architecture
+  TODO picture of runtime vs verification
+  
+- verification scenario
+  * world: dimensions, objects, discretization, ...
+  * robot: connected with models
+  * model: physical behavior, bounding box, sensors added on top of the base frame
+  * sensors: set of simple sensors implemented
+  * ghosts: simulate user inputs
+
+- state of the system
+  * stateful objects: robots, model, [ghosts]
+  * what we save: public variable fields
+  * how we save:
+    -as sequence of bytes
+    -native type are directly stored
+    -complex objects are internalized
+    -limitations:
+      * immutable data-structures (what come as default with scala)
+      * private field (we could emit reflective code to access that)
+      * arbitrary references (problem to internalize across multiple worlds)
+  * code for saving/loading state is automatic generated using type information (also work on bytecode)
+  * rounding/world bound are periodically applied to reduce the state space
+  
+- time quotient and state of the scheduler
+  * controllers and sensors have a period => the global period is the LCM of of the period
+  * when t % period = 0, the scheduler state is back to its original state (modulo FSM states)
+  * default state can be omitted for state space reduction
+  
+- "2 loops" model-checker (for safety properties)
+  * runs the compiled REACT code, identifies branching points, assume that the only non-determinism is in the input and event ordering
+  * inner loop (normal model-checker)
+    - ghost event (saturates the system)
+    - timed event: elapse time to next discrete event (compute continuous behavior), then execute event
+    - simultaneous events: try permutations up to commutativity
+  * outer loop (state space reduction)
+    - remove scheduler form state
+    - apply rounding
+    - optionally clear transient states (state generated during the inner loop)
+    - may store states in a DFA (in theory is should be more compact)
+
+- commutativity analysis
+  * at compile time: annotate the methods with the set of variables that they read/write and the message they send
+  * at verification time compute the set of read/write variable of an event (transitive closure of r/w along messages)
+  * events commutes is no WR/WW conflict
+
+- remark on zeno behaviors
+  * no whenever
+  * async part (user input) should only update local state, periodic task do the communication
