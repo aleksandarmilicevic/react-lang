@@ -78,34 +78,40 @@ class TraceStore {
       writer.newLine()
     }
   }
+    
+  protected def mkState(str: String) = Hex.decodeHex(str.toCharArray)
 
-  protected def parseTrace = {
+  protected def parseLabel(reader: java.io.BufferedReader): Label = {
+    val n = reader.readLine.toInt
+    val raw = for(_ <- 0 until n) yield {
+      reader.readLine
+    }
+    raw.toList
+  }
+    
+  protected def parseTrace(reader: java.io.BufferedReader): (State, Trace) = {
+    val line = reader.readLine.split(" ")
+    assert(line.size == 3)
+    val k = mkState(line(0))
+    val s = mkState(line(1))
+    val n = line(2).toInt
+    val tail = for(_ <- 0 until n) yield {
+      val descr = parseLabel(reader)
+      val state = mkState(reader.readLine)
+      (descr -> state)
+    }
+    val t = new Trace(s, tail.toList)
+    k -> t
+  }
+
+  protected def parseFile = {
     closeWriter //to flush anything left
     var reader = Files.newBufferedReader(path, utf8)
 
-    def mkState(str: String) = Hex.decodeHex(str.toCharArray)
     val predMap = collection.mutable.HashMap[RichState, Trace]()
 
-    def parseLabel: Label = {
-      val n = reader.readLine.toInt
-      val raw = for(_ <- 0 until n) yield {
-        reader.readLine
-      }
-      raw.toList
-    }
-    
     while(reader.ready) {
-      val line = reader.readLine.split(" ")
-      assert(line.size == 3)
-      val k = mkState(line(0))
-      val s = mkState(line(1))
-      val n = line(2).toInt
-      val tail = for(_ <- 0 until n) yield {
-        val descr = parseLabel
-        val state = mkState(reader.readLine)
-        (descr -> state)
-      }
-      val t = new Trace(s, tail.toList)
+      val (k, t) = parseTrace(reader)
       predMap(k) = t
     }
 
@@ -113,7 +119,7 @@ class TraceStore {
   }
 
   def makeTrace(t: Trace): Trace = {
-    val predMap = parseTrace
+    val predMap = parseFile
     def mk(tr: Trace): Trace = {
       if (predMap contains tr.start) {
         val prefix = predMap(tr.start)
@@ -126,7 +132,20 @@ class TraceStore {
   }
 
   def states: Iterable[State] = {
-    parseTrace.values.flatMap(_.states)
+    closeWriter //to flush anything left
+    var reader = Files.newBufferedReader(path, utf8)
+
+    val acc = new scala.collection.mutable.HashSet[RichState]()
+
+    while(reader.ready) {
+      val (k, trace) = parseTrace(reader)
+      acc.add(k)
+      for (state <- trace.states)
+      {
+        acc.add(state)
+      }
+    }
+    acc.view.map(_.state)
   }
 
 }

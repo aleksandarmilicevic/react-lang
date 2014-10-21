@@ -2,7 +2,8 @@ package react.verification.environment
 
 import math._
 
-/** An immobile obstacle in the world (2D → z = ±∞) */
+/** An immobile obstacle in the world (2D → z = ±∞)
+ *  (x,y) denotes the lower left corner */
 class Box2D(val x: Double,
             val y: Double,
             val orientation: Double,
@@ -44,16 +45,34 @@ class Box2D(val x: Double,
     )
   }
 
-  def contains(x: Double, y: Double, error: Double = 1e-6): Boolean = {
+  def inThisFrame(x: Double, y: Double): (Double, Double) = {
     val dx = x - this.x
     val dy = y - this.y
     //val a = atan2(dy, dx) - orientation
     val dx2 = dx * cos(-orientation) - dy * sin(-orientation)
     val dy2 = dx * sin(-orientation) + dy * cos(-orientation)
+    (dx2, dy2)
+  }
+
+  def inGlobalFrame(x: Double, y: Double): (Double, Double) = {
+    ???
+  }
+
+  def contains(x: Double, y: Double, error: Double = 1e-6): Boolean = {
+    val (dx2, dy2) = inThisFrame(x, y)
     dx2 >= -error && dx2 <= width + error && dy2 >= -error && dy2 <= depth + error
   }
   def contains(p: (Double, Double)): Boolean = {
     contains(p._1, p._2)
+  }
+
+  def distance(x: Double, y: Double): Double = {
+    //transform the sensor location in the box frame
+    val (x2, y2) = inThisFrame(x, y)
+    //http://stackoverflow.com/questions/5254838/calculating-distance-between-a-point-and-a-rectangular-box-nearest-point
+    val dx = max(max(-x2, 0), x2 -width)
+    val dy = max(max(-y2, 0), y2 -depth)
+    sqrt(dx*dx + dy*dy);
   }
 
   def center = {

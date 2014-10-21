@@ -23,6 +23,7 @@ abstract class Sensor(parent: react.verification.model.GroundRobot,
   var pose: Pose2D = null
 
   protected var world: List[Box2D] = Nil
+  //TODO add other sensors so we can compute interferences
 
   //this method will be called each time the world changes
   def update(restOfTheWorld: List[Box2D]) {
