@@ -4,62 +4,22 @@ package react.message
  * adding new messages also requires fiiling some type info in react.rewriting.Handlers
  */
 
-case class Time(secs: Int, nsecs: Int)
-case class Duration(secs: Int, nsecs: Int)
+case class Time(secs: Int, nsecs: Int) {
+  def toMillis = secs * 1000 + nsecs / 1000000
+}
+case class Duration(secs: Int, nsecs: Int) {
+  def toMillis = secs * 1000 + nsecs / 1000000
+}
 
 abstract class Message(val rosType: String) { }
 
 //std_msgs
 case class Header(seq: Int, stamp: Time, frame: String) extends Message(std_msgs.Header._TYPE)
 
-//geometry_msgs
-case class Vector3(x: Double, y: Double, z: Double) extends Message(geometry_msgs.Vector3._TYPE)
-case class Point(x: Double, y: Double, z: Double) extends Message(geometry_msgs.Point._TYPE)
-case class Quaternion(x: Double, y: Double, z: Double, w: Double) extends Message(geometry_msgs.Quaternion._TYPE)
-case class Pose2D(x: Double, y: Double, theta: Double) extends Message(geometry_msgs.Pose2D._TYPE)
-case class Pose(position: Point, orientation: Quaternion) extends Message(geometry_msgs.Pose._TYPE)
-case class PoseStamped(header: Header, pose: Pose) extends Message(geometry_msgs.PoseStamped._TYPE)
-case class PoseWithCovariance(pose: Pose, covariance: Array[Double]) extends Message(geometry_msgs.PoseWithCovariance._TYPE) {
-  assert(covariance.size == 36, "PoseWithCovariance.covariance must contain 36 elements")
-}
-case class Twist(linear: Vector3, angular: Vector3) extends Message(geometry_msgs.Twist._TYPE)
-case class TwistStamped(header: Header, twist: Twist) extends Message(geometry_msgs.TwistStamped._TYPE)
-case class TwistWithCovariance(twist: Twist, covariance: Array[Double]) extends Message(geometry_msgs.TwistWithCovariance._TYPE) {
-  assert(covariance.size == 36, "TwistWithCovariance.covariance must contain 36 elements")
-}
-
-//sensor_msgs
-case class Range(header: Header, kind: Byte, fov: Float, min: Float, max: Float, range: Float) extends Message(sensor_msgs.Range._TYPE)
-case class LaserScan( header: Header,
-                      angleMin: Float,
-                      angleMax: Float,
-                      angleIncrement: Float,
-                      timeIncrement: Float,
-                      scanTime: Float,
-                      rangeMin: Float,
-                      rangeMax: Float,
-                      ranges: Array[Float],
-                      intensities: Array[Float]) extends Message(sensor_msgs.LaserScan._TYPE)
-case class Imu( header: Header,
-                orientation: Quaternion,
-                orientationCovariance: Array[Double], //9
-                angularVelocity: Vector3,
-                angularVelocityCovariance: Array[Double], //9
-                linearAcceleration: Vector3,
-                linearAccelerationCovariance: Array[Double] //9
-            ) extends Message(sensor_msgs.Imu._TYPE) {
-  assert(orientationCovariance.size == 9, "Imu.orientationCovariance must contain 9 elements")
-  assert(angularVelocityCovariance.size == 9, "Imu.angularVelocityCovariance must contain 9 elements")
-  assert(linearAccelerationCovariance.size == 9, "Imu.linearAccelerationCovariance must contain 9 elements")
-}
-
-//nav_msgs
-case class Odometry(header: Header, childFrameId: String, pose: PoseWithCovariance, twist: TwistWithCovariance) extends Message(nav_msgs.Odometry._TYPE)
-case class Path(header: Header, poses: Array[PoseStamped]) extends Message(nav_msgs.Path._TYPE)
-
 //react_msgs
 case class Mvmt(header: Header, speed: Double, angular_speed: Double, d: Duration) extends Message(react_msgs.Mvmt._TYPE)
 
+//gazebo_msgs
 case class ModelState(
   model_name: String,
   pose: Pose, 
@@ -67,10 +27,11 @@ case class ModelState(
   reference_frame: String) extends Message(gazebo_msgs.ModelState._TYPE)
 
 
+//TODO refactor this to make it more modular ...
 object Message {
 
-  def time(ms: Long) = Time((ms/1000).toInt, ((ms % 1000) * 1000).toInt)
-  def duration(ms: Long) = Duration((ms/1000).toInt, ((ms % 1000) * 1000).toInt)
+  def time(ms: Long) = Time((ms/1000).toInt, ((ms % 1000000) * 1000000).toInt)
+  def duration(ms: Long) = Duration((ms/1000).toInt, ((ms % 1000000) * 1000000).toInt)
 
   def from(d: org.ros.message.Duration): Duration = Duration(d.secs, d.nsecs)
   def from(t: org.ros.message.Time): Time = Time(t.secs, t.nsecs)
@@ -131,6 +92,19 @@ object Message {
   }
 
   def from(m: react_msgs.Mvmt): Mvmt = Mvmt(from(m.getHeader), m.getSpeed, m.getAngularSpeed, from(m.getD))
+  
+  def from(s: std_msgs.Empty): Primitive.Empty.type = Primitive.Empty
+  def from(s: std_msgs.Bool): Primitive.Bool = Primitive.Bool(s.getData)
+  def from(s: std_msgs.Byte): Primitive.Byte = Primitive.Byte(s.getData)
+  def from(s: std_msgs.Char): Primitive.Char = Primitive.Char(s.getData.asInstanceOf[Char])
+  def from(s: std_msgs.Int16): Primitive.Int16 = Primitive.Int16(s.getData)
+  def from(s: std_msgs.Int32): Primitive.Int32 = Primitive.Int32(s.getData)
+  def from(s: std_msgs.Int64): Primitive.Int64 = Primitive.Int64(s.getData)
+  def from(s: std_msgs.Float32): Primitive.Float32 = Primitive.Float32(s.getData)
+  def from(s: std_msgs.Float64): Primitive.Float64 = Primitive.Float64(s.getData)
+  def from(s: std_msgs.String): Primitive.String = Primitive.String(s.getData)
+  def from(s: std_msgs.Duration): Primitive.Duration = Primitive.Duration(from(s.getData).toMillis)
+  def from(s: std_msgs.Time): Primitive.Time = Primitive.Time(from(s.getData).toMillis)
 
   def fromMessage(rosType: String, msg: Any): Message = {
     if (rosType == std_msgs.Header._TYPE)                        from(msg.asInstanceOf[std_msgs.Header])
@@ -151,6 +125,18 @@ object Message {
     else if (rosType == nav_msgs.Path._TYPE)                     from(msg.asInstanceOf[nav_msgs.Path])
     else if (rosType == react_msgs.Mvmt._TYPE)                   from(msg.asInstanceOf[react_msgs.Mvmt])
     else if (rosType == gazebo_msgs.ModelState._TYPE)            from(msg.asInstanceOf[gazebo_msgs.ModelState])
+    else if (rosType == std_msgs.Empty._TYPE)                    from(msg.asInstanceOf[std_msgs.Empty])
+    else if (rosType == std_msgs.Bool._TYPE)                     from(msg.asInstanceOf[std_msgs.Bool])
+    else if (rosType == std_msgs.Byte._TYPE)                     from(msg.asInstanceOf[std_msgs.Byte])
+    else if (rosType == std_msgs.Char._TYPE)                     from(msg.asInstanceOf[std_msgs.Char])
+    else if (rosType == std_msgs.Int16._TYPE)                    from(msg.asInstanceOf[std_msgs.Int16])
+    else if (rosType == std_msgs.Int32._TYPE)                    from(msg.asInstanceOf[std_msgs.Int32])
+    else if (rosType == std_msgs.Int64._TYPE)                    from(msg.asInstanceOf[std_msgs.Int64])
+    else if (rosType == std_msgs.Float32._TYPE)                  from(msg.asInstanceOf[std_msgs.Float32])
+    else if (rosType == std_msgs.Float64._TYPE)                  from(msg.asInstanceOf[std_msgs.Float64])
+    else if (rosType == std_msgs.String._TYPE)                   from(msg.asInstanceOf[std_msgs.String])
+    else if (rosType == std_msgs.Duration._TYPE)                 from(msg.asInstanceOf[std_msgs.Duration])
+    else if (rosType == std_msgs.Time._TYPE)                     from(msg.asInstanceOf[std_msgs.Time])
     else sys.error("TODO: message type " + rosType + " not yet supported")
   }
 
@@ -160,32 +146,32 @@ object Message {
   import org.ros.message._
   import org.ros.node.Node
 
-  def to(node: Node, h: Header): std_msgs.Header = {
-    val h2 = node.getTopicMessageFactory().newFromType[std_msgs.Header](h.rosType)
+  def to(node: MessageFactory, h: Header): std_msgs.Header = {
+    val h2 = node.newFromType[std_msgs.Header](h.rosType)
     h2.setSeq(h.seq)
     h2.setStamp(to(h.stamp))
     h2.setFrameId(h.frame)
     h2
   }
 
-  def to(node: Node, v: Vector3): geometry_msgs.Vector3 = {
-    val v2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Vector3](v.rosType)
+  def to(node: MessageFactory, v: Vector3): geometry_msgs.Vector3 = {
+    val v2 = node.newFromType[geometry_msgs.Vector3](v.rosType)
     v2.setX(v.x)
     v2.setY(v.y)
     v2.setZ(v.z)
     v2
   }
   
-  def to(node: Node, v: Point): geometry_msgs.Point = {
-    val v2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Point](v.rosType)
+  def to(node: MessageFactory, v: Point): geometry_msgs.Point = {
+    val v2 = node.newFromType[geometry_msgs.Point](v.rosType)
     v2.setX(v.x)
     v2.setY(v.y)
     v2.setZ(v.z)
     v2
   }
   
-  def to(node: Node, v: Quaternion): geometry_msgs.Quaternion = {
-    val v2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Quaternion](v.rosType)
+  def to(node: MessageFactory, v: Quaternion): geometry_msgs.Quaternion = {
+    val v2 = node.newFromType[geometry_msgs.Quaternion](v.rosType)
     v2.setX(v.x)
     v2.setY(v.y)
     v2.setZ(v.z)
@@ -193,58 +179,58 @@ object Message {
     v2
   }
 
-  def to(node: Node, p: Pose2D): geometry_msgs.Pose2D = {
-    val p2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Pose2D](p.rosType)
+  def to(node: MessageFactory, p: Pose2D): geometry_msgs.Pose2D = {
+    val p2 = node.newFromType[geometry_msgs.Pose2D](p.rosType)
     p2.setX(p.x)
     p2.setY(p.y)
     p2.setTheta(p.theta)
     p2
   }
   
-  def to(node: Node, p: Pose): geometry_msgs.Pose = {
-    val p2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Pose](p.rosType)
+  def to(node: MessageFactory, p: Pose): geometry_msgs.Pose = {
+    val p2 = node.newFromType[geometry_msgs.Pose](p.rosType)
     p2.setPosition(to(node, p.position))
     p2.setOrientation(to(node, p.orientation))
     p2
   }
   
-  def to(node: Node, p: PoseStamped): geometry_msgs.PoseStamped = {
-    val p2 = node.getTopicMessageFactory().newFromType[geometry_msgs.PoseStamped](p.rosType)
+  def to(node: MessageFactory, p: PoseStamped): geometry_msgs.PoseStamped = {
+    val p2 = node.newFromType[geometry_msgs.PoseStamped](p.rosType)
     p2.setHeader(to(node, p.header))
     p2.setPose(to(node, p.pose))
     p2
   }
   
-  def to(node: Node, p: PoseWithCovariance): geometry_msgs.PoseWithCovariance = {
-    val p2 = node.getTopicMessageFactory().newFromType[geometry_msgs.PoseWithCovariance](p.rosType)
+  def to(node: MessageFactory, p: PoseWithCovariance): geometry_msgs.PoseWithCovariance = {
+    val p2 = node.newFromType[geometry_msgs.PoseWithCovariance](p.rosType)
     p2.setPose(to(node, p.pose))
     p2.setCovariance(p.covariance)
     p2
   }
   
-  def to(node: Node, t: Twist): geometry_msgs.Twist = {
-    val t2 = node.getTopicMessageFactory().newFromType[geometry_msgs.Twist](t.rosType)
+  def to(node: MessageFactory, t: Twist): geometry_msgs.Twist = {
+    val t2 = node.newFromType[geometry_msgs.Twist](t.rosType)
     t2.setLinear(to(node, t.linear))
     t2.setAngular(to(node, t.angular))
     t2
   }
   
-  def to(node: Node, ts: TwistStamped): geometry_msgs.TwistStamped = {
-    val ts2 = node.getTopicMessageFactory().newFromType[geometry_msgs.TwistStamped](ts.rosType)
+  def to(node: MessageFactory, ts: TwistStamped): geometry_msgs.TwistStamped = {
+    val ts2 = node.newFromType[geometry_msgs.TwistStamped](ts.rosType)
     ts2.setHeader(to(node, ts.header))
     ts2.setTwist(to(node, ts.twist))
     ts2
   }
   
-  def to(node: Node, ts: TwistWithCovariance): geometry_msgs.TwistWithCovariance = {
-    val ts2 = node.getTopicMessageFactory().newFromType[geometry_msgs.TwistWithCovariance](ts.rosType)
+  def to(node: MessageFactory, ts: TwistWithCovariance): geometry_msgs.TwistWithCovariance = {
+    val ts2 = node.newFromType[geometry_msgs.TwistWithCovariance](ts.rosType)
     ts2.setTwist(to(node, ts.twist))
     ts2.setCovariance(ts.covariance)
     ts2
   }
 
-  def to(node: Node, r: Range): sensor_msgs.Range = {
-    val r2 = node.getTopicMessageFactory().newFromType[sensor_msgs.Range](r.rosType)
+  def to(node: MessageFactory, r: Range): sensor_msgs.Range = {
+    val r2 = node.newFromType[sensor_msgs.Range](r.rosType)
     r2.setHeader(to(node, r.header))
     r2.setRadiationType(r.kind)
     r2.setMinRange(r.min)
@@ -253,8 +239,8 @@ object Message {
     r2
   }
   
-  def to(node: Node, r: LaserScan): sensor_msgs.LaserScan = {
-    val r2 = node.getTopicMessageFactory().newFromType[sensor_msgs.LaserScan](r.rosType)
+  def to(node: MessageFactory, r: LaserScan): sensor_msgs.LaserScan = {
+    val r2 = node.newFromType[sensor_msgs.LaserScan](r.rosType)
     r2.setHeader(to(node, r.header))
     r2.setAngleMin(r.angleMin)
     r2.setAngleMax(r.angleMax)
@@ -268,8 +254,8 @@ object Message {
     r2
   }
   
-  def to(node: Node, r: Imu): sensor_msgs.Imu = {
-    val r2 = node.getTopicMessageFactory().newFromType[sensor_msgs.Imu](r.rosType)
+  def to(node: MessageFactory, r: Imu): sensor_msgs.Imu = {
+    val r2 = node.newFromType[sensor_msgs.Imu](r.rosType)
     r2.setHeader(to(node, r.header))
     r2.setOrientation(to(node, r.orientation))
     r2.setOrientationCovariance(r.orientationCovariance)
@@ -280,8 +266,8 @@ object Message {
     r2
   }
 
-  def to(node: Node, o: Odometry): nav_msgs.Odometry = {
-    val o2 = node.getTopicMessageFactory().newFromType[nav_msgs.Odometry](o.rosType)
+  def to(node: MessageFactory, o: Odometry): nav_msgs.Odometry = {
+    val o2 = node.newFromType[nav_msgs.Odometry](o.rosType)
     o2.setHeader(to(node, o.header))
     o2.setChildFrameId(o.childFrameId)
     o2.setPose(to(node, o.pose))
@@ -289,16 +275,16 @@ object Message {
     o2
   }
   
-  def to(node: Node, o: Path): nav_msgs.Path = {
-    val o2 = node.getTopicMessageFactory().newFromType[nav_msgs.Path](o.rosType)
+  def to(node: MessageFactory, o: Path): nav_msgs.Path = {
+    val o2 = node.newFromType[nav_msgs.Path](o.rosType)
     o2.setHeader(to(node, o.header))
     val array: Array[geometry_msgs.PoseStamped] = o.poses.map(to(node, _))
     o2.setPoses(java.util.Arrays.asList[geometry_msgs.PoseStamped](array: _*))
     o2
   }
   
-  def to(node: Node, m: Mvmt): react_msgs.Mvmt = {
-    val m2 = node.getTopicMessageFactory().newFromType[react_msgs.Mvmt](m.rosType)
+  def to(node: MessageFactory, m: Mvmt): react_msgs.Mvmt = {
+    val m2 = node.newFromType[react_msgs.Mvmt](m.rosType)
     m2.setHeader(to(node, m.header))
     m2.setSpeed(m.speed)
     m2.setAngularSpeed(m.angular_speed)
@@ -306,16 +292,87 @@ object Message {
     m2
   }
 
-  def to(node: Node, m: ModelState): gazebo_msgs.ModelState = {
-    val m2 = node.getTopicMessageFactory().newFromType[gazebo_msgs.ModelState](m.rosType)
+  def to(node: MessageFactory, m: ModelState): gazebo_msgs.ModelState = {
+    val m2 = node.newFromType[gazebo_msgs.ModelState](m.rosType)
     m2.setModelName(m.model_name)
     m2.setPose(to(node, m.pose))
     m2.setTwist(to(node, m.twist))
     m2.setReferenceFrame(m.reference_frame)
     m2
   }
+  
+  def to(node: MessageFactory, p: Primitive.Empty.type): std_msgs.Empty = {
+    val p2 = node.newFromType[std_msgs.Empty](p.rosType)
+    p2
+  }
+  
+  def to(node: MessageFactory, p: Primitive.Bool): std_msgs.Bool = {
+    val p2 = node.newFromType[std_msgs.Bool](p.rosType)
+    p2.setData(p.data)
+    p2
+  }
 
-  def toMessage(node: Node, m: Message): Any = m match {
+  def to(node: MessageFactory, p: Primitive.Byte): std_msgs.Byte = {
+    val p2 = node.newFromType[std_msgs.Byte](p.rosType)
+    p2.setData(p.data)
+    p2
+  }
+
+  def to(node: MessageFactory, p: Primitive.Char): std_msgs.Char = {
+    val p2 = node.newFromType[std_msgs.Char](p.rosType)
+    p2.setData(p.data.toByte)
+    p2
+  }
+
+  def to(node: MessageFactory, p: Primitive.Int16): std_msgs.Int16 = {
+    val p2 = node.newFromType[std_msgs.Int16](p.rosType)
+    p2.setData(p.data)
+    p2
+  }
+
+  def to(node: MessageFactory, p: Primitive.Int32): std_msgs.Int32 = {
+    val p2 = node.newFromType[std_msgs.Int32](p.rosType)
+    p2.setData(p.data)
+    p2
+  }
+
+  def to(node: MessageFactory, p: Primitive.Int64): std_msgs.Int64 = {
+    val p2 = node.newFromType[std_msgs.Int64](p.rosType)
+    p2.setData(p.data)
+    p2
+  }
+
+  def to(node: MessageFactory, p: Primitive.Float32): std_msgs.Float32 = {
+    val p2 = node.newFromType[std_msgs.Float32](p.rosType)
+    p2.setData(p.data)
+    p2
+  }
+
+  def to(node: MessageFactory, p: Primitive.Float64): std_msgs.Float64 = {
+    val p2 = node.newFromType[std_msgs.Float64](p.rosType)
+    p2.setData(p.data)
+    p2
+  }
+
+  def to(node: MessageFactory, p: Primitive.String): std_msgs.String = {
+    val p2 = node.newFromType[std_msgs.String](p.rosType)
+    p2.setData(p.data)
+    p2
+  }
+
+  def to(node: MessageFactory, p: Primitive.Duration): std_msgs.Duration = {
+    val p2 = node.newFromType[std_msgs.Duration](p.rosType)
+    p2.setData(to(duration(p.data)))
+    p2
+  }
+
+  def to(node: MessageFactory, p: Primitive.Time): std_msgs.Time = {
+    val p2 = node.newFromType[std_msgs.Time](p.rosType)
+    p2.setData(to(time(p.data)))
+    p2
+  }
+
+  def toMessage(node: MessageFactory, m: Message): Any = m match {
     case h: Header              => to(node, h)
     case p: Pose2D              => to(node, p)
     case p: Pose                => to(node, p)
@@ -332,6 +389,16 @@ object Message {
     case o: Odometry            => to(node, o)
     case m: Mvmt                => to(node, m)
     case m: ModelState          => to(node, m)
+    case Primitive.Empty        => to(node, Primitive.Empty)
+    case m: Primitive.Byte      => to(node, m)
+    case m: Primitive.Bool      => to(node, m)
+    case m: Primitive.Char      => to(node, m)
+    case m: Primitive.Int16     => to(node, m)
+    case m: Primitive.Int32     => to(node, m)
+    case m: Primitive.Int64     => to(node, m)
+    case m: Primitive.String    => to(node, m)
+    case m: Primitive.Duration  => to(node, m)
+    case m: Primitive.Time      => to(node, m)
     case other => sys.error("TODO: message type " + other+ " not fully supported")
   }
 

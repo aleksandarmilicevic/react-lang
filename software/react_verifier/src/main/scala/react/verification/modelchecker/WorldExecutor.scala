@@ -136,7 +136,7 @@ class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) exte
   }
 
   def convertMessage[N](msg: Message): N = {
-    Message.toMessage(node, msg).asInstanceOf[N] //TODO something nicer to avoid the casting
+    Message.toMessage(node.getTopicMessageFactory(), msg).asInstanceOf[N] //TODO something nicer to avoid the casting
   }
   
   def schedule(t: react.runtime.ScheduledTask) = scheduler.schedule(t)

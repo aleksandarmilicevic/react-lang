@@ -45,7 +45,7 @@ class Runtime extends NodeMain {
           last = t
           cnt += 1
           val path = Path(Header(cnt, Message.time(System.currentTimeMillis()), ""), poses.values.toArray)
-          val asRos = Message.to(node, path)
+          val asRos = Message.to(node.getTopicMessageFactory(), path)
           pub.publish(asRos)
         }
       }

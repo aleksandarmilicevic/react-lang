@@ -34,6 +34,18 @@ trait Handlers {
     case "Path"                => nav_msgs.Path._TYPE
     case "Mvmt"                => react_msgs.Mvmt._TYPE
     case "ModelState"          => gazebo_msgs.ModelState._TYPE
+    case "Primitive.Empty"     => std_msgs.Empty._TYPE
+    case "Primitive.Bool"      => std_msgs.Bool._TYPE
+    case "Primitive.Byte"      => std_msgs.Byte._TYPE
+    case "Primitive.Char"      => std_msgs.Char._TYPE
+    case "Primitive.Int16"     => std_msgs.Int16._TYPE
+    case "Primitive.Int32"     => std_msgs.Int32._TYPE
+    case "Primitive.Int64"     => std_msgs.Int64._TYPE
+    case "Primitive.Float32"   => std_msgs.Float32._TYPE
+    case "Primitive.Float64"   => std_msgs.Float64._TYPE
+    case "Primitive.String"    => std_msgs.String._TYPE
+    case "Primitive.Duration"  => std_msgs.Duration._TYPE
+    case "Primitive.Time"      => std_msgs.Time._TYPE
     case other => sys.error("TODO: message type " + other + " not yet supported / unkown")
   }
   
@@ -56,6 +68,19 @@ trait Handlers {
     case "Path"                => tq"nav_msgs.Path"
     case "Mvmt"                => tq"react_msgs.Mvmt"
     case "ModelState"          => tq"gazebo_msgs.ModelState"
+    case "Primitive.Empty"     => tq"std_msgs.Empty"
+    case "Primitive.Empty.type" => tq"std_msgs.Empty"
+    case "Primitive.Bool"      => tq"std_msgs.Bool"
+    case "Primitive.Byte"      => tq"std_msgs.Byte"
+    case "Primitive.Char"      => tq"std_msgs.Char"
+    case "Primitive.Int16"     => tq"std_msgs.Int16"
+    case "Primitive.Int32"     => tq"std_msgs.Int32"
+    case "Primitive.Int64"     => tq"std_msgs.Int64"
+    case "Primitive.Float32"   => tq"std_msgs.Float32"
+    case "Primitive.Float64"   => tq"std_msgs.Float64"
+    case "Primitive.String"    => tq"std_msgs.String"
+    case "Primitive.Duration"  => tq"std_msgs.Duration"
+    case "Primitive.Time"      => tq"std_msgs.Time"
     case other => sys.error("TODO: message type " + other + " not yet supported / unkown")
   }
 
