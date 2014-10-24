@@ -120,6 +120,8 @@ object Main extends Options with react.verification.McOptions {
         runner.run
       case "tests" =>
         tests.RunVerif(this, topic)
+      case "arduino" =>
+        arduino.Run(topic)
       case other =>
         throw new RuntimeException("Unknown robot: " + other)
     }
