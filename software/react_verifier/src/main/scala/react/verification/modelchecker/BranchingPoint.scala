@@ -13,9 +13,10 @@ trait BranchingPoint {
 
 
 /** a branching point for a list of branching points */
-class BranchingPoints(points: List[BranchingPoint]) extends BranchingPoint {
+class SumBranchingPoint(points: List[BranchingPoint]) extends BranchingPoint {
 
-  def alternatives = points.foldLeft(0)(_ + _.alternatives)
+  val alts = points.foldLeft(0)(_ + _.alternatives)
+  def alternatives = alts
 
   def act(alt: Int) = {
     def traverse(alt: Int, points: List[BranchingPoint]): List[String] = {
@@ -27,6 +28,28 @@ class BranchingPoints(points: List[BranchingPoint]) extends BranchingPoint {
       }
     }
     traverse(alt, points)
+  }
+
+}
+
+
+/** a branching point that is the cartesian product for a list of branching points */
+class ProductBranchingPoint(points: List[BranchingPoint], post: () => Unit) extends BranchingPoint {
+
+  val possibilities = points.map(_.alternatives)
+
+  def alternatives = possibilities.foldLeft(1)(_ * _)
+
+  def act(alt: Int) = {
+    var labels = List[String]()
+    points.foldLeft(alt)( (acc, p) => {
+      val idx = acc % p.alternatives
+      val rem = acc / p.alternatives
+      labels = p.act(idx) ::: labels
+      rem
+    })
+    post()
+    labels.reverse
   }
 
 }

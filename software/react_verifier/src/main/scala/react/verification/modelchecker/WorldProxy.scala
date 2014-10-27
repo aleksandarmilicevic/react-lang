@@ -98,7 +98,7 @@ class WorldProxy(val world: World, opts: McOptions) {
   def ghostStep(prefix: Trace, i: Int): Option[Trace] = {
     val s = prefix.stop
     restoreState(s)
-    val bp = new BranchingPoints(world.ghosts)
+    val bp = new SumBranchingPoint(world.ghosts)
     val alt = bp.alternatives
     if (alt > i) {
       val descr = safeExec(prefix, step(bp, i))
@@ -110,39 +110,60 @@ class WorldProxy(val world: World, opts: McOptions) {
   }
 
   def ghostsAlternatives: Int = {
-    new BranchingPoints(world.ghosts).alternatives
+    new SumBranchingPoint(world.ghosts).alternatives
   }
 
   def controllerStep(dt: Int, prefix: Trace, baseIndex: Int, period: Int): Iterable[Trace] = {
     val s = prefix.stop
     restoreState(s)
-    elapse(dt)
-    if (!world.safe) {
-      throw new SafetyError("elapse : " + dt, prefix.append(List("elapse : " + dt), saveState))
-    }
-    val bp = scheduler.nextBP(exec)
-    assert(bp.expiration == now, "bp.expiration = " + bp.expiration + ", now = " + now)
-    val sDt = saveState
-    val alt = bp.alternatives
+
     var i = baseIndex
+    val bpw = world.elapseBP(dt)
+    var bps = scheduler.nextBP(exec)
+    val altw = bpw.alternatives
+    val alts = bpw.alternatives
+
+    var iw = i / altw
+    var is = i % altw
+
     var acc = List[Trace]()
-    while (i < alt) {
-      restoreState(sDt)
-      val descr = safeExec(prefix, step(bp, i))
-      getState(prefix, "controller step " + i, descr) match {
-        case Some(t) => 
-          acc = t :: acc
-        case None => ()
+
+    while (iw < altw) {
+      
+      Logger("ModelChecker", LogWarning, "elapse(" + dt + ") → " + iw)
+      restoreState(s)
+      bpw.act(iw)
+      scheduler.elapse(dt)
+      if (!world.safe) {
+        throw new SafetyError("elapse : " + dt, prefix.append(List("elapse : " + dt), saveState))
       }
-      i += period
+      bps = scheduler.nextBP(exec)
+      assert(bps.expiration == now, "bp.expiration = " + bps.expiration + ", now = " + now)
+      val sDt = saveState
+
+      while(is < alts) {
+        Logger("ModelChecker", LogWarning, "controller step " + is)
+        restoreState(sDt)
+        val descr = safeExec(prefix, step(bps, is))
+        getState(prefix, "controller step " + is, descr) match {
+          case Some(t) => 
+            acc = t :: acc
+          case None => ()
+        }
+        is += period
+      }
+      iw += 1
+      is = is % altw
     }
+
     acc
   }
 
-  def controllerAlernatives: Int = {
+  def controllerAlernatives(dt: Int): Int = {
     val s = scheduler.saveState
-    val bp = scheduler.nextBP(exec)
-    val res = bp.alternatives
+    val bpw = world.elapseBP(dt)
+    val bps = scheduler.nextBP(exec)
+    val res = bpw.alternatives * bps.alternatives
     scheduler.restoreState(s)
     res
   }

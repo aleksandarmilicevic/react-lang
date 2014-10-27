@@ -7,6 +7,7 @@ import react.runtime.MessageListenerRW
 import react.verification.environment._
 import react.verification.ghost._
 import react.verification._
+import react.verification.modelchecker.BranchingPoint
 import math._
 import react.utils._
 
@@ -93,6 +94,19 @@ class GroundRobot( bBox: Box2D,
     sensors.foreach(_._1.update(restOfTheWorld))
   }
 
+  val boxOffsetX = bBox.x //- x
+  val boxOffsetY = bBox.y //- y
+  val boxOffsetO = bBox.orientation //- orientation
+
+  def boundingBox = {
+    //return the box that corresponds to the robot current position
+    new Box2D(x + boxOffsetX * cos(orientation) - boxOffsetY * sin(orientation),
+              y + boxOffsetY * sin(orientation) + boxOffsetY * cos(orientation),
+              orientation + boxOffsetO,
+              bBox.width,
+              bBox.depth)
+  }
+
   protected def moveFor(t: Int) = {
     val dt = t / 1000.0
     val da = (vo * dt).abs
@@ -123,17 +137,17 @@ class GroundRobot( bBox: Box2D,
   //println("--"+t+"--> " + this.toString)
   }
 
-  val boxOffsetX = bBox.x //- x
-  val boxOffsetY = bBox.y //- y
-  val boxOffsetO = bBox.orientation //- orientation
-
-  def boundingBox = {
-    //return the box that corresponds to the robot current position
-    new Box2D(x + boxOffsetX * cos(orientation) - boxOffsetY * sin(orientation),
-              y + boxOffsetY * sin(orientation) + boxOffsetY * cos(orientation),
-              orientation + boxOffsetO,
-              bBox.width,
-              bBox.depth)
+  /** that way we can deal with the imprecision in the physical model */
+  def elapseBP(t: Int): BranchingPoint = {
+    new BranchingPoint {
+      def alternatives = 1
+  
+      def act(alt: Int): List[String] = {
+        assert(alt == 0)
+        elapse(t)
+        List("elapse("+t+")")
+      }
+    }
   }
 
   override def register(exec: Executor) {

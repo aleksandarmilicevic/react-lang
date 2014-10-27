@@ -122,6 +122,9 @@ object Main extends Options with react.verification.McOptions {
         tests.RunVerif(this, topic)
       case "arduino" =>
         arduino.Run(topic)
+      case "arduinoV" =>
+        bypassROS = true
+        arduino.RunV(this)
       case other =>
         throw new RuntimeException("Unknown robot: " + other)
     }

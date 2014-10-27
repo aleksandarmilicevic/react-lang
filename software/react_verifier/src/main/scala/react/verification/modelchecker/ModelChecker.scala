@@ -88,7 +88,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
       Nil
     } else {
       val dt = world.timeToNext.toInt
-      val alts = world.controllerAlernatives
+      val alts = world.controllerAlernatives(dt)
       Logger("ModelChecker", LogDebug, "|controller step| = " + alts)
       statesGenerated += alts
       val enum = (0 until opts.nbrWorlds).par

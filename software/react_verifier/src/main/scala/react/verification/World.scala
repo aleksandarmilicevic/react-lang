@@ -4,6 +4,7 @@ import react.Robot
 import react.verification.environment._
 import react.verification.model._
 import react.verification.ghost._
+import react.verification.modelchecker.ProductBranchingPoint
 import java.nio.ByteBuffer
 
 import scala.language.experimental.macros
@@ -73,6 +74,10 @@ abstract class World extends Playground {
       m.elapse(dt)
     }
     dispatchBoxes
+  }
+
+  def elapseBP(dt: Int) = {
+    new ProductBranchingPoint(models.map(_.elapseBP(dt)), () => dispatchBoxes)
   }
 
   override def toString = {
