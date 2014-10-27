@@ -130,7 +130,7 @@ class WorldProxy(val world: World, opts: McOptions) {
 
     while (iw < altw) {
       
-      Logger("ModelChecker", LogWarning, "elapse(" + dt + ") → " + iw)
+      Logger("ModelChecker", LogDebug, "elapse(" + dt + ") → " + iw)
       restoreState(s)
       bpw.act(iw)
       scheduler.elapse(dt)
@@ -142,7 +142,7 @@ class WorldProxy(val world: World, opts: McOptions) {
       val sDt = saveState
 
       while(is < alts) {
-        Logger("ModelChecker", LogWarning, "controller step " + is)
+        Logger("ModelChecker", LogDebug, "controller step " + is)
         restoreState(sDt)
         val descr = safeExec(prefix, step(bps, is))
         getState(prefix, "controller step " + is, descr) match {
@@ -289,6 +289,8 @@ class WorldProxy(val world: World, opts: McOptions) {
     val vb = "viewBox=\""+(world.xMin-1)+" "+(world.yMin-1)+" "+(_w+2)+" "+(_h+2)+"\""
     writer.write("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" "+w+" "+h+" "+vb+" >")
     writer.newLine
+    writer.write("<g transform=\"scale(1, -1)\" >")
+    writer.newLine
     for (b <- world.envBoxes) {
       b.writeAsSVG(writer)
       writer.newLine
@@ -296,6 +298,8 @@ class WorldProxy(val world: World, opts: McOptions) {
   }
 
   def svgFooter(writer: java.io.BufferedWriter) {
+    writer.write("</g>")
+    writer.newLine
     writer.write("</svg>")
     writer.newLine
   }
