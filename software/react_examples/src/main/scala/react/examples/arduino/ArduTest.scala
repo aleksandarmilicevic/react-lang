@@ -52,9 +52,7 @@ object Run {
   def apply(port: String) {
     Console.println("arduino test port: " + port)
     val r = new ArduTest(port)
-    val exec = new ArduinoExecutor {
-      val robot = r
-    }
+    val exec = new ArduinoExecutor(r)
     new Remote(r)
     exec.start
   }

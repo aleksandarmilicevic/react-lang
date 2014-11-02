@@ -86,9 +86,7 @@ object Arduino {
 
 }
 
-abstract class ArduinoExecutor extends Executor {
-
-  val robot: Robot
+class ArduinoExecutor(val robot: Robot, binary: Boolean = true, poll: Option[Int] = None) extends Executor {
 
   val scheduler = new Scheduler
 
@@ -102,74 +100,14 @@ abstract class ArduinoExecutor extends Executor {
   private var opened = false
   private lazy val serialPort = new SerialPort(port)
 
-  //current format:
-  //   messages are 3 bytes
-  //     [1] is the port
-  //     [2-3] is the value as a Short in little endian format
-
-  val dispatcher = new SerialPortEventListener {
-
-    var port: Byte = 0
-    var acc: Short = 0
-    var i = -1
-
-    def dispatch(port: Byte, value: Short) {
-      val topic = Arduino.intToPort(port)
-      if (subscribers contains topic) {
-        val sub = subscribers(topic).asInstanceOf[ArduinoSubscriber[_]]
-        val tpe = sub.getTopicMessageType
-        if (tpe == std_msgs.Bool._TYPE) {
-            val typedSub = sub.asInstanceOf[ArduinoSubscriber[std_msgs.Bool]]
-            val msg = convertMessage[std_msgs.Bool](Primitive.Bool(value != 0))
-            typedSub.message(msg)
-        } else if (tpe == std_msgs.Byte._TYPE) {
-            val typedSub = sub.asInstanceOf[ArduinoSubscriber[std_msgs.Byte]]
-            val msg = convertMessage[std_msgs.Byte](Primitive.Byte(value.toByte))
-            typedSub.message(msg)
-        } else if (tpe == std_msgs.Int16._TYPE) {
-            val typedSub = sub.asInstanceOf[ArduinoSubscriber[std_msgs.Int16]]
-            val msg = convertMessage[std_msgs.Int16](Primitive.Int16(value))
-            typedSub.message(msg)
-        } else {
-          sys.error(tpe + " is not yet supported in the arduino communication")
-        }
-      }
-    }
-         
-    def push(byte: Byte) {
-      if (i == -1) {
-        port = byte
-      } else {
-        //Console.println("pushing: " + byte + " @ " + i)
-        acc = ((acc.toInt & 0xFFFF) >>> 8).toShort
-        acc = (acc | ((byte.toInt << 8) & 0xFF00)).toShort
-      }
-      i += 1
-      if (i >= 2) {
-        dispatch(port, acc)
-        port = 0
-        acc = 0
-        i = -1
-      }
-    }
-
-    def serialEvent(event: SerialPortEvent) {
-      if(event.isRXCHAR()){//If data is available
-        val size = event.getEventValue()
-        val buffer = serialPort.readBytes(size);
-        for (b <- buffer) push(b)
-        //for (b <- buffer) Console.print(b.toChar)
-      } else {
-        //TODO some other event
-      }
-    }
-  }
-
   protected def initialize {
     if (!opened) {
       opened = true
       serialPort.openPort()
       serialPort.setParams(baudRate, dataBits, stopBits, parity) 
+      val dispatcher =
+        if (binary) new BinarySerialListener(serialPort, this)
+        else new StringSerialListener(serialPort, this)
       serialPort.addEventListener(dispatcher)
     }
   }
@@ -181,8 +119,12 @@ abstract class ArduinoExecutor extends Executor {
     }
   }
 
+  //current format:
+  //   messages are 3 bytes
+  //     [1] is the port
+  //     [2-3] is the value as a Short in little endian format
 
-  def publish[T](topic: String, typeName: String, message: T) = {
+  protected def publishBinary[T](topic: String, typeName: String, message: T) = {
     assert(Primitive.is(typeName), "can only send primitive types to Arduino")
     val payload = Array.ofDim[Byte](3)
     payload(0) = Arduino.portToInt(topic)
@@ -204,13 +146,72 @@ abstract class ArduinoExecutor extends Executor {
     serialPort.writeBytes(payload)
   }
 
-  private val subscribers = scala.collection.mutable.Map[String, Any]()
+  //the format used by Josef, Ankur
+  def publishString[T](topic: String, typeName: String, message: T) = {
+    val value = typeName match {
+      case std_msgs.Bool._TYPE =>
+        val msg = message.asInstanceOf[std_msgs.Bool]
+        if (msg.getData) "1" else "0"
+      case std_msgs.Byte._TYPE =>
+        val msg = message.asInstanceOf[std_msgs.Byte]
+        msg.getData.toString
+      case std_msgs.Int16._TYPE =>
+        val msg = message.asInstanceOf[std_msgs.Int16]
+      case other => sys.error (other + " is not yet supported in the arduino communication")
+    }
+    val msg = "DATA$"+value+"$0$"+topic+"\u0000"
+    val bytes = msg.getBytes("ASCII")
+    //println("publishing: " + msg)
+    serialPort.writeBytes(bytes)
+  }
+
+  def publish[T](topic: String, typeName: String, message: T) = {
+    if (binary) publishBinary(topic, typeName, message)
+    else publishString(topic, typeName, message)
+  }
+
+  def dispatch(port: Byte, value: Short) {
+    val topic = Arduino.intToPort(port)
+    if (subscribers contains topic) {
+      val sub = subscribers(topic).asInstanceOf[ArduinoSubscriber[_]]
+      val tpe = sub.getTopicMessageType
+      if (tpe == std_msgs.Bool._TYPE) {
+          val typedSub = sub.asInstanceOf[ArduinoSubscriber[std_msgs.Bool]]
+          val msg = convertMessage[std_msgs.Bool](Primitive.Bool(value != 0))
+          typedSub.message(msg)
+      } else if (tpe == std_msgs.Byte._TYPE) {
+          val typedSub = sub.asInstanceOf[ArduinoSubscriber[std_msgs.Byte]]
+          val msg = convertMessage[std_msgs.Byte](Primitive.Byte(value.toByte))
+          typedSub.message(msg)
+      } else if (tpe == std_msgs.Int16._TYPE) {
+          val typedSub = sub.asInstanceOf[ArduinoSubscriber[std_msgs.Int16]]
+          val msg = convertMessage[std_msgs.Int16](Primitive.Int16(value))
+          typedSub.message(msg)
+      } else {
+        sys.error(tpe + " is not yet supported in the arduino communication")
+      }
+    }
+  }
+
+  val subscribers = scala.collection.mutable.Map[String, Any]()
   def getSubscriber[T](topic: String, typeName: String): org.ros.node.topic.Subscriber[T] = {
     if (subscribers contains topic) {
       subscribers(topic).asInstanceOf[ArduinoSubscriber[T]]
     } else {
       val p = new ArduinoSubscriber[T](topic, typeName)
       subscribers += (topic -> p)
+      poll match {
+        case Some(period) =>
+          if (binary) {
+            Console.err.println("poll only for string format")
+          } else {
+            val msg = ("GET$0$"+topic+"\u0000").getBytes("ASCII")
+            def pollFct() { serialPort.writeBytes(msg) }
+            val task = new ScheduledTask("polling " + topic, period, pollFct)
+            schedule(task)
+          }
+        case None =>
+      }
       p
     }
   }
@@ -274,4 +275,78 @@ class ArduinoSubscriber[T](topic: String, tpe: String) extends org.ros.node.topi
 
   /** delivers a message */
   def message(msg: T) = listeners.foreach(_.onNewMessage(msg))
+}
+  
+abstract class ArduinoSerialListener(serialPort: SerialPort, exec: ArduinoExecutor) extends SerialPortEventListener {
+    
+  protected def push(byte: Byte): Unit
+
+  def serialEvent(event: SerialPortEvent) {
+    if(event.isRXCHAR()){//If data is available
+      val size = event.getEventValue()
+      val buffer = serialPort.readBytes(size);
+      for (b <- buffer) push(b)
+      //for (b <- buffer) Console.print(b.toChar)
+    } else {
+      //TODO some other event
+    }
+  }
+}
+
+class BinarySerialListener(serialPort: SerialPort, exec: ArduinoExecutor) extends ArduinoSerialListener(serialPort, exec) {
+
+  var port: Byte = 0
+  var acc: Short = 0
+  var i = -1
+
+  protected def push(byte: Byte) {
+    if (i == -1) {
+      port = byte
+    } else {
+      //Console.println("pushing: " + byte + " @ " + i)
+      acc = ((acc.toInt & 0xFFFF) >>> 8).toShort
+      acc = (acc | ((byte.toInt << 8) & 0xFF00)).toShort
+    }
+    i += 1
+    if (i >= 2) {
+      exec.dispatch(port, acc)
+      port = 0
+      acc = 0
+      i = -1
+    }
+  }
+
+}
+
+class StringSerialListener(serialPort: SerialPort, exec: ArduinoExecutor) extends ArduinoSerialListener(serialPort, exec) {
+
+  val acc = new StringBuilder()
+
+  protected def push(byte: Byte) {
+    if (byte == 0) { // '\0'
+      val msg = acc.toString
+      acc.clear
+      val parts = msg.split("\\$")
+      if (parts.size == 3 || parts.size == 4) {
+        if (parts(0) == "DATA") {
+          try {
+            val value = parts(1).toShort
+            val source = parts(2).toByte
+            exec.dispatch(source, value)
+            //ignore the outputfor the moment
+          } catch {
+            case e: Exception =>
+              Console.err.println("error while parsing message: " + e + ", " + msg)
+          }
+        } else if (parts(0) == "GET") {
+          Console.err.println("GET messages not currently supported: " + msg)
+        }
+      } else {
+        Console.err.println("invalid message: " + msg)
+      }
+    } else {
+      acc.append(byte.toChar)
+    }
+  }
+
 }
