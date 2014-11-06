@@ -9,7 +9,7 @@ import net.automatalib.util.automata.Automata
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.words.impl.Alphabets
 
-class HashDfaStateStore(hashTblSize: Int = 1000000) {
+class HashDfaStateStore(hashTblSize: Int = 100000000) {
 
   assert(hashTblSize >= 0)
 

@@ -132,6 +132,50 @@ abstract class World extends Playground {
     for (s <- statefulObj) s.round
   }
 
+  def concretizations = {
+    //get the stateful objects and enumerate the concretizations
+    def mkIter(it1: StateModifierIterator, s: Stateful): StateModifierIterator = {
+      new StateModifierIterator {
+        val it2 = s.concretize
+        var first = true
+        def hasNext = { it1.hasNext || it2.hasNext }
+        def next {
+          if (first) {
+            assert(!it2.isEmpty)
+            it2.next()
+            if (it1.hasNext) {
+              it1.next
+            }
+            first = false
+          } else {
+            if (it1.hasNext) {
+              it1.next
+            } else if (it2.hasNext) {
+              it2.next
+              it1.reset
+              if (it1.hasNext) {
+                it1.next
+              }
+            } else {
+              assert(false, "hasNext == false")
+            }
+          }
+        }
+        def reset {
+          first = true
+          it1.reset
+          it2.reset
+        }
+      }
+    }
+    val empty = new StateModifierIterator{
+      def hasNext = false
+      def next { }
+      def reset { }
+    }
+    statefulObj.foldLeft(empty)(mkIter)
+  }
+
   def inBounds = {
     models.forall( m => m.x >= xMin && m.x <= xMax && m.y >= yMin && m.y <= yMax )
   }

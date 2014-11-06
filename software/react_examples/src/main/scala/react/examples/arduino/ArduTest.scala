@@ -9,9 +9,9 @@ import react.runtime.ArduinoExecutor
 
 class ArduTest(port: String) extends Robot(port) {
 
-  val led = Arduino.D13
+  val led = "0" //Arduino.D13
   val switch = Arduino.D2
-  val ir = Arduino.A2
+  val ir = "1" //Arduino.A2
   val servo = Arduino.D9
 
   //input from keyboard
@@ -52,7 +52,8 @@ object Run {
   def apply(port: String) {
     Console.println("arduino test port: " + port)
     val r = new ArduTest(port)
-    val exec = new ArduinoExecutor(r)
+    val exec = new ArduinoExecutor(r, false, Some(100))
+    //val exec = new ArduinoExecutor(r)
     new Remote(r)
     exec.start
   }

@@ -76,6 +76,7 @@ object Main extends Options with react.verification.McOptions {
   newOption("-cf", Arg.String( s => coverageFile = s), "save the coverage as an SVG image")
   newOption("-t", Arg.Int( i => nbrWorlds = i), "how many world to run in parallel (default: 4, if possible)")
   newOption("-noROS", Arg.Unit( () => bypassROS = true), "bypass ROS, less faithfull to actual program but faster")
+  newOption("-concretize", Arg.Unit( () => withConcretize = true), "more correct way of handling the discretization")
 
   val usage = "..."
 

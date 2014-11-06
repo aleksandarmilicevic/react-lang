@@ -62,8 +62,14 @@ class ExplorableMacros(val c: Context) extends Types
       val setter = fieldSetter(f)
       havoc(f, setter)
     }
+
+    val rndFld = permanentFields.filter(f => f.typeSignature =:= definitions.DoubleTpe ||
+                                             f.typeSignature =:= definitions.FloatTpe)
+    val rnd = rndFld.size
+
+    //Console.err.println("roundable fields are: " + rndFld)
     
-    val rounding = for (f <- permanentFields) yield {
+    val rounding = for (f <- rndFld) yield {
       def rc(f: TermSymbol) = {
         val set = fieldSetter(f)
         val get = fieldGetter(f)
@@ -89,15 +95,79 @@ class ExplorableMacros(val c: Context) extends Types
         }
       }
       fieldGetter(f).name.toString match {
-        case "x" | "y" if f.typeSignature =:= definitions.DoubleTpe =>
-          rc(f) //TODO somthing more robust
-        case _ if f.typeSignature =:= definitions.DoubleTpe ||
-                  f.typeSignature =:= definitions.FloatTpe =>
-          r(f)
-        case _ =>
-          //c.echo(world.tree.pos, "ignoring " + f + " in " + f.owner)
-          q"()"
+        case "x" | "y" => rc(f)
+        case _ => r(f)
       }
+    }
+
+    val rt = robot.tree
+
+    val concretizing = {
+      //get the range for each value and 
+      val intervals = rndFld.map( f => {
+        val get = fieldGetter(f)
+        val name = get.name.toString
+        val vinterval = TermName(name+"_interval")
+        name match {
+          case "x" | "y" => 
+            val min = Select(world.tree, TermName(name+"Min"))
+            val max = Select(world.tree, TermName(name+"Max"))
+            val step = Select(world.tree, TermName(name+"Discretization"))
+                  //println("concretizing " + $name + " at " + tmp + " in " + $rt)
+            q"""private val $vinterval = {
+                  val tmp = $get
+                  Array( tmp,
+                    react.verification.Stateful.lower(tmp, $min, $max, $step),
+                    react.verification.Stateful.upper(tmp, $min, $max, $step))
+                }"""
+          case  _  => 
+            val step = Select(world.tree, TermName("fpDiscretization"))
+            if (f.typeSignature =:= definitions.FloatTpe) {
+                    //println("concretizing " + $name + " at " + tmp + " in " + $rt)
+              q"""private val $vinterval = {
+                    val tmp = $get
+                    Array( tmp.toFloat,
+                      react.verification.Stateful.lower(tmp, Double.MinValue, Double.MaxValue, $step).toFloat,
+                      react.verification.Stateful.upper(tmp, Double.MinValue, Double.MaxValue, $step).toFloat)
+                  }"""
+            } else {
+                    //println("concretizing " + $name + " at " + tmp + " in " + $rt)
+              q"""private val $vinterval = {
+                    val tmp = $get
+                    Array( tmp,
+                      react.verification.Stateful.lower(tmp, Double.MinValue, Double.MaxValue, $step),
+                      react.verification.Stateful.upper(tmp, Double.MinValue, Double.MaxValue, $step))
+                  }"""
+            }
+        } 
+      })
+      val restoring = rndFld.flatMap( f => {
+        val set = fieldSetter(f)
+        val name = fieldGetter(f).name.toString
+        val vinterval = TermName(name+"_interval")
+        List(
+          q"$set( $vinterval(tmp % 3) )",
+          q"tmp = tmp / 3"
+        )
+      })
+      q"""
+      new StateModifierIterator {
+        private var idx = 0
+        private val max = math.pow(3, $rnd).toInt
+        ..$intervals
+        def hasNext = {
+          idx < max
+        }
+        def next {
+          var tmp = idx
+          ..$restoring
+          idx += 1
+        }
+        def reset {
+          idx = 0
+        }
+      }
+      """
     }
     
     val wa = permanentFields forall worldAgnostic
@@ -120,9 +190,11 @@ class ExplorableMacros(val c: Context) extends Types
       ..$caches
       def length: Int = $length
       def worldAgnostic: Boolean = $wa
+      def nbrOfRoundedVars: Int = $rnd
       def round: Unit = {
         ..$rounding
       }
+      def concretize: StateModifierIterator = $concretizing
       def serialize(out: java.nio.ByteBuffer): Unit = {
         ..$storing
       }

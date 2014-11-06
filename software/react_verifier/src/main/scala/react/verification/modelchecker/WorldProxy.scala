@@ -121,7 +121,7 @@ class WorldProxy(val world: World, opts: McOptions) {
     val bpw = world.elapseBP(dt)
     var bps = scheduler.nextBP(exec)
     val altw = bpw.alternatives
-    val alts = bpw.alternatives
+    val alts = bps.alternatives
 
     var iw = i / altw
     var is = i % altw
@@ -153,7 +153,7 @@ class WorldProxy(val world: World, opts: McOptions) {
         is += period
       }
       iw += 1
-      is = is % altw
+      is = 0
     }
 
     acc
@@ -251,6 +251,28 @@ class WorldProxy(val world: World, opts: McOptions) {
   def restoreStateCompact(s: State) {
     world.restoreState(s)
     scheduler.restoreCompact(getSchedulerState(s))
+  }
+
+  /** Take a rounded state and returns states within that abstract state
+   *  at the boundaries of the abstract state and in the center.
+   *  TODO this could also be done in parallel
+   */
+  def concretizeCompactState(s: State): List[State] = {
+    restoreStateCompact(s)
+    //println(world.toString)
+    val it = world.concretizations
+    var acc: List[State] = Nil
+    //println("XXX")
+    while (it.hasNext) {
+      it.next()
+      //println("# " + acc.size)
+      //println(world.toString)
+      acc = saveState :: acc
+    }
+    //println("YYY")
+    assert(!acc.isEmpty)
+    Logger("WorldProxy", LogDebug, "concretization generated: " + acc.size + " states.")
+    acc
   }
 
 

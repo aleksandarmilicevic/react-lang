@@ -86,7 +86,7 @@ object Arduino {
 
 }
 
-class ArduinoExecutor(val robot: Robot, binary: Boolean = true, poll: Option[Int] = None) extends Executor {
+class ArduinoExecutor(val robot: Robot, binary: Boolean = false, poll: Option[Int] = None) extends Executor {
 
   val scheduler = new Scheduler
 
@@ -159,7 +159,9 @@ class ArduinoExecutor(val robot: Robot, binary: Boolean = true, poll: Option[Int
         val msg = message.asInstanceOf[std_msgs.Int16]
       case other => sys.error (other + " is not yet supported in the arduino communication")
     }
-    val msg = "DATA$"+value+"$0$"+topic+"\u0000"
+    //val msg = "DATA$"+topic+"$"+value+"\u0000"
+    val msg = "DATA$"+value+"$$"+topic+"\u0000"
+    //val msg = "DATA$"+value+"$0$"+topic+"\u0000"
     val bytes = msg.getBytes("ASCII")
     //println("publishing: " + msg)
     serialPort.writeBytes(bytes)
@@ -171,7 +173,8 @@ class ArduinoExecutor(val robot: Robot, binary: Boolean = true, poll: Option[Int
   }
 
   def dispatch(port: Byte, value: Short) {
-    val topic = Arduino.intToPort(port)
+    //val topic = Arduino.intToPort(port)
+    val topic = port.toString
     if (subscribers contains topic) {
       val sub = subscribers(topic).asInstanceOf[ArduinoSubscriber[_]]
       val tpe = sub.getTopicMessageType
@@ -205,8 +208,13 @@ class ArduinoExecutor(val robot: Robot, binary: Boolean = true, poll: Option[Int
           if (binary) {
             Console.err.println("poll only for string format")
           } else {
-            val msg = ("GET$0$"+topic+"\u0000").getBytes("ASCII")
-            def pollFct() { serialPort.writeBytes(msg) }
+            println("polling at " + period)
+            val msg = ("GET$"+topic+"\u0000").getBytes("ASCII")
+            //val msg = ("GET$0$"+topic+"\u0000").getBytes("ASCII")
+            def pollFct() {
+              println("polling: " + msg.map(_.toChar).mkString)
+              serialPort.writeBytes(msg)
+            }
             val task = new ScheduledTask("polling " + topic, period, pollFct)
             schedule(task)
           }
@@ -323,6 +331,7 @@ class StringSerialListener(serialPort: SerialPort, exec: ArduinoExecutor) extend
   val acc = new StringBuilder()
 
   protected def push(byte: Byte) {
+    //println("receiving: " + byte + ", " + byte.toChar)
     if (byte == 0) { // '\0'
       val msg = acc.toString
       acc.clear
@@ -332,6 +341,7 @@ class StringSerialListener(serialPort: SerialPort, exec: ArduinoExecutor) extend
           try {
             val value = parts(1).toShort
             val source = parts(2).toByte
+            //println("dispatching: " + value + " to port " + source)
             exec.dispatch(source, value)
             //ignore the outputfor the moment
           } catch {

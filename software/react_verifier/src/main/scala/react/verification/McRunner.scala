@@ -15,6 +15,7 @@ trait McOptions {
   var coverageFile = ""
   var nbrWorlds = 4
   var bypassROS = false
+  var withConcretize = false
 }
 
 class McRunner(opts: McOptions, newWorld: () => World) {

@@ -19,18 +19,18 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
   var onTarget = false
   sensor[Primitive.Bool](sensor){
     case Primitive.Bool(b) =>
-      Console.println("onTarget ← " + b)
+      //Console.println("onTarget ← " + b)
       onTarget = b
   }
   
   val speed: Short = 90
   every(100) {
     if (onTarget ^ clockwise) {
-      Console.println("turning right")
+      //Console.println("turning right")
       publish(left, Primitive.Int16(speed))
       publish(right, Primitive.Int16(0))
     } else {
-      Console.println("turning left")
+      //Console.println("turning left")
       publish(left, Primitive.Int16(0))
       publish(right, Primitive.Int16(speed))
     }
@@ -69,12 +69,12 @@ class FollowTheEdgeTest extends World {
   
   val i1 = "/robot1"
   val r1 = new FollowTheEdge(i1)
-  val m1 = new TwoWheeledRobot(new Box2D(-0.5, -0.5, 0, 1, 1),
-                               i1,
-                               r1.left,
-                               r1.right,
-                               0.3,
-                               1)
+//val m1 = new TwoWheeledRobot(new Box2D(-0.5, -0.5, 0, 1, 1),
+//                             i1, r1.left, r1.right,
+//                             0.3, 1)
+  val m1 = new TwoWheeledRobotWithError(new Box2D(-0.5, -0.5, 0, 1, 1),
+                                        i1, r1.left, r1.right,
+                                        0.3, 1, 0.5, 10)
   m1.setPosition(0,-1)
   val targets = List(
     new Box2D(-1,-1,0,2,2)

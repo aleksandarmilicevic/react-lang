@@ -126,13 +126,21 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
     if (!opts.keepTransient) {
       transientStates.clear()
     }
-    world.restoreStateCompact(s)
-    val s2 = world.saveState
-    transientStates += s2
-    val t = Trace(s, List("restore from state compact") -> s2) 
-    local = t :: local
-    transientStatesStored += 1
-    putT(t)
+    val s2s =
+      if (opts.withConcretize) {
+        world.concretizeCompactState(s)
+      } else {
+        world.restoreStateCompact(s)
+        List(world.saveState)
+      }
+    statesGenerated += s2s.size - 1
+    for (s2 <- s2s) {
+      transientStates += s2
+      val t = Trace(s, List("restore from state compact") -> s2) 
+      local = t :: local
+      transientStatesStored += 1
+      putT(t)
+    }
     while(!frontierT.isEmpty) {
       Logger("ModelChecker", LogDebug, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
       if (cnt % 500 == 0) {
