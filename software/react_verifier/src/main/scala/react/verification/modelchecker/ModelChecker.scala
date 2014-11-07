@@ -61,6 +61,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   //to represent the transient states between the round
   protected val transientStates = new HashStateStore()
 
+  //TODO refactor to allow other search heuristics
   protected val frontierT = new java.util.ArrayDeque[Trace]()
   protected def putT(t: Trace) = frontierT.addFirst(t)
   protected def getT: Trace =
@@ -73,13 +74,12 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   }
 
 
-  var period = -1 //TODO initialize
+  var period = -1 //initialized later
 
   //////////////////
   // taking steps //
   //////////////////
 
-  //TODO elapsing way too many time ...
   /** executes until to next period */
   def controllerStep(t: Trace): Iterable[Trace] = {
     val s = t.stop
@@ -325,7 +325,6 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
         for (s <- transientStates) world.writeModelsAsSVG(writer, s.state)
         for (s <- frontierContent) world.writeModelsAsSVG(writer, s._2)
         for (s <- frontierContentT) world.writeModelsAsSVG(writer, s)
-        // TODO enumerate state from the StateStore ?
         world.svgFooter(writer)
       }
       react.utils.IO.writeInFile(opts.coverageFile, print(_))

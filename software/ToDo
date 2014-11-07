@@ -25,13 +25,11 @@ current part
 ------------
 
 -make the model checker:
-  -cached values: emit a warning if we are not sure whether it is safe
+  -cached values: emit a warning if we are not sure whether it is supported
   -internalize objects references and make sure they are shared/sync across worlds
--model takes account rounding went moving (to be on the safe side)
--integrate more realisitc models of robot (see with Ankur)
--sensors: 
-  -implement a range sensor instead of the laser one
-  -interference between multiple sensors
+-trace and error:
+  -free memory before processing the trace file
+  -process the trace file in a streaming fashion
 
 model complex model (extracted from robot description)
 -------------------

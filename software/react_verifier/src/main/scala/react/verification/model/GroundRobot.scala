@@ -41,9 +41,9 @@ class GroundRobot( bBox: Box2D,
   def writeAsSVG(writer: java.io.BufferedWriter, color: String = "black") {
     boundingBox.writeAsSVG(writer, color)
     writer.newLine
-    val x2 = x + 0.5 * math.cos(orientation)
-    val y2 = y + 0.5 * math.sin(orientation)
-    writer.write("<line x1=\""+x+"\" y1=\""+y+"\" x2=\""+x2+"\" y2=\""+y2+"\" stroke-width=\"0.1\" stroke=\""+color+"\"/>")
+    val x2 = x + 0.5 * bBox.width * math.cos(orientation)
+    val y2 = y + 0.5 * bBox.width * math.sin(orientation)
+    writer.write("<line x1=\""+x+"\" y1=\""+y+"\" x2=\""+x2+"\" y2=\""+y2+"\" stroke-width=\""+math.min(0.1,bBox.depth/10)+"\" stroke=\""+color+"\"/>")
     writer.newLine
   }
 

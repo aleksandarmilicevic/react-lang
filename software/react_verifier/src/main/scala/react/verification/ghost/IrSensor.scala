@@ -13,6 +13,8 @@ import math._
 class IrSensor( parent: GroundRobot,
                 _topic: String,
                 rate: Double,
+                beamAngle: Double = 0.5,
+                additionalFading: Double = 0.2,
                 a: Double = 650,
                 b: Double = 10,
                 c: Double = 0.5,
@@ -20,7 +22,15 @@ class IrSensor( parent: GroundRobot,
               ) extends Sensor(parent, _topic, std_msgs.Int16._TYPE, rate)
 {
 
-  protected def reponseFct(angle: Double, dist: Double): Short = {
+  val ba = beamAngle/2
+  val fa = additionalFading/2
+  val minAngle = -(ba+fa)
+  val maxAngle =  (ba+fa)
+  val steps = 50
+  val step = (maxAngle - minAngle)/steps
+
+
+  protected def responseFct(angle: Double, dist: Double): Short = {
     val expected = a / (b * dist + c)
     val faded = expected * fadeOut(angle)
     val bounded = max(min(a, faded), 0)
@@ -31,20 +41,31 @@ class IrSensor( parent: GroundRobot,
   //good range is [-0.15,0.15] rad
   //then we fade to 0 on another 0.1 rad
   protected def fadeOut(angle: Double): Double = {
-    val a = angle.abs - 0.15
+    val a = angle.abs - (ba - fa)
     if (a <= 0) 1.0
-    else if (a <= 0.1) (0.1 - a) * 10.0
+    else if (a <= fa) (fa - a) / fa
     else 0.0
   }
 
   def act {
 
     var range: Short = d
-    for (i <- 0 until 50) {
-      val a = pose.theta -0.25 + i * 0.1
+    for (i <- 0 until steps) {
+      val a1 = minAngle + i * step
+      val a = pose.theta + a1
       val intersections = world.flatMap(_.intersectLine((pose.x, pose.y), (cos(a), sin(a))))
       val pos = intersections.filter(_ > 0)
-      range = if (!pos.isEmpty) max(range, reponseFct(a, pos.min)).toShort else range
+      if (!pos.isEmpty) {
+        val m = pos.min
+        val resp = responseFct(a1, m)
+      //println("x: " + pose.x +
+      //      ", y: " + pose.y +
+      //      ", o: " + pose.theta +
+      //      ", a: " + a1 +
+      //      ", dist: " + m +
+      //      ", response: " + resp)
+        range = max(range, resp).toShort
+      }
     }
 
     val msg = Primitive.Int16( range )

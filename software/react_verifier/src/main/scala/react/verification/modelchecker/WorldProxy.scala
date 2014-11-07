@@ -123,14 +123,14 @@ class WorldProxy(val world: World, opts: McOptions) {
     val altw = bpw.alternatives
     val alts = bps.alternatives
 
-    var iw = i / altw
-    var is = i % altw
+    var iw = i / alts
+    var is = i % alts
 
     var acc = List[Trace]()
 
     while (iw < altw) {
       
-      Logger("ModelChecker", LogDebug, "elapse(" + dt + ") → " + iw)
+      Logger("ModelChecker", LogDebug, "elapse(" + dt + ") → " + iw + "/" + altw)
       restoreState(s)
       bpw.act(iw)
       scheduler.elapse(dt)
@@ -152,8 +152,8 @@ class WorldProxy(val world: World, opts: McOptions) {
         }
         is += period
       }
-      iw += 1
-      is = 0
+      iw += is / alts
+      is = is % alts
     }
 
     acc

@@ -31,6 +31,10 @@ public class StateStore {
         return states.size();
     }
 
+    public void clear() {
+        states = new CompactDFA(alpha);
+    }
+
     public void minimize() {
         //Automata.invasiveMinimize<Integer, Integer, Integer, Boolean, Void, CompactDFA<Integer>>(states, alpha);
         Automata.invasiveMinimize(states, alpha);

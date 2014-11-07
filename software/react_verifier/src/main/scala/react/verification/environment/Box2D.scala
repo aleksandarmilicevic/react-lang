@@ -15,7 +15,8 @@ class Box2D(val x: Double,
   }
 
   def writeAsSVG(writer: java.io.BufferedWriter, color: String = "rgb(0, 0, 0)") = {
-    writer.write("<rect x=\""+x+"\" y=\""+y+"\" width=\""+width+"\" height=\""+depth+"\" transform=\"rotate("+math.toDegrees(orientation)+" "+ x +" "+ y + ")\" stroke-width=\"0.1\" stroke=\""+color+"\" />")
+    val stroke = math.min(0.1, math.min(depth/10,width/10))
+    writer.write("<rect x=\""+x+"\" y=\""+y+"\" width=\""+width+"\" height=\""+depth+"\" transform=\"rotate("+math.toDegrees(orientation)+" "+ x +" "+ y + ")\" stroke-width=\""+stroke+"\" stroke=\""+color+"\" />")
   }
 
   override def equals(obj: Any) = {

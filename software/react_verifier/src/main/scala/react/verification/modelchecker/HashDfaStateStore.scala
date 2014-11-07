@@ -38,6 +38,11 @@ class HashDfaStateStore(hashTblSize: Int = 100000000) {
     hash.contains(state) ||
     dfa.contains(StateStore.stateToWord(state))
   }
+
+  def clear {
+    hash.clear
+    dfa.clear
+  }
   
   protected def compact {
     Logger("HashDfaStateStore", LogNotice, "compacting state store")
