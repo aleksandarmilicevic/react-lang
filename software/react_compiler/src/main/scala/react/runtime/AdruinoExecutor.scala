@@ -16,6 +16,7 @@ class ArduinoExecutor(val robot: Robot, binary: Boolean = false, poll: Option[In
   lazy val port: String = robot.id
   //TODO make that configurable
   var baudRate: Int = SerialPort.BAUDRATE_9600
+  //var baudRate: Int = SerialPort.BAUDRATE_38400
   var dataBits: Int = SerialPort.DATABITS_8
   var stopBits: Int = SerialPort.STOPBITS_1
   var parity: Int = SerialPort.PARITY_NONE
@@ -77,13 +78,14 @@ class ArduinoExecutor(val robot: Robot, binary: Boolean = false, poll: Option[In
         msg.getData.toString
       case std_msgs.Int16._TYPE =>
         val msg = message.asInstanceOf[std_msgs.Int16]
+        msg.getData.toString
       case other => sys.error (other + " is not yet supported in the arduino communication")
     }
     //val msg = "DATA$"+topic+"$"+value+"\u0000"
     val msg = "DATA$"+value+"$$"+topic+"\u0000"
     //val msg = "DATA$"+value+"$0$"+topic+"\u0000"
     val bytes = msg.getBytes("ASCII")
-    //println("publishing: " + msg)
+    println("publishing: " + msg)
     serialPort.writeBytes(bytes)
   }
 
@@ -94,6 +96,7 @@ class ArduinoExecutor(val robot: Robot, binary: Boolean = false, poll: Option[In
 
   def dispatch(port: Byte, value: Short) {
     //val topic = Arduino.intToPort(port)
+    //println("dispatching: " + port + ", " + value)
     val topic = port.toString
     if (subscribers contains topic) {
       val sub = subscribers(topic).asInstanceOf[ArduinoSubscriber[_]]
@@ -104,7 +107,7 @@ class ArduinoExecutor(val robot: Robot, binary: Boolean = false, poll: Option[In
           typedSub.message(msg)
       } else if (tpe == std_msgs.Byte._TYPE) {
           val typedSub = sub.asInstanceOf[ArduinoSubscriber[std_msgs.Byte]]
-          val msg = convertMessage[std_msgs.Byte](Primitive.Byte(value.toByte))
+          val msg = convertMessage[std_msgs.Byte](Primitive.Byte((value & 0xFF).toByte))
           typedSub.message(msg)
       } else if (tpe == std_msgs.Int16._TYPE) {
           val typedSub = sub.asInstanceOf[ArduinoSubscriber[std_msgs.Int16]]
@@ -258,6 +261,7 @@ class StringSerialListener(serialPort: SerialPort, exec: ArduinoExecutor) extend
     //println("receiving: " + byte + ", " + byte.toChar)
     if (byte == 0) { // '\0'
       val msg = acc.toString
+      println("received: " + msg)
       acc.clear
       val parts = msg.split("\\$")
       if (parts.size == 3 || parts.size == 4) {

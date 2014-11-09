@@ -34,6 +34,9 @@ abstract class World extends Playground {
 
   /* ghost to 'close' the world (simulate user input, ...) */
   final def ghost[T <: Ghost](g: T): Unit = macro WorldMacros.addGhost[T]
+  
+  /* an object with a state that needs to be saved/restored */
+  final def stateful[T](s: T): Unit = macro WorldMacros.addStateful[T]
 
   ///////////////////////////////////////////////////
   // data structures for the elements in the world //
@@ -241,6 +244,16 @@ class WorldMacros(val c: Context) {
       val $id = $g
       statefulObj = Stateful.makeStateful($id, $t) :: statefulObj
       ghosts = $id :: ghosts
+      """
+    c.Expr[Unit](tree)
+  }
+
+  def addStateful[T: c.WeakTypeTag](s: c.Expr[T]): c.Expr[Unit] = {
+    val id = Ident(TermName(c.freshName("id")))
+    val t = c.prefix
+    val tree = q"""
+      val $id = $s
+      statefulObj = Stateful.makeStateful($id, $t) :: statefulObj
       """
     c.Expr[Unit](tree)
   }

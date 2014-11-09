@@ -71,6 +71,30 @@ abstract class VerifTemplate extends World {
     m.addSensor(ds, Pose2D(0.1, 0, 0))
   }
   
+  def addSwipeSensor(m: GroundRobot, id: String, sensorTopic: String, servoTopic: String) {
+    val ds = new IrSensor(  m,
+                            id + "/" + sensorTopic,
+                            20,
+                            3
+                         )
+    val servo = new Servo[Sensor](id + "/" + servoTopic)
+    m.addNode(servo, Pose2D(0.1, 0, 0))
+    servo.addLeaf(ds, Pose2D(0, 0, 0))
+    stateful(servo)
+  }
+  
+}
+
+class SwipeScanTest extends VerifTemplate {
+  
+  val i1 = "/robot1"
+  val r1 = new SwipeScan(i1)
+  val m1 = mkModel(i1, r1.motorLeft, r1.motorRight,
+                   0, -0.5, 0,
+                   0.1, 0.2)
+  addSwipeSensor(m1, i1, r1.sensorDist, r1.sensorServo)
+  robot(r1, m1)
+
 }
 
 class FollowTheEdgeTest extends VerifTemplate {
@@ -132,6 +156,7 @@ object RunV {
     val world = test match {
       case "rhr" => (() => new RightHandRuleTest)
       case "ru" => (() => new RightHandRuleAndUserTest)
+      case "s" => (() => new SwipeScanTest)
       case _ => (() => new FollowTheEdgeTest)
     }
     val runner = new react.verification.McRunner(args, world)

@@ -15,12 +15,9 @@ import react.utils._
 
 class GroundRobot( bBox: Box2D,
                    snap: Option[(String,String)] = None
-                 ) extends Executed {
+                 ) extends FrameTransformer[Sensor] with Positioned with Executed {
 
   val lock = new java.util.concurrent.locks.ReentrantLock(true)
-
-  /* sensor and offset w.r.t the robot frame */
-  @ignore var sensors: List[(Sensor, Pose2D)] = Nil
 
   var x = 0.0
   var y = 0.0
@@ -50,8 +47,10 @@ class GroundRobot( bBox: Box2D,
   @ignore
   var robotId = ""
 
+  def sensors = getLeafs
+
   def addSensor(s: Sensor, p: Pose2D) {
-    sensors = (s,p) :: sensors
+    addLeaf(s, p)
   }
 
   def setPosition(x: Double, y: Double) = {
@@ -65,6 +64,14 @@ class GroundRobot( bBox: Box2D,
     updateChildrenPose
   }
 
+  def pose: Pose2D = {
+    Pose2D(x, y, orientation)
+  }
+
+  def pose_=(p: Pose2D) {
+    setPose(p)
+  }
+
   def setPose(pose: Pose2D) = {
     x = pose.x
     y = pose.y
@@ -72,17 +79,7 @@ class GroundRobot( bBox: Box2D,
     updateChildrenPose
   }
 
-  protected def setChildPose(s: Sensor, offset: Pose2D) {
-    val cx = x + cos(orientation) * offset.x - sin(orientation) * offset.y
-    val cy = y + sin(orientation) * offset.x + cos(orientation) * offset.y
-    val co = Angle.normalize(orientation + offset.theta)
-    s.pose = Pose2D(cx, cy, co)
-  }
-
-  protected def updateChildrenPose {
-    for ( (s, p) <- sensors )
-      setChildPose(s, p)
-  }
+  protected def updateChildrenPose { updatePose(pose) }
 
   def restored {
     updateChildrenPose
@@ -91,7 +88,7 @@ class GroundRobot( bBox: Box2D,
   //rest of the world exclude the robot own bounding box
   //this method will be called each time the world changes
   def updateWorld(restOfTheWorld: List[Box2D]) {
-    sensors.foreach(_._1.update(restOfTheWorld))
+    sensors.foreach(_.update(restOfTheWorld))
   }
 
   val boxOffsetX = bBox.x //- x
@@ -176,12 +173,12 @@ class GroundRobot( bBox: Box2D,
       val sub = exec.getSubscriber[gazebo_msgs.ModelState](snap.get._1, gazebo_msgs.ModelState._TYPE)
       sub.addMessageListener(listener2)
     }
-    sensors.foreach(_._1.register(exec))
+    sensors.foreach(_.register(exec))
   }
 
   override def deregister(exec: Executor) {
     super.deregister(exec)
-    sensors.foreach(_._1.deregister(exec))
+    sensors.foreach(_.deregister(exec))
   }
 
 }

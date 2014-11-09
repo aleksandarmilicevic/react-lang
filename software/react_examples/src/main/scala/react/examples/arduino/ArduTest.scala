@@ -5,7 +5,6 @@ import react.robot._
 import react.message._
 import react.examples._
 import react.runtime.Arduino
-import react.runtime.ArduinoExecutor
 
 class ArduTest(port: String) extends Robot(port) {
 
@@ -43,19 +42,6 @@ class ArduTest(port: String) extends Robot(port) {
     //Console.println("servo → " + distance)
     //publish(servo, Primitive.Int16(distance.toShort))
     //}
-  }
-
-}
-
-object Run {
-
-  def apply(port: String) {
-    Console.println("arduino test port: " + port)
-    val r = new ArduTest(port)
-    val exec = new ArduinoExecutor(r, false, Some(100))
-    //val exec = new ArduinoExecutor(r)
-    new Remote(r)
-    exec.start
   }
 
 }

@@ -8,27 +8,39 @@ import react.runtime.{Arduino, ArduinoExecutor}
 
 class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port) {
 
-  val sensor     = Arduino.D2
-  val servoLeft  = Arduino.D9
-  val servoRight = Arduino.D10
+  val sensor     = "16"
+  val servoLeft  = "10"
+  val servoRight = "4"
 
   var onTarget = false
-  sensor[Primitive.Bool](sensor){
-    case Primitive.Bool(b) =>
-      //Console.println("onTarget ← " + b)
-      onTarget = b
+//sensor[Primitive.Bool](sensor){
+//  case Primitive.Bool(b) =>
+//    //Console.println("onTarget ← " + b)
+//    onTarget = b
+//}
+  sensor[Primitive.Int16](sensor){
+    case Primitive.Int16(i) =>
+      Console.println("onTarget ← " + i)
+      onTarget = (i < 450)
   }
   
-  val speed: Short = 80
+  val speed: Short = -25
+
+  var currDirection = !clockwise
+
   every(100) {
-    if (onTarget ^ clockwise) {
-      //Console.println("turning right")
-      publish(servoLeft, Primitive.Int16(speed))
-      publish(servoRight, Primitive.Int16(0))
-    } else {
-      //Console.println("turning servoLeft")
-      publish(servoLeft, Primitive.Int16(0))
-      publish(servoRight, Primitive.Int16(speed))
+    val newDir = onTarget ^ clockwise
+    if (newDir != currDirection) {
+      if (newDir) {
+        //Console.println("turning right")
+        publish(servoLeft, Primitive.Int16(speed))
+        publish(servoRight, Primitive.Int16(0))
+      } else {
+        //Console.println("turning servoLeft")
+        publish(servoLeft, Primitive.Int16(0))
+        publish(servoRight, Primitive.Int16(speed))
+      }
+      currDirection = newDir
     }
   }
 

@@ -27,10 +27,10 @@ class TwoWheeledRobot(
   var vl: Short = 0
   var vr: Short = 0
 
-  //maps v ∈ [-90,90] to [-2π,2π]
+  val motorCoeff = 1.0
+  //maps v ∈ [-100,100] to [- motorCoeff * π, motorCoeff * π] and then mutliply by ms/1000
   protected def angle(v: Short, ms: Int) = {
-    //val angularSpeed = (v - 90) / 90 * 2 * Pi  
-    val angularSpeed = v / 90.0 * 2.0 * Pi  
+    val angularSpeed = v / 100.0 * motorCoeff * Pi  
     angularSpeed * ms / 1000
   }
 

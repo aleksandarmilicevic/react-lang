@@ -11,7 +11,7 @@ import react.utils.RosUtils
 abstract class Sensor(parent: react.verification.model.GroundRobot,
                       _topic: String,
                       msgType: String,
-                      rate: Double) extends Executed {
+                      rate: Double) extends Positioned with Executed {
 
   def topic = RosUtils.mayAddPrefix(parent.robotId, _topic)
 
