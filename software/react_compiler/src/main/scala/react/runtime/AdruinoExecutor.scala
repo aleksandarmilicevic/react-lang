@@ -178,6 +178,11 @@ class ArduinoExecutor(val robot: Robot, binary: Boolean = false, poll: Option[In
       }
     }
   }
+  
+  override def finalize {
+    close
+  }
+
 
 }
 

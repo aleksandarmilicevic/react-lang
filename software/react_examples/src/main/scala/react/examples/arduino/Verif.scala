@@ -95,6 +95,13 @@ class SwipeScanTest extends VerifTemplate {
   addSwipeSensor(m1, i1, r1.sensorDist, r1.sensorServo)
   robot(r1, m1)
 
+  val i2 = "/robot2"
+  val r2 = new SwipeScan(i2)
+  val m2 = mkModel(i2, r2.motorLeft, r2.motorRight,
+                   0, 0.5, 0,
+                   0.1, 0.2)
+  addSwipeSensor(m2, i2, r2.sensorDist, r2.sensorServo)
+  robot(r2, m2)
 }
 
 class FollowTheEdgeTest extends VerifTemplate {

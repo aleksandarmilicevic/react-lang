@@ -14,10 +14,10 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
   val motorRight   = "4" 
 
   //constant for the motors
-  val speed: Short = 80
+  val speed: Short = 40
   val half: Short = (speed/2).toShort
   val mhalf: Short = (-half).toShort
-  val steps = 2
+  val steps = 1
   var stepsLeft = steps
 
   //about the distance
