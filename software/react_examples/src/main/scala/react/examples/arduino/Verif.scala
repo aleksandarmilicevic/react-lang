@@ -10,15 +10,19 @@ abstract class VerifTemplate extends World {
 
   val xMin = -1
   val xMax = 1
-  val xDiscretization = 0.015625
+  val xDiscretization = 0.015625 / 4 / 4
 
   val yMin = -1
   val yMax = 1
-  val yDiscretization = 0.015625
+  val yDiscretization = 0.015625 / 4 / 4
 
   val enclosed = true
   
   val fpDiscretization = 0.015625
+      
+  obstacle(new Box2D( 0.0,   0.0,    0.0 , 0.25,  0.05))
+  obstacle(new Box2D( 0.25,  0.0,   0.3 , 0.1,   0.05))
+  obstacle(new Box2D( 0.015, 0.0476, 2.83, 0.125, 0.05))
 
   /////////
   def noCollision = {
@@ -31,18 +35,22 @@ abstract class VerifTemplate extends World {
     )
   }
 
-  def safe = noCollision
+  def safe = true // noCollision
+  
+  val bodyLength = 0.12
+  val bodyWidth = 0.09
+  val wheelRadius = 0.03
+
 
   def mkModel(id: String, left: String, right: String,
-              x: Double, y: Double, o: Double,
-              wheelRadius: Double, wheelSeparation: Double) = {
+              x: Double, y: Double, o: Double) = {
 
-  val m1 = new TwoWheeledRobot(new Box2D(-0.1, -wheelSeparation/2, 0, 0.2, wheelSeparation),
+  val m1 = new TwoWheeledRobot(new Box2D(-bodyLength/2, -bodyWidth/2, 0, bodyLength, bodyWidth),
                                id, left, right,
-                               wheelRadius, wheelSeparation)
-  //val m1 = new TwoWheeledRobotWithError(new Box2D(-0.1, -wheelSeparation/2, 0, 0.2, wheelSeparation),
+                               wheelRadius, bodyWidth)
+  //val m1 = new TwoWheeledRobotWithError(new Box2D(-bodyLength/2, -bodyWidth/2, 0, bodyLength, bodyWidth),
   //                                      id, left, right,
-  //                                      wheelRadius, wheelSeparation,
+  //                                      wheelRadius, bodyWidth,
   //                                      0.2, 10)
     m1.setPosition(x,y)
     m1.setOrientation(o)
@@ -51,7 +59,9 @@ abstract class VerifTemplate extends World {
 
   def addSensorTarget(m: GroundRobot, id: String, topic: String) {
     val targets = List(
-      new Box2D(-0.5,-0.5,0,1,1)
+      new Box2D( 0.0,   0.0,    0.0 , 0.25,  0.05),
+      new Box2D( 0.25,  0.0,    0.3 , 0.1,   0.05),
+      new Box2D( 0.015, 0.0476, 2.83, 0.125, 0.05)
     )
     val gs = new GroundSensor( targets,
                                m,
@@ -59,7 +69,7 @@ abstract class VerifTemplate extends World {
                                20,
                                false
                              )
-    m.addSensor(gs, Pose2D(0.1, 0, 0))
+    m.addSensor(gs, Pose2D(0.05, 0, 0))
   }
   
   def addSensorDistance(m: GroundRobot, id: String, topic: String) {
@@ -90,16 +100,14 @@ class SwipeScanTest extends VerifTemplate {
   val i1 = "/robot1"
   val r1 = new SwipeScan(i1)
   val m1 = mkModel(i1, r1.motorLeft, r1.motorRight,
-                   0, -0.5, 0,
-                   0.1, 0.2)
+                   0, 0, 0)
   addSwipeSensor(m1, i1, r1.sensorDist, r1.sensorServo)
   robot(r1, m1)
 
   val i2 = "/robot2"
   val r2 = new SwipeScan(i2)
   val m2 = mkModel(i2, r2.motorLeft, r2.motorRight,
-                   0, 0.5, 0,
-                   0.1, 0.2)
+                   0, 0.5, 0)
   addSwipeSensor(m2, i2, r2.sensorDist, r2.sensorServo)
   robot(r2, m2)
 }
@@ -109,8 +117,7 @@ class FollowTheEdgeTest extends VerifTemplate {
   val i1 = "/robot1"
   val r1 = new FollowTheEdge(i1)
   val m1 = mkModel(i1, r1.servoLeft, r1.servoRight,
-                   0, -0.5, 0,
-                   0.1, 0.2)
+                   0, -0.01, 0)
   addSensorTarget(m1, i1, r1.sensor)
   robot(r1, m1)
 
@@ -121,16 +128,14 @@ class RightHandRuleTest extends VerifTemplate {
   val i1 = "/robot1"
   val r1 = new RightHandRule(i1)
   val m1 = mkModel(i1, r1.servoLeft, r1.servoRight,
-                   0, -0.5, 0,
-                   0.1, 0.2)
+                   0, -0.5, 0)
   addSensorDistance(m1, i1, r1.sensorDist)
   robot(r1, m1)
 
   val i2 = "/robot2"
   val r2 = new RightHandRule(i2)
   val m2 = mkModel(i2, r2.servoLeft, r2.servoRight,
-                   0, 0.5, 0,
-                   0.1, 0.2)
+                   0, 0.5, 0)
   addSensorDistance(m2, i2, r2.sensorDist)
   robot(r2, m2)
 
@@ -149,8 +154,7 @@ class RightHandRuleAndUserTest extends VerifTemplate {
   val i2 = "/robot2"
   val r2 = new UserControlled(i2)
   val m2 = mkModel(i2, r2.servoLeft, r2.servoRight,
-                   0, 0.5, 0,
-                   0.1, 0.2)
+                   0, 0.5, 0)
   addSensorDistance(m2, i2, r2.sensorDist)
   robot(r2, m2)
   ghost(new UserInput(r2))

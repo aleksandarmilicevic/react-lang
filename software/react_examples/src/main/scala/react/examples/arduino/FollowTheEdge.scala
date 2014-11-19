@@ -39,9 +39,14 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
 //    rSpeed = (rSpeed - 1).toShort
 //    publish(servoRight, Primitive.Int16(rSpeed))
 //}
+
+  //in the xp, we observe a rotation of 2.44 rad/s
   
-  var lSpeed: Short = -7
-  var rSpeed: Short =  8
+  var lSpeed: Short = 78
+  var rSpeed: Short = 78
+  
+//var lSpeed: Short = -7
+//var rSpeed: Short =  8
 
   var currDirection = !clockwise
 
