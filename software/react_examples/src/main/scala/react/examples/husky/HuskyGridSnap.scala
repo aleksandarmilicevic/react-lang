@@ -1,6 +1,7 @@
 package react.examples.husky
 
 import react._
+import react.utils.Env
 import react.robot._
 import react.message._
 import react.examples._
@@ -8,8 +9,8 @@ import react.examples.husky._
 
 class HuskyGridSnap(_id: String) extends HuskyRobot(_id) with FsmController {
 
-  val tmpWait = getEnvI("REACT_STEP_WAIT", 5)
-  val steps = getEnvI("REACT_STEPS", 20)
+  val tmpWait = Env.getInt("REACT_STEP_WAIT", 5)
+  val steps = Env.getInt("REACT_STEPS", 20)
   var stepCnt = 0
   var dX = 0.0
   var dY = 0.0

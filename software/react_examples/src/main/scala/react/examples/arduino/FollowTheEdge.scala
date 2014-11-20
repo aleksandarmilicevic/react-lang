@@ -3,6 +3,7 @@ package react.examples.arduino
 import react._
 import react.robot._
 import react.message._
+import react.utils.Env
 import react.examples._
 import react.runtime.{Arduino, ArduinoExecutor}
 
@@ -40,11 +41,10 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
 //    publish(servoRight, Primitive.Int16(rSpeed))
 //}
 
-  //in the xp, we observe a rotation of 2.44 rad/s
-  
-  var lSpeed: Short = 78
-  var rSpeed: Short = 78
-  
+  val defaultSpeed: Short = 8 // 78 for 2.44 rad/s in the MC
+  var lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
+  var rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)
+  //what we got last time after calibration
 //var lSpeed: Short = -7
 //var rSpeed: Short =  8
 

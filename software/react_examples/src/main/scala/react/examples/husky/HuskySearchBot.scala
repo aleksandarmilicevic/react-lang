@@ -3,12 +3,13 @@ package react.examples.husky
 import react._
 import react.robot._
 import react.message._
+import react.utils.Env
 import react.examples._
 import react.examples.husky._
 
 class HuskySearchBot(_id: String) extends HuskyRobot(_id) with FsmController {
 
-  val botWaitTime = getEnvI("REACT_BOT_WAIT_TIME", 300)
+  val botWaitTime = Env.getInt("REACT_BOT_WAIT_TIME", 300)
 
   initialState('init)
 

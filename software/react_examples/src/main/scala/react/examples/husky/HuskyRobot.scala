@@ -3,24 +3,10 @@ package react.examples.husky
 import react._
 import react.robot._
 import react.message._
+import react.utils.Env
 import react.examples._
 
 class HuskyRobot(_id: String) extends GroundRobot(_id) {
-
-  def getEnv[T](key: String, defaultValue: T, parser: (String) => T): T = {
-    val ans = System.getenv(key)
-    if (ans != null)
-      try {
-        return parser(ans)
-      } catch {
-        case e: Exception => defaultValue
-      }
-    else
-      return defaultValue
-  }
-
-  def getEnvI(key: String, value: Int): Int = getEnv(key, value, (s) => s.toInt)
-  def getEnvD(key: String, v: Double): Double = getEnv(key, v, (s) => s.toDouble)
 
   val STAY_PUT    = -1
   val TURN_LEFT   = 0
@@ -31,7 +17,7 @@ class HuskyRobot(_id: String) extends GroundRobot(_id) {
   var targetY = 0.0
   var targetO = 0.0
 
-  val safeDistance    = getEnvD("REACT_SAFE_DISTANCE", 2.7)
+  val safeDistance    = Env.getDouble("REACT_SAFE_DISTANCE", 2.7)
   var frontDistance   = 1.0
   var poseUpdated     = false
   var distanceUpdated = false

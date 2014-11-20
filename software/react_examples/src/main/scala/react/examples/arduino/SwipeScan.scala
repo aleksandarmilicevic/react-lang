@@ -3,6 +3,7 @@ package react.examples.arduino
 import react._
 import react.robot._
 import react.message._
+import react.utils.Env
 import react.examples._
 
 class SwipeScan(port: String) extends Robot(port) with FsmController {
@@ -14,15 +15,21 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
   val motorRight   = "4" 
 
   //constant for the motors
-  val speed: Short = 40
-  val half: Short = (speed/2).toShort
-  val mhalf: Short = (-half).toShort
+  val defaultSpeed: Short = Env.getShort("speed", 40)
+  var lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
+  var rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)
+
+  val lhalf: Short = (lSpeed/2).toShort
+  val lmhalf: Short = (-lhalf).toShort
+  val rhalf: Short = (rSpeed/2).toShort
+  val rmhalf: Short = (-rhalf).toShort
+
   val steps = 1
   var stepsLeft = steps
 
   //about the distance
   var distance = 0
-  val safeDistance = 150
+  val safeDistance = Env.getInt("safeDistance", 150)
   //TODO min max for the sensor and normalization
   val servoAngleNA = -200
   val servoAngleInc = 70
@@ -67,12 +74,12 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
       if (stepsLeft == steps) {
         if (distance < safeDistance) {
           //Console.println("straight")
-          publish(motorLeft, Primitive.Int16(speed))
-          publish(motorRight, Primitive.Int16(speed))
+          publish(motorLeft, Primitive.Int16(lSpeed))
+          publish(motorRight, Primitive.Int16(lSpeed))
         } else {
           //Console.println("right")
-          publish(motorLeft, Primitive.Int16(half))
-          publish(motorRight, Primitive.Int16(mhalf))
+          publish(motorLeft, Primitive.Int16(lhalf))
+          publish(motorRight, Primitive.Int16(rmhalf))
         }
         stepsLeft -= 1
       } else if (stepsLeft > 0) {

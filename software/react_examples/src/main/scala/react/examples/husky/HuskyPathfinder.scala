@@ -3,6 +3,7 @@ package react.examples.husky
 import scala.util.control.Breaks._
 
 import react._
+import react.utils.Env
 import react.robot._
 import react.message._
 import react.examples._
@@ -10,8 +11,8 @@ import react.examples.husky._
 
 class HuskyPathfinder(_id: String) extends HuskyRobot(_id) with FsmController {
 
-  val pathfinderWaitTime = getEnvI("REACT_PATHFINDER_WAIT_TIME", 300)
-  val spinWaitTime = getEnvI("REACT_PATHFINDER_SPIN_WAIT_TIME", 5)
+  val pathfinderWaitTime = Env.getInt("REACT_PATHFINDER_WAIT_TIME", 300)
+  val spinWaitTime = Env.getInt("REACT_PATHFINDER_SPIN_WAIT_TIME", 5)
 
   // val steps = List((1,-1), (1,0), (1,1), (0,-1), (0,1), (-1,-1), (-1,0), (-1,1))
   val steps = List((1,0), (0,-1), (0,1), (-1,0))
