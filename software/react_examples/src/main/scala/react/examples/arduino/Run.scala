@@ -10,7 +10,7 @@ object Run {
     //val r = new FollowTheEdge(port)
     val r = new SwipeScan(port)
     //val exec = new ArduinoExecutor(r)
-    val exec = new ArduinoExecutor(r, false, Some(100))
+    val exec = new ArduinoExecutor(r, false, Some(333))
     new Remote(r)
     exec.start
   }

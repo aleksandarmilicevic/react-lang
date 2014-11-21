@@ -9,13 +9,13 @@ import react.examples._
 class SwipeScan(port: String) extends Robot(port) with FsmController {
 
   //port
-  val sensorDist   = "16" 
-  val sensorServo  = "20"
-  val motorLeft    = "10"
+  val sensorDist   = "33" 
+  val sensorServo  = "16"
+  val motorLeft    = "27"
   val motorRight   = "4" 
 
   //constant for the motors
-  val defaultSpeed: Short = Env.getShort("speed", 40)
+  val defaultSpeed: Short = Env.getShort("speed", 15)
   var lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
   var rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)
 
@@ -29,13 +29,21 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
 
   //about the distance
   var distance = 0
-  val safeDistance = Env.getInt("safeDistance", 150)
+  val safeDistance = Env.getInt("safeDistance", 400)
   //TODO min max for the sensor and normalization
   val servoAngleNA = -200
   val servoAngleInc = 70
   var servoAngle = servoAngleNA
 
   initialState('scan)
+
+  Console.println("safeDistance: " + safeDistance)
+  Console.println("lSpeed: " + lSpeed)
+  Console.println("rSpeed: " + rSpeed)
+  Console.println("lhalf: " + lhalf)
+  Console.println("lmhalf: " + lmhalf)
+  Console.println("rhalf: " + rhalf)
+  Console.println("rmhalf: " + rmhalf)
 
 
   //always listen to the sensor
@@ -75,7 +83,7 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
         if (distance < safeDistance) {
           //Console.println("straight")
           publish(motorLeft, Primitive.Int16(lSpeed))
-          publish(motorRight, Primitive.Int16(lSpeed))
+          publish(motorRight, Primitive.Int16(rSpeed))
         } else {
           //Console.println("right")
           publish(motorLeft, Primitive.Int16(lhalf))
