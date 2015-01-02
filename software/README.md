@@ -9,6 +9,11 @@ Setup
 Dependencies
 ------------
 
+This project requires java 7.
+You can build it using [sbt](http://www.scala-sbt.org/).
+To install sbt follow the instructions at [http://www.scala-sbt.org/release/tutorial/Setup.html](http://www.scala-sbt.org/release/tutorial/Setup.html).
+
+If you want to interface REACT with ROS and uses custom messages you need:
 * [ROS indigo](http://wiki.ros.org/)
   Follows the instructions http://wiki.ros.org/indigo/Installation
 * [ROS java](http://wiki.ros.org/rosjava)
@@ -22,31 +27,31 @@ In Ubuntu system, `$ROS_HOME` is usually `/opt/ros/indigo/`.
 
 Directory Structure
 -------------------
-`react_compiler`, `react_verifier`, and `react_examples` contains the sources of the project.
-The other directories are created/needed by rosjava.
-`src` contains a top level `react_lang` projects.
-`react_lang` contains three gradle subprojects for the compiler, verifier, and examples.
-the three sub projects are links that points to the corresponding folder at the root.
+`compiler`, `verifier`, and `examples` contains the sources of the project.
+`ros-zone` contains a `react_msgs` project for ROS custom messages.
 
 Compiling
 ---------
-- `catkin_make` to build the entire workspace.
-- `cd src/react_lang; ./gradlew installApp` to rebuild only the java/scala subprojects.
+In a console, execute:
+```
+$ sbt
+> compile
+```
+After the first compilation you should execute the `generateClassPath.sh` script
+
 
 Examples
 ========
-to start the turtlesim teleop example:
+to start the ROS turtlesim teleop example:
 - `roscore &`
 - `rosrun turtlesim turtlesim_node &`
-- `cd src/react_lang/react_examples`
-- `./build/install/react_examples/bin/react_examples teleop /turtle1`
+- `./run.sh examples teleop /turtle1`
 
 for the husky example:
-- first, you need to install a few dependencies: follow the steps in `react_examples/src/main/resources/husky/`
+- first, you need to install a few dependencies: follow the steps in `ros-zone/husky/`
 - once you have launched gazebo:
-  * `cd src/react_lang/react_examples`
-  * `./build/install/react_examples/bin/react_examples husky /husky1 &`
-  * `./build/install/react_examples/bin/react_examples husky /husky2 &`
+  * `./run.sh examples husky /husky1 &`
+  * `./run.sh examples husky /husky2 &`
 Alternatively, instead of the `husky` controller, you can use `huskyG` which tries to move only along the grid axes.
 
 Verification
@@ -61,9 +66,8 @@ Furthermore, the system needs to be closed.
 Any interaction with the environment, such as user input, needs to be simulated using a ghost element.
 
 An example of verification scenarios, can be found in: `react_examples/src/main/scala/react/examples/tests/Verif.scala`
-They can be run using `./react_examples/build/install/react_examples/bin/react_examples tests XXX 2>/dev/null` where XXX is the ID of one of the scenario as specified in the source file.
+They can be run using `./run.sh examples tests XXX 2>/dev/null` where XXX is the ID of one of the scenario as specified in the source file.
 
 Misc
 ====
-To give more memory to the JVM: `export JAVA_OPTS="-Xms1G -Xmx4G"`
 For scala syntax highlight in vim, I recommend [https://github.com/derekwyatt/vim-scala.git](https://github.com/derekwyatt/vim-scala.git).

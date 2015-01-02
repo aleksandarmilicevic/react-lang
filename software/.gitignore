@@ -1,6 +1,8 @@
-/src/
 build/
 devel/
+target/
+project/
 .catkin_workspace
-/react_examples/src/main/resources/husky/src/
+/ros-zone/husky/src/
 *.bak
+deps-*
