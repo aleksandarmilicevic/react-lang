@@ -1,6 +1,7 @@
 package react.verification.modelchecker
 
-import react.utils._
+import dzufferey.utils.LogLevel._
+import dzufferey.utils.Logger
 import java.nio.file._
 import java.nio.file.StandardOpenOption._
 import java.nio.charset.Charset
@@ -34,7 +35,7 @@ class TraceStore {
       assert(Files.isWritable(path))
     } catch {
       case e: Exception =>
-        Logger("TraceStore", LogWarning, "could not create temporary file (" + e + "), not storing the trace")
+        Logger("TraceStore", Warning, "could not create temporary file (" + e + "), not storing the trace")
     }
   }
 

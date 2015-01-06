@@ -10,6 +10,8 @@ import org.ros.node.topic._
 import org.ros.message.MessageListener
 import org.ros.concurrent.CancellableLoop
 import react.utils._
+import dzufferey.utils.LogLevel._
+import dzufferey.utils.Logger
 import java.util.concurrent.{Semaphore,TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -59,16 +61,16 @@ class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) exte
       val done = pending.tryAcquire(toDeliver, 500, TimeUnit.MILLISECONDS)
       val a = pending.availablePermits
       if (!done) {
-        Logger("WorldExecutor", LogWarning, "could not make sure that all messages were delivered ("+a+" < " + toDeliver + ")")
+        Logger("WorldExecutor", Warning, "could not make sure that all messages were delivered ("+a+" < " + toDeliver + ")")
       } else if (a > 0) {
-        Logger("WorldExecutor", LogWarning, "delivered more than expected: "+a)
+        Logger("WorldExecutor", Warning, "delivered more than expected: "+a)
       }
     }
     pending.drainPermits()
   }
   override def messageDelivered {
     //println("messageDelivered")
-    Logger("WorldExecutor", LogDebug, "message delivered")
+    Logger("WorldExecutor", Debug, "message delivered")
     pending.release()
   }
   
@@ -86,7 +88,7 @@ class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) exte
   
   def publish[T](topic: String, typeName: String, message: T) = {
     val pub = getPublisher[T](topic, typeName)
-    Logger("WorldExecutor", LogDebug, "publishing on " + topic + "[" + typeName + "]")
+    Logger("WorldExecutor", Debug, "publishing on " + topic + "[" + typeName + "]")
     if (!bypassROS) {
       val ns = getSubscribed[T](topic, typeName) //messages to deliver
       cnt.addAndGet(ns)

@@ -2,6 +2,8 @@ package react.verification.modelchecker
 
 import react.utils._
 import react.verification.StateStore
+import dzufferey.utils.LogLevel._
+import dzufferey.utils.Logger
 import HashStateStore._
 import net.automatalib.words.{Word, WordBuilder}
 import net.automatalib.util.automata.fsa.DFAs
@@ -45,7 +47,7 @@ class HashDfaStateStore(hashTblSize: Int = 100000000) {
   }
   
   protected def compact {
-    Logger("HashDfaStateStore", LogNotice, "compacting state store")
+    Logger("HashDfaStateStore", Notice, "compacting state store")
     def union(a: CompactDFA[Integer], b: CompactDFA[Integer]) = {
       val d = DFAs.or(a, b, dfa.alphabet)
       //println("d1: " + d.size)
@@ -58,7 +60,7 @@ class HashDfaStateStore(hashTblSize: Int = 100000000) {
     val newDfa = v2.reduce( union )
     dfa.addDFA(newDfa)
     dfa.minimize()
-    Logger("HashDfaStateStore", LogInfo, "dfa size: " + dfa.size)
+    Logger("HashDfaStateStore", Info, "dfa size: " + dfa.size)
     hash.clear()
     hashCnt = 0
   }

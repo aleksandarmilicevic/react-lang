@@ -3,8 +3,13 @@ package react.verification.modelchecker
 import org.ros.RosCore
 import org.ros.RosRun
 import org.ros.node._
+
 import react.utils._
 import react.verification._
+
+import dzufferey.utils.LogLevel._
+import dzufferey.utils.Logger
+
 
 import ModelChecker._
 
@@ -28,22 +33,22 @@ class WorldProxy(val world: World, opts: McOptions) {
     rosExec.execute(exec, config)
     var to = 0
     while(!exec.ready) {
-      Logger("WorldProxy", LogNotice, "Waiting for ROS executor to start")
+      Logger("WorldProxy", Notice, "Waiting for ROS executor to start")
       Thread.sleep(1000)
       to += 1
       if (to > 5) {
-        Logger.logAndThrow("WorldProxy", LogError, "Wait for ROS executor to start timed out")
+        Logger.logAndThrow("WorldProxy", Error, "Wait for ROS executor to start timed out")
       }
     }
     exec.register
     allTasks.foreach(scheduler.warmUpCache)
-    Logger("WorldProxy", LogInfo, "scheduler cache = " + scheduler.cache.size)
+    Logger("WorldProxy", Info, "scheduler cache = " + scheduler.cache.size)
   }
 
   init
 
   def shutdown {
-    Logger("WorldProxy", LogNotice, "shuting down core")
+    Logger("WorldProxy", Notice, "shuting down core")
     rosExec.shutdown
     core.shutdown
     //pool.shutdownNow
@@ -76,10 +81,10 @@ class WorldProxy(val world: World, opts: McOptions) {
 
   protected def step(bp: BranchingPoint, i: Int): Label = {
     assert(world.safe, "world unsafe before taking a step!\n" + world.currentState)
-    Logger("ModelChecker", LogDebug, "## start step")
+    Logger("ModelChecker", Debug, "## start step")
     val descr = bp.act(i)
     exec.waitUntilDelivered
-    Logger("ModelChecker", LogDebug, "## end step")
+    Logger("ModelChecker", Debug, "## end step")
     descr
   }
 
@@ -104,7 +109,7 @@ class WorldProxy(val world: World, opts: McOptions) {
       val descr = safeExec(prefix, step(bp, i))
       getState(prefix, "ghost step " + i, descr)
     } else {
-      Logger("ModelChecker", LogWarning, "ghost step " + i + " but alt = " + alt)
+      Logger("ModelChecker", Warning, "ghost step " + i + " but alt = " + alt)
       None
     }
   }
@@ -130,7 +135,7 @@ class WorldProxy(val world: World, opts: McOptions) {
 
     while (iw < altw) {
       
-      Logger("ModelChecker", LogDebug, "elapse(" + dt + ") → " + iw + "/" + altw)
+      Logger("ModelChecker", Debug, "elapse(" + dt + ") → " + iw + "/" + altw)
       restoreState(s)
       bpw.act(iw)
       scheduler.elapse(dt)
@@ -142,7 +147,7 @@ class WorldProxy(val world: World, opts: McOptions) {
       val sDt = saveState
 
       while(is < alts) {
-        Logger("ModelChecker", LogDebug, "controller step " + is)
+        Logger("ModelChecker", Debug, "controller step " + is)
         restoreState(sDt)
         val descr = safeExec(prefix, step(bps, is))
         getState(prefix, "controller step " + is, descr) match {
@@ -169,7 +174,7 @@ class WorldProxy(val world: World, opts: McOptions) {
   }
   
   def elapse(dt: Int) = {
-    Logger("ModelChecker", LogDebug, "elapse " + dt)
+    Logger("ModelChecker", Debug, "elapse " + dt)
     scheduler.elapse(dt)
     world.elapse(dt)
   }
@@ -220,7 +225,7 @@ class WorldProxy(val world: World, opts: McOptions) {
   
   def getSchedulerState(s: State): State = {
     val sched = s.drop(wl)
-    //Logger("ModelChecker", LogWarning, "sched = " + sched.size + ", s = " + s.size)
+    //Logger("ModelChecker", Warning, "sched = " + sched.size + ", s = " + s.size)
     sched
   }
 
@@ -228,7 +233,7 @@ class WorldProxy(val world: World, opts: McOptions) {
     val w = world.getCurrentState
     val s = scheduler.saveState
     val full = w ++ s
-    //Logger("ModelChecker", LogWarning, "wl = " + wl + ", w = " + w.size + ", s = " + s.size + ", full = " + full.size)
+    //Logger("ModelChecker", Warning, "wl = " + wl + ", w = " + w.size + ", s = " + s.size + ", full = " + full.size)
     full
   }
 
@@ -271,7 +276,7 @@ class WorldProxy(val world: World, opts: McOptions) {
     }
     //println("YYY")
     assert(!acc.isEmpty)
-    Logger("WorldProxy", LogDebug, "concretization generated: " + acc.size + " states.")
+    Logger("WorldProxy", Debug, "concretization generated: " + acc.size + " states.")
     acc
   }
 
@@ -349,14 +354,14 @@ object WorldProxy {
   def newRosCore = {
     val p = port.getAndIncrement
     val core = RosCore.newPrivate(p)
-    Logger("WorldProxy", LogNotice, "starting ROS core on " + p)
+    Logger("WorldProxy", Notice, "starting ROS core on " + p)
     core.start()
     try {
       core.awaitStart()
     } catch {
       case e: Exception => throw new RuntimeException(e)
     }
-    Logger("WorldProxy", LogNotice, "core started on " + p)
+    Logger("WorldProxy", Notice, "core started on " + p)
     val config = NodeConfiguration.newPrivate(core.getUri())
     config.setNodeName("ReactVerifier"+p)
     (core, config)

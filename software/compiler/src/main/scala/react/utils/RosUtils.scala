@@ -1,5 +1,7 @@
 package react.utils
 
+import dzufferey.utils.SysCmd
+
 object RosUtils {
 
   def mayAddPrefix(prefix: String, topicName: String) = {

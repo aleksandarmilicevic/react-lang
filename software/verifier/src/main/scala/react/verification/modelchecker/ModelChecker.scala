@@ -8,6 +8,9 @@ import react.utils._
 import scala.collection.GenIterable
 import scala.collection.parallel._
 
+import dzufferey.utils.LogLevel._
+import dzufferey.utils.Logger
+
 import HashStateStore._
 
 class SafetyError(val cause: String, val suffix: Trace) extends Exception("safety violation (" + cause + ")") {
@@ -37,7 +40,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
       Left(fct(w))
     } catch {
       case t: Throwable =>
-        Logger("ModelChecker", LogInfo, "isolated: caught " + t)
+        Logger("ModelChecker", Info, "isolated: caught " + t)
         Right(t)
     } finally {
       qW.add(w)
@@ -89,7 +92,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
     } else {
       val dt = world.timeToNext.toInt
       val alts = world.controllerAlernatives(dt)
-      Logger("ModelChecker", LogDebug, "|controller step| = " + alts)
+      Logger("ModelChecker", Debug, "|controller step| = " + alts)
       statesGenerated += alts
       val enum = (0 until opts.nbrWorlds).par
       val successors = enum.map( i => isolated( w => w.controllerStep(dt, t, i, opts.nbrWorlds) ) ).seq
@@ -105,7 +108,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
     val s = t.stop
     world.restoreState(s)
     val alts = world.ghostsAlternatives
-    Logger("ModelChecker", LogDebug, "|ghost step| = " + alts)
+    Logger("ModelChecker", Debug, "|ghost step| = " + alts)
     statesGenerated += alts
     val enum = (0 until alts).par
     //enum.tasksupport = taskSupport
@@ -142,9 +145,9 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
       putT(t)
     }
     while(!frontierT.isEmpty) {
-      Logger("ModelChecker", LogDebug, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
+      Logger("ModelChecker", Debug, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
       if (cnt % 500 == 0) {
-        Logger("ModelChecker", LogInfo, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
+        Logger("ModelChecker", Info, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
       }
       cnt += 1 
       val tr = getT
@@ -162,9 +165,9 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
     //the controller step
     local foreach putT
     while(!frontierT.isEmpty) {
-      Logger("ModelChecker", LogDebug, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
+      Logger("ModelChecker", Debug, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
       if (cnt % 500 == 0) {
-        Logger("ModelChecker", LogInfo, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
+        Logger("ModelChecker", Info, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
       }
       cnt += 1 
       val tr = getT
@@ -189,7 +192,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
         val t = s.append(List("compact"), x)
         //check if there after rounding
         if (!world.safe) {
-          Logger("ModelChecker", LogWarning, "Rounding made a safe state unsafe, discarding. You should increase precision.")
+          Logger("ModelChecker", Warning, "Rounding made a safe state unsafe, discarding. You should increase precision.")
           None
         } else if (!transientStates.contains(x)) {
           transientStates += x
@@ -207,7 +210,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   
   def oneStep = {
     try {
-      Logger("ModelChecker", LogNotice, "outer loop: #permantent states = " + permanentStatesStored + ", frontier = " + frontier.size)
+      Logger("ModelChecker", Notice, "outer loop: #permantent states = " + permanentStatesStored + ", frontier = " + frontier.size)
       if (!frontier.isEmpty) {
         val (p, s) = get
         val post = innerLoop(s)
@@ -226,41 +229,41 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
       }
     } catch {
       case s: SafetyError =>
-        Logger("ModelChecker", LogError, "Error found: " + s.cause)
+        Logger("ModelChecker", Error, "Error found: " + s.cause)
         if (!s.suffix.isEmpty) {
           val last = s.suffix.stop
           world.restoreState(last)
-          Logger("ModelChecker", LogError, "last known state:")
-          Logger("ModelChecker", LogError, world.toString)
-          Logger("ModelChecker", LogError, world.currentState)
+          Logger("ModelChecker", Error, "last known state:")
+          Logger("ModelChecker", Error, world.toString)
+          Logger("ModelChecker", Error, world.currentState)
           val trace = makeTrace(s.suffix)
-          Logger("ModelChecker", LogError, "\n")
-          Logger("ModelChecker", LogError, traceToString(trace))
+          Logger("ModelChecker", Error, "\n")
+          Logger("ModelChecker", Error, traceToString(trace))
           if (opts.traceFile != "") {
             printTraceAsSVG(opts.traceFile, trace)
           }
         }
         false
       case t: Throwable =>
-        Logger("ModelChecker", LogCritical, "internal model checker error: " + t)
+        Logger("ModelChecker", Critical, "internal model checker error: " + t)
         throw t
     }
   }
 
   def init {
-    Logger("ModelChecker", LogNotice, "initializing model-checker.")
-    Logger("ModelChecker", LogNotice, world.stateSpaceDescription)
+    Logger("ModelChecker", Notice, "initializing model-checker.")
+    Logger("ModelChecker", Notice, world.stateSpaceDescription)
     val allTasks = world.allTasks
     period = opts.periodCoeff * Scheduler.computePeriod(allTasks)
     assert(period > 0)
-    Logger("ModelChecker", LogNotice, "period = " + period)
-    Logger("ModelChecker", LogNotice, world.schedulerToString)
+    Logger("ModelChecker", Notice, "period = " + period)
+    Logger("ModelChecker", Notice, world.schedulerToString)
     val initState = world.saveStateCompact
     permanentStates.add(initState)
     permanentStatesStored += 1
     put(0, initState)
     if(!world.safe) {
-      Logger("ModelChecker", LogError, "error state reached:\n" + world.toString)
+      Logger("ModelChecker", Error, "error state reached:\n" + world.toString)
       throw new SafetyError("initial state", Trace(initState))
     }
     val ri = new RichState(initState)
@@ -287,7 +290,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
   def traceToString(trace: Trace) = world.traceToString(trace)
 
   def printTraceAsSVG(fileName: String, trace: Trace) =
-    react.utils.IO.writeInFile(fileName, world.writeTraceAsSVG(_, trace))
+    dzufferey.utils.IO.writeInFile(fileName, world.writeTraceAsSVG(_, trace))
 
   ///////////
   // stats //
@@ -304,14 +307,14 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
     val sec = dt / 1000
     val ms = dt % 1000
     val ts = frontierContent.map(_._1)
-    Logger("ModelChecker", LogNotice, "Model checker ran for " + sec + "." + ms + " seconds")
-    Logger("ModelChecker", LogNotice, "  #states generated = " + statesGenerated)
-    Logger("ModelChecker", LogNotice, "  #transient states = " + transientStatesStored)
-    Logger("ModelChecker", LogNotice, "  #permanent states = " + permanentStatesStored)
+    Logger("ModelChecker", Notice, "Model checker ran for " + sec + "." + ms + " seconds")
+    Logger("ModelChecker", Notice, "  #states generated = " + statesGenerated)
+    Logger("ModelChecker", Notice, "  #transient states = " + transientStatesStored)
+    Logger("ModelChecker", Notice, "  #permanent states = " + permanentStatesStored)
     if (!ts.isEmpty) {
       val min = ts.min * period
       val max = ts.max * period
-      Logger("ModelChecker", LogNotice, "  time horizon for the frontier ∈ [" + min + ", " + max + "]")
+      Logger("ModelChecker", Notice, "  time horizon for the frontier ∈ [" + min + ", " + max + "]")
     }
     printCoverage
     predMap.clean
@@ -327,7 +330,7 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
         for (s <- frontierContentT) world.writeModelsAsSVG(writer, s)
         world.svgFooter(writer)
       }
-      react.utils.IO.writeInFile(opts.coverageFile, print(_))
+      dzufferey.utils.IO.writeInFile(opts.coverageFile, print(_))
     }
   }
 

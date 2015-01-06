@@ -5,6 +5,8 @@ import react.runtime._
 import react.utils._
 import react.examples.turtle._
 import react.examples.husky._
+import dzufferey.arg._
+import dzufferey.utils.Logger
 
 class RunTurtleTeleop extends RosExecutor {
   //define the robot we are working on
@@ -64,25 +66,25 @@ class RunHuskyPathfinder extends RosExecutor {
 
 object Main extends Options with react.verification.McOptions {
 
-  newOption("-v", Arg.Unit(() => Logger.moreVerbose), "increase the verbosity level.")
-  newOption("-q", Arg.Unit(() => Logger.lessVerbose), "decrease the verbosity level.")
+  newOption("-v", Unit(() => Logger.moreVerbose), "increase the verbosity level.")
+  newOption("-q", Unit(() => Logger.lessVerbose), "decrease the verbosity level.")
 
-  newOption("-bfs", Arg.Unit(() => bfs = true), "BFS state-space exploration")
-  newOption("-dfs", Arg.Unit(() => bfs = false), "DFS space-space exploration")
-  newOption("-tb", Arg.Int(l => timeBound = l), "bound the time horizon (in milliseconds)")
-  newOption("-transient", Arg.Unit(() => keepTransient = true), "keep the transient states (faster for small systems, requires more memory)")
-  newOption("-pc", Arg.Int( i => periodCoeff = i), "coefficient to multiply the period used when building the time quotient")
-  newOption("-tf", Arg.String( s => traceFile = s), "save the trace as an SVG image")
-  newOption("-cf", Arg.String( s => coverageFile = s), "save the coverage as an SVG image")
-  newOption("-t", Arg.Int( i => nbrWorlds = i), "how many world to run in parallel (default: 4, if possible)")
-  newOption("-noROS", Arg.Unit( () => bypassROS = true), "bypass ROS, less faithfull to actual program but faster")
-  newOption("-concretize", Arg.Unit( () => withConcretize = true), "more correct way of handling the discretization")
+  newOption("-bfs",         Unit(() => bfs = true),         "BFS state-space exploration")
+  newOption("-dfs",         Unit(() => bfs = false),        "DFS space-space exploration")
+  newOption("-tb",          Int(l => timeBound = l),        "bound the time horizon (in milliseconds)")
+  newOption("-transient",   Unit(() => keepTransient = true), "keep the transient states (faster for small systems, requires more memory)")
+  newOption("-pc",          Int( i => periodCoeff = i),     "coefficient to multiply the period used when building the time quotient")
+  newOption("-tf",          String( s => traceFile = s),    "save the trace as an SVG image")
+  newOption("-cf",          String( s => coverageFile = s), "save the coverage as an SVG image")
+  newOption("-t",           Int( i => nbrWorlds = i),       "how many world to run in parallel (default: 4, if possible)")
+  newOption("-noROS",       Unit( () => bypassROS = true),  "bypass ROS, less faithfull to actual program but faster")
+  newOption("-concretize",  Unit( () => withConcretize = true), "more correct way of handling the discretization")
 
   val usage = "..."
 
   var topic = ""
 
-  def main(args: Array[String]) {
+  def main(args: Array[java.lang.String]) {
     apply(args) // preprocess the args
     val (cls, topic) =
       if (input.length == 0)

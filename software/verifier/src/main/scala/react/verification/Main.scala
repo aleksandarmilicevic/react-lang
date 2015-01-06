@@ -3,14 +3,15 @@ package react.verification
 import org.ros.RosCore
 import org.ros.RosRun
 import org.ros.node.{DefaultNodeMainExecutor, NodeConfiguration, NodeMain}
-import react.utils._
+import dzufferey.utils.LogLevel._
+import dzufferey.utils.Logger
 
 object Main {
 
   var core: RosCore = null
 
   def startCore {
-    Logger("verification.Main", LogNotice, "starting core")
+    Logger("verification.Main", Notice, "starting core")
     core = RosCore.newPrivate()
     core.start()
     try {
@@ -18,12 +19,12 @@ object Main {
     } catch {
       case e: Exception => throw new RuntimeException(e)
     }
-    Logger("verification.Main", LogNotice, "core started")
+    Logger("verification.Main", Notice, "core started")
   }
 
   def shutdownCore {
     if (core != null) {
-      Logger("verification.Main", LogNotice, "shuting down core")
+      Logger("verification.Main", Notice, "shuting down core")
       core.shutdown
       core = null
     }

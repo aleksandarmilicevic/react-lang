@@ -9,7 +9,8 @@ import react.verification.ghost._
 import react.verification._
 import react.verification.modelchecker.BranchingPoint
 import math._
-import react.utils._
+import dzufferey.utils.LogLevel._
+import dzufferey.utils.Logger
 
 //TODO uncertainty according rounding
 
@@ -156,7 +157,7 @@ class GroundRobot( bBox: Box2D,
         override def written = Some(Set("x", "y", "orientation", "vx" , "vo"))
         val name = snap.get._2
         def onNewMessage(message: gazebo_msgs.ModelState) {
-          Logger("GroundRobot", LogDebug, name + " -> " + message.getModelName)
+          Logger("GroundRobot", Debug, name + " -> " + message.getModelName)
           lock.lock
           try {
             if (message.getModelName == name) {

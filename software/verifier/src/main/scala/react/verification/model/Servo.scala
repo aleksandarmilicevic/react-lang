@@ -1,11 +1,13 @@
 package react.verification.model
 
 import react.robot._
-import react.utils._
 import react.message._
 import react.runtime.MessageListenerRW
 import react.Executor
 import math._
+import dzufferey.utils.LogLevel._
+import dzufferey.utils.Logger
+
 
 class Servo[A <: Positioned](
     topic: String
@@ -29,7 +31,7 @@ class Servo[A <: Positioned](
       override def sendMsgsTo = Some(Set())
       def onNewMessage(message: std_msgs.Int16) {
         angle = (message.getData - 90) * Pi / 180.0
-        Logger("Servo", LogDebug, robotID + " -> " + message.getData + " -> " + angle)
+        Logger("Servo", Debug, robotID + " -> " + message.getData + " -> " + angle)
         exec.messageDelivered
       }
     }
