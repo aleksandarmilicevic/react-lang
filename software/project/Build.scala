@@ -61,6 +61,7 @@ object MyBuild extends Build {
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
           "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+          "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3",
           /* ROS dependencies */
           "org.ros.rosjava_core" % "rosjava" % "0.2.0",
           /* Other dependencies */
@@ -75,7 +76,8 @@ object MyBuild extends Build {
           "net.automatalib" % "automata-core" % "0.4.1",
           "net.automatalib" % "automata-misc-parent" % "0.4.1",
           "net.automatalib" % "automata-util" % "0.4.1",
-          "io.github.dzufferey" %% "misc-scala-utils" % "0.1-SNAPSHOT"
+          "io.github.dzufferey" %% "misc-scala-utils" % "0.1-SNAPSHOT",
+          "io.github.dzufferey" %% "scala-smtlib-interface" % "0.1-SNAPSHOT"
       )
     )
   ).dependsOn(compiler)
