@@ -4,8 +4,10 @@ import react.message.Primitive
 import react.runtime.MessageListenerRW
 import react.Executor
 import react.robot._
+import react.verification.Playground
 import react.verification.model._
 import react.verification.environment._
+import react.verification.modelchecker.BranchingPoint
 import dzufferey.smtlib._
 import dzufferey.utils._
 import dzufferey.utils.LogLevel._
@@ -13,10 +15,102 @@ import dzufferey.utils.LogLevel._
 case class Input(v: Variable, topic: String)
 case class Fun(name: String, args: List[Variable], body: Formula)
 
-class GenericRobot( bBox: Box2D, inputs: List[Input], fcts: List[Fun], constraints: Formula) extends GroundRobot(bBox, None) {
+class GenericRobot( pg: Playground,
+                    bBox: Box2D,
+                    inputs: List[Input],
+                    fcts: List[Fun],
+                    constraints: Formula ) extends GroundRobot(bBox, None) {
 
   override protected def moveFor(t: Int) = {
-    ???
+    Logger.logAndThrow("GenericRobot", Error, "should not be used")
+  }
+
+  val xIntervals: List[Double] = {
+    val steps = ((pg.xMax - pg.xMin) / pg.xDiscretization).toInt
+    (for (i <- 0 to steps) yield pg.xMin + i * pg.xDiscretization).toList
+  }
+
+  val yIntervals: List[Double] = {
+    val steps = ((pg.yMax - pg.yMin) / pg.yDiscretization).toInt
+    (for (i <- 0 to steps) yield pg.yMin + i * pg.yDiscretization).toList
+  }
+
+  assert(fcts.isEmpty, "TODO support Fun")
+
+  def baseConstraints = {
+    val in = inputs.flatMap( i => store.get(i.v).map( v => Eq(i.v, Literal(v))) )
+    dzufferey.smtlib.Application(And, constraints :: in).setType(Bool)
+  }
+
+  protected def getMinX: Double = {
+    val cstr = baseConstraints
+    xIntervals.reverse.find( v => {
+      val cutting = Lt(Variable("x").setType(Real), Literal(v))
+      val solver = DReal(QF_NRA)
+      solver.testB(And(baseConstraints, cutting))
+    }).getOrElse(pg.xMax.toDouble) + pg.xDiscretization
+  }
+
+  protected def getMaxX: Double = {
+    val cstr = baseConstraints
+    xIntervals.find( v => {
+      val cutting = Gt(Variable("x").setType(Real), Literal(v))
+      val solver = DReal(QF_NRA)
+      solver.testB(And(baseConstraints, cutting))
+    }).getOrElse(pg.xMin.toDouble) - pg.xDiscretization
+  }
+  
+  protected def getMinY: Double = {
+    val cstr = baseConstraints
+    xIntervals.reverse.find( v => {
+      val cutting = Lt(Variable("y").setType(Real), Literal(v))
+      val solver = DReal(QF_NRA)
+      solver.testB(And(baseConstraints, cutting))
+    }).getOrElse(pg.yMax.toDouble) + pg.yDiscretization
+  }
+
+  protected def getMaxY: Double = {
+    val cstr = baseConstraints
+    xIntervals.find( v => {
+      val cutting = Gt(Variable("y").setType(Real), Literal(v))
+      val solver = DReal(QF_NRA)
+      solver.testB(And(baseConstraints, cutting))
+    }).getOrElse(pg.yMin.toDouble) - pg.yDiscretization
+  }
+  
+  override def elapseBP(t: Int): BranchingPoint = {
+
+    val minX: Double = getMinX
+    val maxX: Double = getMaxX
+    val minY: Double = getMinY
+    val maxY: Double = getMaxY
+
+    val xs = if (minX < maxX) 2
+             else if (minX == maxX) 1
+             else 0
+    val ys = if (minY < maxY) 2
+             else if (minY == maxY) 1
+             else 0
+    
+    val alt =
+      if (xs*ys == 1) 1
+      else if (xs*ys > 1) xs*ys + 1
+      else Logger.logAndThrow("GenericRobot", Error, "movement equations do not have a solution ?!!")
+
+    new BranchingPoint {
+      def alternatives = alt
+  
+      def act(alt: Int): List[String] = {
+        alt match {
+          case 1 => x = minX; y = minY
+          case 2 => x = maxX; y = maxY
+          case 3 => x = minX; y = maxY
+          case 4 => x = maxX; y = minY
+          case _ => x = (minX + maxX)/2; y = (minY + maxY)/2
+        }
+        List("elapse("+t+", "+alt+")")
+      }
+    }
   }
 
   var store = Map[Variable, Short]()
@@ -76,7 +170,17 @@ object GenericRobot {
       Logger.logAndThrow("GenericRobot", Error, "expected expression, not ()")
   }
 
-  def apply(sexprs: List[SExpr]): GenericRobot = {
+  def apply(pg: Playground, fileName: String): GenericRobot = {
+    val content = IO.readTextFile(fileName)
+    val sexpres = SExprParser.parse(content)
+    sexpres match {
+      case Some(lst) => apply(pg, lst)
+      case None =>
+        Logger.logAndThrow("GenericRobot", Error, "could not parse:\n" + content)
+    }
+  }
+
+  def apply(pg: Playground, sexprs: List[SExpr]): GenericRobot = {
     
     var bBox = List[Box2D]()
     var inputs = List[Input]()
@@ -123,7 +227,7 @@ object GenericRobot {
         b
     }
 
-    new GenericRobot(bb, inputs, funs, And.application(cstrs))
+    new GenericRobot(pg, bb, inputs, funs, And.application(cstrs))
   }
 
 }

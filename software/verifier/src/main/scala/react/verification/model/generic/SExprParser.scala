@@ -17,4 +17,16 @@ object SExprParser extends RegexParsers {
     | nonWhite                          ^^ { op => Atom(op) }
   )
 
+  def sExprs: Parser[List[SExpr]] = rep(sExpr)
+
+  def parse(str: String): Option[List[SExpr]] = {
+    val result = parse(sExprs, str)
+    if (result.successful) {
+      val cmds = result.get
+      Some(cmds)
+    } else {
+      None
+    }
+  }
+
 }
