@@ -4,7 +4,7 @@ import Keys._
 object BuildSettings {
   val baseDir = System.getProperty("user.dir")
   val buildVersion = "0.1.0-SNAPSHOT"
-  val buildScalaVersion = System.getProperty("scala.version", "2.11.4")
+  val buildScalaVersion = System.getProperty("scala.version", "2.11.5")
   val buildSettings = Defaults.defaultSettings ++ Seq(
     version := buildVersion,
     scalaVersion := buildScalaVersion,
