@@ -34,56 +34,74 @@ class GenericRobot( pg: Playground,
     val steps = ((pg.yMax - pg.yMin) / pg.yDiscretization).toInt
     (for (i <- 0 to steps) yield pg.yMin + i * pg.yDiscretization).toList
   }
+  
+  val yawIntervals: List[Double] = {
+    val steps = (2 * math.Pi / pg.fpDiscretization).toInt
+    (for (i <- 0 to steps) yield -math.Pi + i * pg.fpDiscretization).toList
+  }
 
-  assert(fcts.isEmpty, "TODO support Fun")
+  def prepareSolver = {
+    ???
+  }
 
   def baseConstraints = {
+    assert(fcts.isEmpty, "TODO support Fun")
     val in = inputs.flatMap( i => store.get(i.v).map( v => Eq(i.v, Literal(v))) )
     dzufferey.smtlib.Application(And, constraints :: in).setType(Bool)
   }
-
-  protected def getMinX: Double = {
+  
+  protected def getMin(t: Double, v: Variable, intervals: List[Double]): Option[Double] = {
     val cstr = baseConstraints
-    xIntervals.reverse.find( v => {
-      val cutting = Lt(Variable("x").setType(Real), Literal(v))
+    intervals.reverse.find( value => {
+      val cutting = Lt(v, Literal(value))
       val solver = DReal(QF_NRA)
-      solver.testB(And(baseConstraints, cutting))
-    }).getOrElse(pg.xMax.toDouble) + pg.xDiscretization
+      val time = Eq(Variable("t").setType(Real), Divides(Literal(t), Literal(1000.0)))
+      solver.testB(And( time, And(baseConstraints, cutting)))
+    })
   }
 
-  protected def getMaxX: Double = {
+  protected def getMax(t: Double, v: Variable, intervals: List[Double]): Option[Double] = {
     val cstr = baseConstraints
-    xIntervals.find( v => {
-      val cutting = Gt(Variable("x").setType(Real), Literal(v))
+    intervals.find( value => {
+      val cutting = Gt(v, Literal(value))
       val solver = DReal(QF_NRA)
-      solver.testB(And(baseConstraints, cutting))
-    }).getOrElse(pg.xMin.toDouble) - pg.xDiscretization
+      val time = Eq(Variable("t").setType(Real), Divides(Literal(t), Literal(1000.0)))
+      solver.testB(And( time, And(baseConstraints, cutting)))
+    })
+  }
+
+  protected def getMinX(t: Double): Double = {
+    getMin(t, Variable("x").setType(Real), xIntervals).getOrElse(pg.xMax.toDouble) + pg.xDiscretization
+  }
+
+  protected def getMaxX(t: Double): Double = {
+    getMax(t, Variable("x").setType(Real), xIntervals).getOrElse(pg.xMin.toDouble) - pg.xDiscretization
   }
   
-  protected def getMinY: Double = {
-    val cstr = baseConstraints
-    xIntervals.reverse.find( v => {
-      val cutting = Lt(Variable("y").setType(Real), Literal(v))
-      val solver = DReal(QF_NRA)
-      solver.testB(And(baseConstraints, cutting))
-    }).getOrElse(pg.yMax.toDouble) + pg.yDiscretization
+  protected def getMinY(t: Double): Double = {
+    getMin(t, Variable("y").setType(Real), yIntervals).getOrElse(pg.yMax.toDouble) + pg.yDiscretization
   }
 
-  protected def getMaxY: Double = {
-    val cstr = baseConstraints
-    xIntervals.find( v => {
-      val cutting = Gt(Variable("y").setType(Real), Literal(v))
-      val solver = DReal(QF_NRA)
-      solver.testB(And(baseConstraints, cutting))
-    }).getOrElse(pg.yMin.toDouble) - pg.yDiscretization
+  protected def getMaxY(t: Double): Double = {
+    getMax(t, Variable("y").setType(Real), yIntervals).getOrElse(pg.yMin.toDouble) - pg.yDiscretization
+  }
+  
+  protected def getMinYaw(t: Double): Double = {
+    getMin(t, Variable("yaw").setType(Real), yawIntervals).getOrElse(10.0) + pg.fpDiscretization
+  }
+
+  protected def getMaxYaw(t: Double): Double = {
+    getMax(t, Variable("yaw").setType(Real), yawIntervals).getOrElse(-10.0) - pg.fpDiscretization
   }
   
   override def elapseBP(t: Int): BranchingPoint = {
 
-    val minX: Double = getMinX
-    val maxX: Double = getMaxX
-    val minY: Double = getMinY
-    val maxY: Double = getMaxY
+    val minX: Double = getMinX(t)
+    val maxX: Double = getMaxX(t)
+    val minY: Double = getMinY(t)
+    val maxY: Double = getMaxY(t)
+    val minYaw: Double = getMinYaw(t)
+    val maxYaw: Double = getMaxYaw(t)
 
     val xs = if (minX < maxX) 2
              else if (minX == maxX) 1
@@ -91,23 +109,40 @@ class GenericRobot( pg: Playground,
     val ys = if (minY < maxY) 2
              else if (minY == maxY) 1
              else 0
+    val yaws = if (minYaw < maxYaw) 2
+             else if (minYaw == maxYaw) 1
+             else 0
     
     val alt =
-      if (xs*ys == 1) 1
-      else if (xs*ys > 1) xs*ys + 1
+      if (xs*ys*yaws == 1) 1
+      else if (xs*ys*yaws > 1) xs*ys*yaws + 1
       else Logger.logAndThrow("GenericRobot", Error, "movement equations do not have a solution ?!!")
 
     new BranchingPoint {
       def alternatives = alt
   
+      //corners of cube and center
       def act(alt: Int): List[String] = {
-        alt match {
-          case 1 => x = minX; y = minY
-          case 2 => x = maxX; y = maxY
-          case 3 => x = minX; y = maxY
-          case 4 => x = maxX; y = minY
-          case _ => x = (minX + maxX)/2; y = (minY + maxY)/2
-        }
+        if (yaws == 1) 
+          alt match {
+            case 1 => x = minX; y = minY; orientation = (maxYaw - minYaw)/2
+            case 2 => x = maxX; y = maxY; orientation = (maxYaw - minYaw)/2
+            case 3 => x = minX; y = maxY; orientation = (maxYaw - minYaw)/2
+            case 4 => x = maxX; y = minY; orientation = (maxYaw - minYaw)/2
+            case _ => x = (minX + maxX)/2; y = (minY + maxY)/2; orientation = (maxYaw - minYaw)/2
+          }
+        else
+          alt match {
+            case 1 => x = minX; y = minY; orientation = minYaw
+            case 2 => x = maxX; y = maxY; orientation = minYaw
+            case 3 => x = minX; y = maxY; orientation = minYaw
+            case 4 => x = maxX; y = minY; orientation = minYaw
+            case 5 => x = minX; y = minY; orientation = maxYaw
+            case 6 => x = maxX; y = maxY; orientation = maxYaw
+            case 7 => x = minX; y = maxY; orientation = maxYaw
+            case 8 => x = maxX; y = minY; orientation = maxYaw
+            case _ => x = (minX + maxX)/2; y = (minY + maxY)/2; orientation = (maxYaw - minYaw)/2
+          }
         List("elapse("+t+", "+alt+")")
       }
     }
@@ -197,11 +232,12 @@ object GenericRobot {
           val v = Variable(name).setType(Real)
           cstrs ::= Eq(v, parseFormula(formula))
         case Application("assert", List(formula)) =>
-          cstrs ::= Eq(parseFormula(formula))
+          cstrs ::= parseFormula(formula)
         case Application("let", List(Atom(name), args, formula)) =>
           val args2 = args match {
-            case Application(i1, is) => (i1 :: is).map{
-              case Atom(n) => Variable(n).setType(Real)
+            case Application(i1, is) => (Atom(i1) :: is).flatMap{
+              case Atom(n) => List(Variable(n).setType(Real))
+              case SNil => Nil
               case e => Logger.logAndThrow("GenericRobot", Error, "argument should be atom, not " + e)
             }
             case SNil => Nil
