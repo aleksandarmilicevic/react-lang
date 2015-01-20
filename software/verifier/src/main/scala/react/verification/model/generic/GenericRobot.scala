@@ -13,7 +13,14 @@ import dzufferey.utils._
 import dzufferey.utils.LogLevel._
 
 case class Input(v: Variable, topic: String)
-case class Fun(name: String, args: List[Variable], body: Formula)
+case class Fun(name: String, args: List[Variable], body: Formula) {
+  def apply(a: List[Formula]) = {
+    assert(a.length == args.length, "wrong arity when applying " + name)
+    val subst = args.zip(a).toMap[Formula, Formula]
+    def fct(f: Formula): Formula = subst.getOrElse(f, f)
+    FormulaUtils.map(fct, body)
+  }
+}
 
 class GenericRobot( pg: Playground,
                     bBox: Box2D,
@@ -39,59 +46,95 @@ class GenericRobot( pg: Playground,
     val steps = (2 * math.Pi / pg.fpDiscretization).toInt
     (for (i <- 0 to steps) yield -math.Pi + i * pg.fpDiscretization).toList
   }
-
-  def prepareSolver = {
-    ???
-  }
+  
+  protected val timeVar = Variable("t").setType(Real)
+  protected val xVar    = Variable("x").setType(Real)
+  protected val yVar    = Variable("y").setType(Real)
+  protected val yawVar  = Variable("yaw").setType(Real)
+  protected val xVar1   = Variable("xPrimed").setType(Real)
+  protected val yVar1   = Variable("yPrimed").setType(Real)
+  protected val yawVar1 = Variable("yawPrimed").setType(Real)
+  
 
   def baseConstraints = {
-    assert(fcts.isEmpty, "TODO support Fun")
-    val in = inputs.flatMap( i => store.get(i.v).map( v => Eq(i.v, Literal(v))) )
-    dzufferey.smtlib.Application(And, constraints :: in).setType(Bool)
+    val funMap = fcts.map(f => f.name -> f).toMap
+    def substFun(formula: Formula): Formula = formula match {
+      case dzufferey.smtlib.Application(UnInterpretedFct(name,_,_), args) if funMap contains name =>
+        val applied = funMap(name)(args)
+        FormulaUtils.map(substFun, applied)
+      case f => f
+    }
+    def fixTypes(f: Formula) {
+      val t = new FormulaUtils.Traverser {
+        override def traverse(f: Formula) {
+          super.traverse(f)
+          if (f.tpe == Int) f.setType(Real)
+        }
+      }
+      t.traverse(f)
+    }
+    val in = inputs.flatMap( i => store.get(i.v).map( v => Eq(i.v, Literal(v.toDouble))) )
+    val pos = List(
+      Eq(xVar, Literal(x)), //TODO discretization
+      Eq(yVar, Literal(y)), //TODO discretization
+      Eq(yawVar, Literal(orientation)) //TODO discretization
+    )
+    val allCstrs = dzufferey.smtlib.Application(And, constraints :: pos ::: in).setType(Bool)
+    val withDefs = FormulaUtils.map(substFun, allCstrs)
+    fixTypes(withDefs)
+    withDefs 
   }
-  
+
   protected def getMin(t: Double, v: Variable, intervals: List[Double]): Option[Double] = {
     val cstr = baseConstraints
-    intervals.reverse.find( value => {
+    intervals.find( value => {
       val cutting = Lt(v, Literal(value))
       val solver = DReal(QF_NRA)
-      val time = Eq(Variable("t").setType(Real), Divides(Literal(t), Literal(1000.0)))
-      solver.testB(And( time, And(baseConstraints, cutting)))
+      //val time = Eq(timeVar, Divides(Literal(t), Literal(1000.0))) //TODO Int vs Real
+      val time = Eq(timeVar, Literal(t/1000.0))
+      val res = solver.testB(And( time, And(baseConstraints, cutting)))
+      //Logger("GenericRobot", Notice, v + " < " + value + " → " + res)
+      res
     })
   }
 
   protected def getMax(t: Double, v: Variable, intervals: List[Double]): Option[Double] = {
     val cstr = baseConstraints
-    intervals.find( value => {
+    intervals.reverse.find( value => {
       val cutting = Gt(v, Literal(value))
       val solver = DReal(QF_NRA)
-      val time = Eq(Variable("t").setType(Real), Divides(Literal(t), Literal(1000.0)))
-      solver.testB(And( time, And(baseConstraints, cutting)))
+      //val time = Eq(timeVar, Divides(Literal(t), Literal(1000.0))) //TODO Int vs Real
+      val time = Eq(timeVar, Literal(t/1000.0))
+      val res = solver.testB(And( time, And(baseConstraints, cutting)))
+      //Logger("GenericRobot", Notice, v + " > " + value + " → " + res)
+      res
     })
   }
 
+  //TODO make that cleaner and figure out how δ-sat influence > vs ≥
+
   protected def getMinX(t: Double): Double = {
-    getMin(t, Variable("x").setType(Real), xIntervals).getOrElse(pg.xMax.toDouble) + pg.xDiscretization
+    getMin(t, xVar1, xIntervals).getOrElse(pg.xMax.toDouble) //- pg.xDiscretization
   }
 
   protected def getMaxX(t: Double): Double = {
-    getMax(t, Variable("x").setType(Real), xIntervals).getOrElse(pg.xMin.toDouble) - pg.xDiscretization
+    getMax(t, xVar1, xIntervals).getOrElse(pg.xMin.toDouble) //+ pg.xDiscretization
   }
   
   protected def getMinY(t: Double): Double = {
-    getMin(t, Variable("y").setType(Real), yIntervals).getOrElse(pg.yMax.toDouble) + pg.yDiscretization
+    getMin(t, yVar1, yIntervals).getOrElse(pg.yMax.toDouble) //- pg.yDiscretization
   }
 
   protected def getMaxY(t: Double): Double = {
-    getMax(t, Variable("y").setType(Real), yIntervals).getOrElse(pg.yMin.toDouble) - pg.yDiscretization
+    getMax(t, yVar1, yIntervals).getOrElse(pg.yMin.toDouble) //+ pg.yDiscretization
   }
   
   protected def getMinYaw(t: Double): Double = {
-    getMin(t, Variable("yaw").setType(Real), yawIntervals).getOrElse(10.0) + pg.fpDiscretization
+    getMin(t, yawVar1, yawIntervals).getOrElse(10.0) - pg.fpDiscretization
   }
 
   protected def getMaxYaw(t: Double): Double = {
-    getMax(t, Variable("yaw").setType(Real), yawIntervals).getOrElse(-10.0) - pg.fpDiscretization
+    getMax(t, yawVar1, yawIntervals).getOrElse(-10.0) //+ pg.fpDiscretization
   }
   
   override def elapseBP(t: Int): BranchingPoint = {
@@ -102,6 +145,10 @@ class GenericRobot( pg: Playground,
     val maxY: Double = getMaxY(t)
     val minYaw: Double = getMinYaw(t)
     val maxYaw: Double = getMaxYaw(t)
+      
+    Logger("GenericRobot", Notice, "minX: " + minX + ", maxX: " + maxX)
+    Logger("GenericRobot", Notice, "minY: " + minY + ", maxY: " + maxY)
+    Logger("GenericRobot", Notice, "minΘ: " + minYaw + ", maxΘ: " + maxYaw)
 
     val xs = if (minX < maxX) 2
              else if (minX == maxX) 1
@@ -229,7 +276,7 @@ object GenericRobot {
         case Application("input", List(Atom(name), Atom(port))) =>
           inputs ::= Input(Variable(name).setType(Real), port)
         case Application("output", List(Atom(name), formula)) =>
-          val v = Variable(name).setType(Real)
+          val v = Variable(name + "Primed").setType(Real) //TODO really ?
           cstrs ::= Eq(v, parseFormula(formula))
         case Application("assert", List(formula)) =>
           cstrs ::= parseFormula(formula)
