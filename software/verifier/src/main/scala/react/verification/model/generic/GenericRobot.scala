@@ -11,6 +11,7 @@ import react.verification.modelchecker.BranchingPoint
 import dzufferey.smtlib._
 import dzufferey.utils._
 import dzufferey.utils.LogLevel._
+import Utils._
 
 case class Input(v: Variable, topic: String)
 case class Fun(name: String, args: List[Variable], body: Formula) {
@@ -32,19 +33,19 @@ class GenericRobot( pg: Playground,
     Logger.logAndThrow("GenericRobot", Error, "should not be used")
   }
 
-  val xIntervals: List[Double] = {
+  val xIntervals: Array[Double] = {
     val steps = ((pg.xMax - pg.xMin) / pg.xDiscretization).toInt
-    (for (i <- 0 to steps) yield pg.xMin + i * pg.xDiscretization).toList
+    (for (i <- 0 to steps) yield pg.xMin + i * pg.xDiscretization).toArray
   }
 
-  val yIntervals: List[Double] = {
+  val yIntervals: Array[Double] = {
     val steps = ((pg.yMax - pg.yMin) / pg.yDiscretization).toInt
-    (for (i <- 0 to steps) yield pg.yMin + i * pg.yDiscretization).toList
+    (for (i <- 0 to steps) yield pg.yMin + i * pg.yDiscretization).toArray
   }
   
-  val yawIntervals: List[Double] = {
+  val yawIntervals: Array[Double] = {
     val steps = (2 * math.Pi / pg.fpDiscretization).toInt
-    (for (i <- 0 to steps) yield -math.Pi + i * pg.fpDiscretization).toList
+    (for (i <- 0 to steps) yield -math.Pi + i * pg.fpDiscretization).toArray
   }
   
   protected val timeVar = Variable("t").setType(Real)
@@ -56,6 +57,7 @@ class GenericRobot( pg: Playground,
   protected val yawVar1 = Variable("yawPrimed").setType(Real)
   
 
+  //TODO we need to add bounds to the variables
   def baseConstraints = {
     val funMap = fcts.map(f => f.name -> f).toMap
     def substFun(formula: Formula): Formula = formula match {
@@ -64,77 +66,114 @@ class GenericRobot( pg: Playground,
         FormulaUtils.map(substFun, applied)
       case f => f
     }
-    def fixTypes(f: Formula) {
-      val t = new FormulaUtils.Traverser {
-        override def traverse(f: Formula) {
-          super.traverse(f)
-          if (f.tpe == Int) f.setType(Real)
-        }
-      }
-      t.traverse(f)
-    }
     val in = inputs.flatMap( i => store.get(i.v).map( v => Eq(i.v, Literal(v.toDouble))) )
     val pos = List(
       Eq(xVar, Literal(x)), //TODO discretization
       Eq(yVar, Literal(y)), //TODO discretization
       Eq(yawVar, Literal(orientation)) //TODO discretization
     )
-    val allCstrs = dzufferey.smtlib.Application(And, constraints :: pos ::: in).setType(Bool)
+    val bounds = List(
+      Lt(xVar1, Literal(pg.xMax + pg.xDiscretization)),
+      Gt(xVar1, Literal(pg.xMin - pg.xDiscretization)),
+      Lt(yVar1, Literal(pg.yMax + pg.yDiscretization)),
+      Gt(yVar1, Literal(pg.yMin - pg.yDiscretization)),
+      Lt(yawVar1, Literal(math.Pi + pg.fpDiscretization)),
+      Gt(yawVar1, Literal(-math.Pi - pg.fpDiscretization))
+    )
+    val allCstrs = dzufferey.smtlib.Application(And, constraints :: pos ::: bounds ::: in).setType(Bool)
     val withDefs = FormulaUtils.map(substFun, allCstrs)
     fixTypes(withDefs)
     withDefs 
   }
 
-  protected def getMin(t: Double, v: Variable, intervals: List[Double]): Option[Double] = {
-    val cstr = baseConstraints
-    intervals.find( value => {
-      val cutting = Lt(v, Literal(value))
-      val solver = DReal(QF_NRA)
-      //val time = Eq(timeVar, Divides(Literal(t), Literal(1000.0))) //TODO Int vs Real
-      val time = Eq(timeVar, Literal(t/1000.0))
-      val res = solver.testB(And( time, And(baseConstraints, cutting)))
-      //Logger("GenericRobot", Notice, v + " < " + value + " → " + res)
-      res
-    })
+  //find the first sat value
+  protected def firstSatSearch(mkFormula: Double => Formula, seq: Array[Double]): Option[Double] = {
+    //var cnt = 0
+    def test(idx: Int) = {
+      //cnt += 1
+      val solver = DReal(QF_NRA)//, "search_" + cnt + ".smt2")
+      solver.testB(mkFormula(seq(idx)))
+    }
+    var lo = 0
+    var hi = seq.length - 1
+    var isSat = false 
+    while (lo < hi) {
+      val middle = lo + (hi-lo)/2
+      assert(middle < hi, "no progress")
+      if (test(middle)) {
+        //println("sat at " + middle + ", " + seq(middle) )
+        hi = middle
+      } else {
+        //println("unsat at " + middle + ", " + seq(middle) )
+        lo = middle + 1
+      }
+    }
+    val res1 = if (lo == hi && test(lo)) {
+      Some(seq(lo))
+    } else {
+      None
+    }
+    ////to double check
+    //val res2 = seq.find( value => {
+    //  val solver = DReal(QF_NRA)
+    //  val formula = mkFormula(value)
+    //  val res = solver.testB(formula)
+    //  res
+    //})
+    //assert(res1 == res2, "res1: " + res1 + ", res2: " + res2 + ", seq: " + seq.mkString("[",",","]") + ", lo: " + lo + ", hi: " + hi)
+    res1
   }
 
-  protected def getMax(t: Double, v: Variable, intervals: List[Double]): Option[Double] = {
-    val cstr = baseConstraints
-    intervals.reverse.find( value => {
-      val cutting = Gt(v, Literal(value))
-      val solver = DReal(QF_NRA)
-      //val time = Eq(timeVar, Divides(Literal(t), Literal(1000.0))) //TODO Int vs Real
-      val time = Eq(timeVar, Literal(t/1000.0))
-      val res = solver.testB(And( time, And(baseConstraints, cutting)))
-      //Logger("GenericRobot", Notice, v + " > " + value + " → " + res)
-      res
-    })
+  protected def getMin(t: Double, v: Variable, intervals: Array[Double]): Option[Double] = {
+    val time = Eq(timeVar, Divides(Literal(t), Literal(1000.0)).setType(Real)) //Int vs Real
+    val cstr = And(time, baseConstraints)
+    def mkFormula(value: Double) = And(cstr, Leq(v, Literal(value)))
+    firstSatSearch(mkFormula, intervals)
+  }
+
+  protected def getMax(t: Double, v: Variable, intervals: Array[Double]): Option[Double] = {
+    val time = Eq(timeVar, Divides(Literal(t), Literal(1000.0)).setType(Real)) //Int vs Real
+    val cstr = And(time, baseConstraints)
+    def mkFormula(value: Double) = And(cstr, Geq(v, Literal(value)))
+    firstSatSearch(mkFormula, intervals.reverse)
   }
 
   //TODO make that cleaner and figure out how δ-sat influence > vs ≥
 
   protected def getMinX(t: Double): Double = {
-    getMin(t, xVar1, xIntervals).getOrElse(pg.xMax.toDouble) //- pg.xDiscretization
+    val res = getMin(t, xVar1, xIntervals)
+    //println("getMinX: " + res)
+    res.getOrElse(pg.xMax.toDouble) //- pg.xDiscretization
   }
 
   protected def getMaxX(t: Double): Double = {
-    getMax(t, xVar1, xIntervals).getOrElse(pg.xMin.toDouble) //+ pg.xDiscretization
+    val res = getMax(t, xVar1, xIntervals)
+    //println("getMaxX: " + res)
+    res.getOrElse(pg.xMin.toDouble) //+ pg.xDiscretization
   }
   
   protected def getMinY(t: Double): Double = {
-    getMin(t, yVar1, yIntervals).getOrElse(pg.yMax.toDouble) //- pg.yDiscretization
+    val res = getMin(t, yVar1, yIntervals)
+    //println("getMinY: " + res)
+    res.getOrElse(pg.yMax.toDouble) //- pg.yDiscretization
   }
 
   protected def getMaxY(t: Double): Double = {
-    getMax(t, yVar1, yIntervals).getOrElse(pg.yMin.toDouble) //+ pg.yDiscretization
+    val res = getMax(t, yVar1, yIntervals)
+    //println("getMaxY: " + res)
+    res.getOrElse(pg.yMin.toDouble) //+ pg.yDiscretization
   }
   
   protected def getMinYaw(t: Double): Double = {
-    getMin(t, yawVar1, yawIntervals).getOrElse(10.0) - pg.fpDiscretization
+    val res = getMin(t, yawVar1, yawIntervals)
+    //println("getMinΘ: " + res)
+    res.getOrElse(10.0) - pg.fpDiscretization
   }
 
   protected def getMaxYaw(t: Double): Double = {
-    getMax(t, yawVar1, yawIntervals).getOrElse(-10.0) //+ pg.fpDiscretization
+    val res = getMax(t, yawVar1, yawIntervals)
+    //println("getMaxΘ: " + res)
+    res.getOrElse(-10.0) //+ pg.fpDiscretization
   }
   
   override def elapseBP(t: Int): BranchingPoint = {
@@ -228,29 +267,6 @@ class GenericRobot( pg: Playground,
 }
 
 object GenericRobot {
-
-  def parseFormula(e: SExpr): Formula = e match {
-    case Atom(str) =>
-      Misc.toDouble(str) match {
-        case Some(l) => Literal(l)
-        case None => Variable(str).setType(Real)
-      }
-    case Application(op, args) =>
-      val args2 = args map parseFormula
-      val symbol: Symbol = op match {
-        case "der" =>
-          DRealDecl.timeDerivative
-        case _ if InterpretedFct(op).isDefined =>
-          InterpretedFct(op).get
-        case _ if DRealDecl.fcts.exists(_.toString == op) =>
-          DRealDecl.fcts.find(_.toString == op).get
-        case other =>
-          UnInterpretedFct(other)
-      }
-      symbol.application(args2)
-    case SNil => 
-      Logger.logAndThrow("GenericRobot", Error, "expected expression, not ()")
-  }
 
   def apply(pg: Playground, fileName: String): GenericRobot = {
     val content = IO.readTextFile(fileName)

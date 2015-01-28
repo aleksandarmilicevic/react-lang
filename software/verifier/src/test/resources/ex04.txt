@@ -1,0 +1,18 @@
+( = ( + ( ^ leg1.q_a 2 ) ( ^ leg1.q_k 2 ) ( ^ leg1.q_i 2 ) ( ^ leg1.q_j 2 ) ) 1 )
+
+( = ( + ( ^ leg2.q_k 2 ) ( ^ leg2.q_a 2 ) ( ^ leg2.q_j 2 ) ( ^ leg2.q_i 2 ) ) 1 )
+
+( = ( + ( * leg1.beamwidth ( + ( ^ leg1.q_a 2 ) ( * -1 ( ^ leg1.q_j 2 ) ) ( ^ leg1.q_i 2 ) ( * -1 ( ^ leg1.q_k 2 ) ) ) ) leg1.dx ) ( + ( * leg2.beamwidth ( + ( * -1 ( ^ leg2.q_k 2 ) ) ( ^ leg2.q_a 2 ) ( ^ leg2.q_i 2 ) ( * -1 ( ^ leg2.q_j 2 ) ) ) ) ( * leg2.length ( + ( * -2 leg2.q_a leg2.q_k ) ( * 2 leg2.q_i leg2.q_j ) ) ) leg2.dx ) )
+
+( = ( + ( * leg1.beamwidth ( + ( * 2 leg1.q_a leg1.q_k ) ( * 2 leg1.q_i leg1.q_j ) ) ) leg1.dy ) ( + ( * leg2.beamwidth ( + ( * 2 leg2.q_i leg2.q_j ) ( * 2 leg2.q_a leg2.q_k ) ) ) leg2.dy ( * leg2.length ( + ( * -1 ( ^ leg2.q_i 2 ) ) ( * -1 ( ^ leg2.q_k 2 ) ) ( ^ leg2.q_a 2 ) ( ^ leg2.q_j 2 ) ) ) ) )
+
+( = ( + ( * leg1.beamwidth ( + ( * 2 leg1.q_i leg1.q_k ) ( * -2 leg1.q_a leg1.q_j ) ) ) leg1.dz ) ( + ( * leg2.beamwidth ( + ( * 2 leg2.q_i leg2.q_k ) ( * -2 leg2.q_a leg2.q_j ) ) ) leg2.dz ( * leg2.length ( + ( * 2 leg2.q_a leg2.q_i ) ( * 2 leg2.q_j leg2.q_k ) ) ) ) )
+
+( = leg1.dx ( + ( * leg2.length ( + ( * -2 leg2.q_a leg2.q_k ) ( * 2 leg2.q_i leg2.q_j ) ) ) leg2.dx ) )
+
+( = leg1.dy ( + leg2.dy ( * leg2.length ( + ( * -1 ( ^ leg2.q_i 2 ) ) ( * -1 ( ^ leg2.q_k 2 ) ) ( ^ leg2.q_a 2 ) ( ^ leg2.q_j 2 ) ) ) ) )
+
+( = leg1.dz ( + leg2.dz ( * leg2.length ( + ( * 2 leg2.q_a leg2.q_i ) ( * 2 leg2.q_j leg2.q_k ) ) ) ) )
+
+( = ( + ( * ( + ( * -2 leg1.q_a leg1.q_i ) ( * 2 leg1.q_j leg1.q_k ) ) ( + ( * -2 leg2.q_a leg2.q_i ) ( * 2 leg2.q_j leg2.q_k ) ) ) ( * ( + ( * 2 leg1.q_i leg1.q_k ) ( * 2 leg1.q_a leg1.q_j ) ) ( + ( * 2 leg2.q_i leg2.q_k ) ( * 2 leg2.q_a leg2.q_j ) ) ) ( * ( + ( ^ leg1.q_a 2 ) ( ^ leg1.q_k 2 ) ( * -1 ( ^ leg1.q_i 2 ) ) ( * -1 ( ^ leg1.q_j 2 ) ) ) ( + ( * -1 ( ^ leg2.q_i 2 ) ) ( ^ leg2.q_k 2 ) ( ^ leg2.q_a 2 ) ( * -1 ( ^ leg2.q_j 2 ) ) ) ) ) ( cos ( * (/ 1 180) pi angle ) ) )
+
