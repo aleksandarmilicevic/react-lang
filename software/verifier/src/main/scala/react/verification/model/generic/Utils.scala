@@ -26,16 +26,19 @@ object Utils {
     case Application(op, args) =>
       val args2 = args map parseFormula
       val symbol: Symbol = op match {
-        case "der" =>
+        case "D" =>
           DRealDecl.timeDerivative
         case _ if InterpretedFct(op).isDefined =>
+          //println("known symbol: " + op)
           InterpretedFct(op).get
         case _ if DRealDecl.fcts.exists(_.toString == op) =>
+          //println("known symbol: " + op)
           DRealDecl.fcts.find(_.toString == op).get
         case other =>
+          Logger("GenericRobot", Debug, "unknown symbol: " + op)
           UnInterpretedFct(other)
       }
-      symbol.application(args2)
+      symbol(args2:_*)
     case SNil => 
       Logger.logAndThrow("GenericRobot", Error, "expected expression, not ()")
   }

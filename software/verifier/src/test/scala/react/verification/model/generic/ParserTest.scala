@@ -43,7 +43,22 @@ class ParserTest extends FunSuite {
     val formula = fvs.foldLeft(unbounded)( (acc, v) => And(Geq(v, lo), And(Leq(v, hi), acc)) )
     fixTypes(formula)
     //val dReal = DReal(QF_NRA, "test.smt2")
+    //val dReal = DReal(QF_NRA_ODE, "test.smt2")
     //assert(dReal.testB(formula))
+  }
+  
+  test("parse 5") {
+    val content = dzufferey.utils.IO.readTextFile(Resources.path + "ex05.txt")
+    val sexpres = SExprParser.parse(content)
+    assert(sexpres.isDefined)
+    //for(s <- sexpres.get) println(s)
+    import Utils._
+    val unbounded = sexpres.get.map(s => parseFormula(s)).reduce(And(_, _))
+    val fvs = unbounded.freeVariables
+    val lo = Literal(-5.0)
+    val hi = Literal(5.0)
+    val formula = fvs.foldLeft(unbounded)( (acc, v) => And(Geq(v, lo), And(Leq(v, hi), acc)) )
+    fixTypes(formula)
   }
 
   test("build robot 1") {

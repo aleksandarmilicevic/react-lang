@@ -41,7 +41,8 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
 //    publish(servoRight, Primitive.Int16(rSpeed))
 //}
 
-  val defaultSpeed: Short = 8 // 78 for 2.44 rad/s in the MC
+  //val defaultSpeed: Short = 8 // 78 for 2.44 rad/s in the MC
+  val defaultSpeed: Short = 78 // 2.44 rad/s in the MC
   var lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
   var rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)
   //what we got last time after calibration
@@ -52,7 +53,7 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
 
   every(100) {
     val newDir = onTarget ^ clockwise
-    if (newDir != currDirection) {
+  //if (newDir != currDirection) {
       if (newDir) {
         //Console.println("turning right")
         publish(servoLeft, Primitive.Int16(lSpeed))
@@ -63,7 +64,7 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
         publish(servoRight, Primitive.Int16(rSpeed))
       }
       currDirection = newDir
-    }
+  //}
   }
 
 }

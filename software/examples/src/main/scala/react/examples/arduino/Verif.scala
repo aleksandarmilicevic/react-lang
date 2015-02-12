@@ -10,11 +10,11 @@ abstract class VerifTemplate extends World {
 
   val xMin = -1
   val xMax = 1
-  val xDiscretization = 0.015625 / 4 / 4
+  val xDiscretization = 0.015625 / 4 // 4
 
   val yMin = -1
   val yMax = 1
-  val yDiscretization = 0.015625 / 4 / 4
+  val yDiscretization = 0.015625 / 4 // 4
 
   val enclosed = true
   
@@ -70,6 +70,7 @@ abstract class VerifTemplate extends World {
                                false
                              )
     m.addSensor(gs, Pose2D(0.05, 0, 0))
+    //m.addSensor(gs, Pose2D(-0.05, 0, 0)) //sensor on the back
   }
   
   def addSensorDistance(m: GroundRobot, id: String, topic: String) {

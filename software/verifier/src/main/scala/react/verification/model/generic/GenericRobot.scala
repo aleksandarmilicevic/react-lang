@@ -80,7 +80,7 @@ class GenericRobot( pg: Playground,
       Lt(yawVar1, Literal(math.Pi + pg.fpDiscretization)),
       Gt(yawVar1, Literal(-math.Pi - pg.fpDiscretization))
     )
-    val allCstrs = dzufferey.smtlib.Application(And, constraints :: pos ::: bounds ::: in).setType(Bool)
+    val allCstrs = And((constraints :: pos ::: bounds ::: in):_*)
     val withDefs = FormulaUtils.map(substFun, allCstrs)
     fixTypes(withDefs)
     withDefs 
@@ -326,7 +326,7 @@ object GenericRobot {
         b
     }
 
-    new GenericRobot(pg, bb, inputs, funs, And.application(cstrs))
+    new GenericRobot(pg, bb, inputs, funs, And(cstrs:_*))
   }
 
 }
