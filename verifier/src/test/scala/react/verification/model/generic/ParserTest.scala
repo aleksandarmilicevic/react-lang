@@ -21,7 +21,7 @@ class ParserTest extends FunSuite {
 
   test("parse 3") {
     val content = dzufferey.utils.IO.readTextFile(Resources.path + "ex03.txt")
-    val (vars, sexpres) GenericRobot.preprocess(content)
+    val (vars, sexpres) = GenericRobot.preprocess(content)
     assert(true)
     //for(s <- sexpres.get) println(s)
   }
