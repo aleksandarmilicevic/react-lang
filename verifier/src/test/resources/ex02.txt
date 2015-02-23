@@ -1,6 +1,6 @@
 (bbox -0.1 -0.1 0.2 0.2 0)
-(input motorLeft  16)
-(input motorRight 23)
+(input motorLeft)
+(input motorRight)
 (let angularSpeed (v) (* (/ v 100) Pi))
 (let dl () (* wheelRadius (* (angularSpeed motorLeft) t)))
 (let dr () (* wheelRadius (* (angularSpeed motorRight) t)))

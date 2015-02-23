@@ -1,0 +1,233 @@
+~~~ Parameters:
+beam.depth
+beam.dx
+beam.dy
+beam.dz
+beam.length
+beam.q_a
+beam.q_i
+beam.q_j
+beam.q_k
+beam.width
+leftmotor.angle
+leftmotor.dx
+leftmotor.dy
+leftmotor.dz
+leftmotor.height
+leftmotor.horndepth
+leftmotor.hornheight
+leftmotor.hornlength
+leftmotor.hornoffset
+leftmotor.input
+leftmotor.length
+leftmotor.q_a
+leftmotor.q_i
+leftmotor.q_j
+leftmotor.q_k
+leftmotor.scale
+leftmotor.shoulderlength
+leftmotor.width
+leftwheel.dx
+leftwheel.dy
+leftwheel.dz
+leftwheel.q_a
+leftwheel.q_i
+leftwheel.q_j
+leftwheel.q_k
+leftwheel.radius
+rightmotor.angle
+rightmotor.dx
+rightmotor.dy
+rightmotor.dz
+rightmotor.height
+rightmotor.horndepth
+rightmotor.hornheight
+rightmotor.hornlength
+rightmotor.hornoffset
+rightmotor.input
+rightmotor.length
+rightmotor.q_a
+rightmotor.q_i
+rightmotor.q_j
+rightmotor.q_k
+rightmotor.scale
+rightmotor.shoulderlength
+rightmotor.width
+rightwheel.dx
+rightwheel.dy
+rightwheel.dz
+rightwheel.q_a
+rightwheel.q_i
+rightwheel.q_j
+rightwheel.q_k
+rightwheel.radius
+siminput0_input
+siminput1_input
+tail.dx
+tail.dy
+tail.dz
+tail.l
+tail.q_a
+tail.q_i
+tail.q_j
+tail.q_k
+tail.w
+
+~~~ Equations:
+( input siminput0_input )
+( input siminput1_input )
+( dynamic beam.dx )
+( dynamic beam.dy )
+( dynamic beam.dz )
+( dynamic beam.q_a )
+( dynamic beam.q_i )
+( dynamic beam.q_j )
+( dynamic beam.q_k )
+( dynamic leftmotor.angle )
+( dynamic leftmotor.dx )
+( dynamic leftmotor.dy )
+( dynamic leftmotor.dz )
+( dynamic leftmotor.input )
+( dynamic leftmotor.q_a )
+( dynamic leftmotor.q_i )
+( dynamic leftmotor.q_j )
+( dynamic leftmotor.q_k )
+( dynamic leftwheel.dx )
+( dynamic leftwheel.dy )
+( dynamic leftwheel.dz )
+( dynamic leftwheel.q_a )
+( dynamic leftwheel.q_i )
+( dynamic leftwheel.q_j )
+( dynamic leftwheel.q_k )
+( dynamic rightmotor.angle )
+( dynamic rightmotor.dx )
+( dynamic rightmotor.dy )
+( dynamic rightmotor.dz )
+( dynamic rightmotor.input )
+( dynamic rightmotor.q_a )
+( dynamic rightmotor.q_i )
+( dynamic rightmotor.q_j )
+( dynamic rightmotor.q_k )
+( dynamic rightwheel.dx )
+( dynamic rightwheel.dy )
+( dynamic rightwheel.dz )
+( dynamic rightwheel.q_a )
+( dynamic rightwheel.q_i )
+( dynamic rightwheel.q_j )
+( dynamic rightwheel.q_k )
+( dynamic tail.dx )
+( dynamic tail.dy )
+( dynamic tail.dz )
+( dynamic tail.q_a )
+( dynamic tail.q_i )
+( dynamic tail.q_j )
+( dynamic tail.q_k )
+( > beam.depth 0 )
+( > beam.length 0 )
+( > beam.width 0 )
+( > leftmotor.height 0 )
+( > leftmotor.horndepth 0 )
+( > leftmotor.hornheight 0 )
+( > leftmotor.hornlength 0 )
+( > leftmotor.hornoffset 0 )
+( > leftmotor.length 0 )
+( > leftmotor.scale 0 )
+( > leftmotor.shoulderlength 0 )
+( > leftmotor.width 0 )
+( > leftwheel.radius 0 )
+( > rightmotor.height 0 )
+( > rightmotor.horndepth 0 )
+( > rightmotor.hornheight 0 )
+( > rightmotor.hornlength 0 )
+( > rightmotor.hornoffset 0 )
+( > rightmotor.length 0 )
+( > rightmotor.scale 0 )
+( > rightmotor.shoulderlength 0 )
+( > rightmotor.width 0 )
+( > rightwheel.radius 0 )
+( > tail.l 0 )
+( > tail.w 0 )
+( == ( + ( ^ beam.q_k 2 ) ( ^ beam.q_i 2 ) ( ^ beam.q_a 2 ) ( ^ beam.q_j 2 ) ) 1 )
+( == ( + ( ^ tail.q_j 2 ) ( ^ tail.q_i 2 ) ( ^ tail.q_k 2 ) ( ^ tail.q_a 2 ) ) 1 )
+( == ( + ( ^ rightmotor.q_j 2 ) ( ^ rightmotor.q_i 2 ) ( ^ rightmotor.q_a 2 ) ( ^ rightmotor.q_k 2 ) ) 1 )
+( == ( D rightmotor.angle ) ( * rightmotor.input rightmotor.scale ) )
+( == ( + ( ^ rightwheel.q_i 2 ) ( ^ rightwheel.q_a 2 ) ( ^ rightwheel.q_j 2 ) ( ^ rightwheel.q_k 2 ) ) 1 )
+( == ( + ( ^ leftwheel.q_j 2 ) ( ^ leftwheel.q_a 2 ) ( ^ leftwheel.q_k 2 ) ( ^ leftwheel.q_i 2 ) ) 1 )
+( == ( + ( ^ leftmotor.q_i 2 ) ( ^ leftmotor.q_a 2 ) ( ^ leftmotor.q_j 2 ) ( ^ leftmotor.q_k 2 ) ) 1 )
+( == ( D leftmotor.angle ) ( * leftmotor.input leftmotor.scale ) )
+( == ( + ( ^ beam.q_k 2 ) ( * -1 ( ^ beam.q_i 2 ) ) ( ^ beam.q_a 2 ) ( * -1 ( ^ beam.q_j 2 ) ) ) ( + ( * -1 ( ^ rightmotor.q_j 2 ) ) ( * -1 ( ^ rightmotor.q_i 2 ) ) ( ^ rightmotor.q_a 2 ) ( ^ rightmotor.q_k 2 ) ) )
+( == ( + ( * 2 beam.q_a beam.q_i ) ( * 2 beam.q_j beam.q_k ) ) ( + ( * 2 rightmotor.q_a rightmotor.q_i ) ( * 2 rightmotor.q_j rightmotor.q_k ) ) )
+( == ( + ( * -2 beam.q_a beam.q_j ) ( * 2 beam.q_i beam.q_k ) ) ( + ( * 2 rightmotor.q_i rightmotor.q_k ) ( * -2 rightmotor.q_a rightmotor.q_j ) ) )
+( == ( + ( * 2 beam.q_i beam.q_j ) ( * -2 beam.q_a beam.q_k ) ) ( + ( * 2 rightmotor.q_i rightmotor.q_j ) ( * -2 rightmotor.q_a rightmotor.q_k ) ) )
+( == ( + ( * -1 ( ^ beam.q_k 2 ) ) ( ^ beam.q_i 2 ) ( ^ beam.q_a 2 ) ( * -1 ( ^ beam.q_j 2 ) ) ) ( + ( * -1 ( ^ rightmotor.q_j 2 ) ) ( ^ rightmotor.q_i 2 ) ( ^ rightmotor.q_a 2 ) ( * -1 ( ^ rightmotor.q_k 2 ) ) ) )
+( == ( + ( * 2 beam.q_i beam.q_j ) ( * 2 beam.q_a beam.q_k ) ) ( + ( * 2 rightmotor.q_i rightmotor.q_j ) ( * 2 rightmotor.q_a rightmotor.q_k ) ) )
+( == ( + ( * 2 beam.q_a beam.q_j ) ( * 2 beam.q_i beam.q_k ) ) ( + ( * 2 rightmotor.q_i rightmotor.q_k ) ( * 2 rightmotor.q_a rightmotor.q_j ) ) )
+( == ( + ( * -1 ( ^ beam.q_k 2 ) ) ( * -1 ( ^ beam.q_i 2 ) ) ( ^ beam.q_a 2 ) ( ^ beam.q_j 2 ) ) ( + ( * -1 ( ^ rightmotor.q_i 2 ) ) ( ^ rightmotor.q_j 2 ) ( ^ rightmotor.q_a 2 ) ( * -1 ( ^ rightmotor.q_k 2 ) ) ) )
+( == beam.dz rightmotor.dz )
+( == beam.dx rightmotor.dx )
+( == beam.dy rightmotor.dy )
+( == ( + ( * -2 beam.q_a beam.q_i ) ( * 2 beam.q_j beam.q_k ) ) ( + ( * -2 rightmotor.q_a rightmotor.q_i ) ( * 2 rightmotor.q_j rightmotor.q_k ) ) )
+( == ( + ( * -1 ( ^ rightmotor.q_j 2 ) ) ( * -1 ( ^ rightmotor.q_i 2 ) ) ( ^ rightmotor.q_a 2 ) ( ^ rightmotor.q_k 2 ) ) ( + ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_j 2 ) ) ( * -1 ( ^ rightwheel.q_i 2 ) ) ( ^ rightwheel.q_k 2 ) ) )
+( == ( + ( * ( + ( * 2 rightmotor.q_a rightmotor.q_i ) ( * 2 rightmotor.q_j rightmotor.q_k ) ) ( cos rightmotor.angle ) ) ( * -1 ( + ( * 2 rightmotor.q_i rightmotor.q_k ) ( * -2 rightmotor.q_a rightmotor.q_j ) ) ( sin rightmotor.angle ) ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_i ) ) )
+( == ( + ( * ( + ( * 2 rightmotor.q_a rightmotor.q_i ) ( * 2 rightmotor.q_j rightmotor.q_k ) ) ( sin rightmotor.angle ) ) ( * ( + ( * 2 rightmotor.q_i rightmotor.q_k ) ( * -2 rightmotor.q_a rightmotor.q_j ) ) ( cos rightmotor.angle ) ) ) ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) )
+( == ( + ( * ( + ( * 2 rightmotor.q_i rightmotor.q_j ) ( * -2 rightmotor.q_a rightmotor.q_k ) ) ( cos rightmotor.angle ) ) ( * -1 ( + ( * -1 ( ^ rightmotor.q_j 2 ) ) ( ^ rightmotor.q_i 2 ) ( ^ rightmotor.q_a 2 ) ( * -1 ( ^ rightmotor.q_k 2 ) ) ) ( sin rightmotor.angle ) ) ) ( + ( * -2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) )
+( == ( + ( * ( + ( * -1 ( ^ rightmotor.q_j 2 ) ) ( ^ rightmotor.q_i 2 ) ( ^ rightmotor.q_a 2 ) ( * -1 ( ^ rightmotor.q_k 2 ) ) ) ( cos rightmotor.angle ) ) ( * ( + ( * 2 rightmotor.q_i rightmotor.q_j ) ( * -2 rightmotor.q_a rightmotor.q_k ) ) ( sin rightmotor.angle ) ) ) ( + ( ^ rightwheel.q_i 2 ) ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( * -1 ( ^ rightwheel.q_j 2 ) ) ) )
+( == ( + ( * ( + ( * 2 rightmotor.q_i rightmotor.q_j ) ( * 2 rightmotor.q_a rightmotor.q_k ) ) ( cos rightmotor.angle ) ) ( * ( + ( * -1 ( ^ rightmotor.q_i 2 ) ) ( ^ rightmotor.q_j 2 ) ( ^ rightmotor.q_a 2 ) ( * -1 ( ^ rightmotor.q_k 2 ) ) ) ( sin rightmotor.angle ) ) ) ( + ( * 2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) )
+( == ( + ( * 2 rightmotor.q_i rightmotor.q_k ) ( * 2 rightmotor.q_a rightmotor.q_j ) ) ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_j ) ) )
+( == ( + ( * ( + ( * -1 ( ^ rightmotor.q_i 2 ) ) ( ^ rightmotor.q_j 2 ) ( ^ rightmotor.q_a 2 ) ( * -1 ( ^ rightmotor.q_k 2 ) ) ) ( cos rightmotor.angle ) ) ( * -1 ( + ( * 2 rightmotor.q_i rightmotor.q_j ) ( * 2 rightmotor.q_a rightmotor.q_k ) ) ( sin rightmotor.angle ) ) ) ( + ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( ^ rightwheel.q_j 2 ) ( * -1 ( ^ rightwheel.q_i 2 ) ) ) )
+( == ( + ( * rightmotor.hornheight ( + ( * -1 ( ^ rightmotor.q_j 2 ) ) ( * -1 ( ^ rightmotor.q_i 2 ) ) ( ^ rightmotor.q_a 2 ) ( ^ rightmotor.q_k 2 ) ) ) rightmotor.dz ) rightwheel.dz )
+( == ( + rightmotor.dx ( * rightmotor.hornheight ( + ( * 2 rightmotor.q_i rightmotor.q_k ) ( * 2 rightmotor.q_a rightmotor.q_j ) ) ) ) rightwheel.dx )
+( == ( + rightmotor.dy ( * rightmotor.hornheight ( + ( * -2 rightmotor.q_a rightmotor.q_i ) ( * 2 rightmotor.q_j rightmotor.q_k ) ) ) ) rightwheel.dy )
+( == ( + ( * -2 rightmotor.q_a rightmotor.q_i ) ( * 2 rightmotor.q_j rightmotor.q_k ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_i ) ) )
+( == ( + ( * -1 ( ^ beam.q_k 2 ) ) ( ^ beam.q_i 2 ) ( * -1 ( ^ beam.q_a 2 ) ) ( ^ beam.q_j 2 ) ) ( + ( ^ leftmotor.q_a 2 ) ( * -1 ( ^ leftmotor.q_i 2 ) ) ( * -1 ( ^ leftmotor.q_j 2 ) ) ( ^ leftmotor.q_k 2 ) ) )
+( == ( + ( * 2 beam.q_a beam.q_i ) ( * 2 beam.q_j beam.q_k ) ) ( + ( * 2 leftmotor.q_j leftmotor.q_k ) ( * 2 leftmotor.q_a leftmotor.q_i ) ) )
+( == ( + ( * 2 beam.q_a beam.q_j ) ( * -2 beam.q_i beam.q_k ) ) ( + ( * -2 leftmotor.q_a leftmotor.q_j ) ( * 2 leftmotor.q_i leftmotor.q_k ) ) )
+( == ( + ( * 2 beam.q_i beam.q_j ) ( * -2 beam.q_a beam.q_k ) ) ( + ( * 2 leftmotor.q_i leftmotor.q_j ) ( * -2 leftmotor.q_a leftmotor.q_k ) ) )
+( == ( + ( ^ beam.q_k 2 ) ( * -1 ( ^ beam.q_a 2 ) ) ( * -1 ( ^ beam.q_i 2 ) ) ( ^ beam.q_j 2 ) ) ( + ( * -1 ( ^ leftmotor.q_k 2 ) ) ( ^ leftmotor.q_i 2 ) ( ^ leftmotor.q_a 2 ) ( * -1 ( ^ leftmotor.q_j 2 ) ) ) )
+( == ( + ( * -2 beam.q_i beam.q_j ) ( * -2 beam.q_a beam.q_k ) ) ( + ( * 2 leftmotor.q_i leftmotor.q_j ) ( * 2 leftmotor.q_a leftmotor.q_k ) ) )
+( == ( + ( * -2 beam.q_a beam.q_j ) ( * -2 beam.q_i beam.q_k ) ) ( + ( * 2 leftmotor.q_i leftmotor.q_k ) ( * 2 leftmotor.q_a leftmotor.q_j ) ) )
+( == ( + ( * -1 ( ^ beam.q_k 2 ) ) ( * -1 ( ^ beam.q_i 2 ) ) ( ^ beam.q_a 2 ) ( ^ beam.q_j 2 ) ) ( + ( * -1 ( ^ leftmotor.q_k 2 ) ) ( ^ leftmotor.q_a 2 ) ( * -1 ( ^ leftmotor.q_i 2 ) ) ( ^ leftmotor.q_j 2 ) ) )
+( == ( + beam.dz ( * -1 beam.depth ( + ( ^ beam.q_k 2 ) ( * -1 ( ^ beam.q_i 2 ) ) ( ^ beam.q_a 2 ) ( * -1 ( ^ beam.q_j 2 ) ) ) ) ) leftmotor.dz )
+( == ( + ( * -1 beam.depth ( + ( * 2 beam.q_a beam.q_j ) ( * 2 beam.q_i beam.q_k ) ) ) beam.dx ) leftmotor.dx )
+( == ( + beam.dy ( * -1 beam.depth ( + ( * -2 beam.q_a beam.q_i ) ( * 2 beam.q_j beam.q_k ) ) ) ) leftmotor.dy )
+( == ( + ( * -2 beam.q_j beam.q_k ) ( * 2 beam.q_a beam.q_i ) ) ( + ( * -2 leftmotor.q_a leftmotor.q_i ) ( * 2 leftmotor.q_j leftmotor.q_k ) ) )
+( == ( + ( ^ leftmotor.q_a 2 ) ( * -1 ( ^ leftmotor.q_i 2 ) ) ( * -1 ( ^ leftmotor.q_j 2 ) ) ( ^ leftmotor.q_k 2 ) ) ( + ( * -1 ( ^ leftwheel.q_j 2 ) ) ( * -1 ( ^ leftwheel.q_i 2 ) ) ( ^ leftwheel.q_a 2 ) ( ^ leftwheel.q_k 2 ) ) )
+( == ( + ( * -1 ( + ( * -2 leftmotor.q_a leftmotor.q_j ) ( * 2 leftmotor.q_i leftmotor.q_k ) ) ( sin leftmotor.angle ) ) ( * ( + ( * 2 leftmotor.q_j leftmotor.q_k ) ( * 2 leftmotor.q_a leftmotor.q_i ) ) ( cos leftmotor.angle ) ) ) ( + ( * 2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) )
+( == ( + ( * ( + ( * 2 leftmotor.q_j leftmotor.q_k ) ( * 2 leftmotor.q_a leftmotor.q_i ) ) ( sin leftmotor.angle ) ) ( * ( + ( * -2 leftmotor.q_a leftmotor.q_j ) ( * 2 leftmotor.q_i leftmotor.q_k ) ) ( cos leftmotor.angle ) ) ) ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) )
+( == ( + ( * -1 ( + ( * -1 ( ^ leftmotor.q_k 2 ) ) ( ^ leftmotor.q_i 2 ) ( ^ leftmotor.q_a 2 ) ( * -1 ( ^ leftmotor.q_j 2 ) ) ) ( sin leftmotor.angle ) ) ( * ( + ( * 2 leftmotor.q_i leftmotor.q_j ) ( * -2 leftmotor.q_a leftmotor.q_k ) ) ( cos leftmotor.angle ) ) ) ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * -2 leftwheel.q_a leftwheel.q_k ) ) )
+( == ( + ( * ( + ( * 2 leftmotor.q_i leftmotor.q_j ) ( * -2 leftmotor.q_a leftmotor.q_k ) ) ( sin leftmotor.angle ) ) ( * ( + ( * -1 ( ^ leftmotor.q_k 2 ) ) ( ^ leftmotor.q_i 2 ) ( ^ leftmotor.q_a 2 ) ( * -1 ( ^ leftmotor.q_j 2 ) ) ) ( cos leftmotor.angle ) ) ) ( + ( * -1 ( ^ leftwheel.q_j 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ( ^ leftwheel.q_i 2 ) ) )
+( == ( + ( * ( + ( * -1 ( ^ leftmotor.q_k 2 ) ) ( ^ leftmotor.q_a 2 ) ( * -1 ( ^ leftmotor.q_i 2 ) ) ( ^ leftmotor.q_j 2 ) ) ( sin leftmotor.angle ) ) ( * ( + ( * 2 leftmotor.q_i leftmotor.q_j ) ( * 2 leftmotor.q_a leftmotor.q_k ) ) ( cos leftmotor.angle ) ) ) ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * 2 leftwheel.q_a leftwheel.q_k ) ) )
+( == ( + ( * 2 leftmotor.q_i leftmotor.q_k ) ( * 2 leftmotor.q_a leftmotor.q_j ) ) ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * 2 leftwheel.q_a leftwheel.q_j ) ) )
+( == ( + ( * ( + ( * -1 ( ^ leftmotor.q_k 2 ) ) ( ^ leftmotor.q_a 2 ) ( * -1 ( ^ leftmotor.q_i 2 ) ) ( ^ leftmotor.q_j 2 ) ) ( cos leftmotor.angle ) ) ( * -1 ( + ( * 2 leftmotor.q_i leftmotor.q_j ) ( * 2 leftmotor.q_a leftmotor.q_k ) ) ( sin leftmotor.angle ) ) ) ( + ( ^ leftwheel.q_j 2 ) ( * -1 ( ^ leftwheel.q_i 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ) )
+( == ( + leftmotor.dz ( * leftmotor.hornheight ( + ( ^ leftmotor.q_a 2 ) ( * -1 ( ^ leftmotor.q_i 2 ) ) ( * -1 ( ^ leftmotor.q_j 2 ) ) ( ^ leftmotor.q_k 2 ) ) ) ) leftwheel.dz )
+( == ( + leftmotor.dx ( * leftmotor.hornheight ( + ( * 2 leftmotor.q_i leftmotor.q_k ) ( * 2 leftmotor.q_a leftmotor.q_j ) ) ) ) leftwheel.dx )
+( == ( + leftmotor.dy ( * leftmotor.hornheight ( + ( * -2 leftmotor.q_a leftmotor.q_i ) ( * 2 leftmotor.q_j leftmotor.q_k ) ) ) ) leftwheel.dy )
+( == ( + ( * -2 leftmotor.q_a leftmotor.q_i ) ( * 2 leftmotor.q_j leftmotor.q_k ) ) ( + ( * -2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) )
+( == ( + ( * ( / 1 2 ) beam.length ( + ( * 2 beam.q_i beam.q_j ) ( * -2 beam.q_a beam.q_k ) ) ) beam.dx ( * ( / 1 2 ) beam.width ( + ( * -1 ( ^ beam.q_k 2 ) ) ( ^ beam.q_i 2 ) ( ^ beam.q_a 2 ) ( * -1 ( ^ beam.q_j 2 ) ) ) ) ) ( + tail.dx ( * ( / 1 2 ) tail.w ( + ( * 2 tail.q_i tail.q_j ) ( * -2 tail.q_a tail.q_k ) ) ) ( * ( / 1 2 ) tail.l ( + ( * -1 ( ^ tail.q_k 2 ) ) ( ^ tail.q_i 2 ) ( * -1 ( ^ tail.q_j 2 ) ) ( ^ tail.q_a 2 ) ) ) ) )
+( == ( + ( * ( / 1 2 ) beam.width ( + ( * 2 beam.q_i beam.q_j ) ( * 2 beam.q_a beam.q_k ) ) ) beam.dy ( * ( / 1 2 ) beam.length ( + ( * -1 ( ^ beam.q_k 2 ) ) ( * -1 ( ^ beam.q_i 2 ) ) ( ^ beam.q_a 2 ) ( ^ beam.q_j 2 ) ) ) ) ( + tail.dy ( * ( / 1 2 ) tail.l ( + ( * 2 tail.q_a tail.q_k ) ( * 2 tail.q_i tail.q_j ) ) ) ( * ( / 1 2 ) tail.w ( + ( * -1 ( ^ tail.q_k 2 ) ) ( ^ tail.q_j 2 ) ( * -1 ( ^ tail.q_i 2 ) ) ( ^ tail.q_a 2 ) ) ) ) )
+( == ( + ( * ( / 1 2 ) beam.width ( + ( * -2 beam.q_a beam.q_j ) ( * 2 beam.q_i beam.q_k ) ) ) ( * ( / 1 2 ) beam.length ( + ( * 2 beam.q_a beam.q_i ) ( * 2 beam.q_j beam.q_k ) ) ) beam.dz ) ( + ( * ( / 1 2 ) tail.l ( + ( * 2 tail.q_i tail.q_k ) ( * -2 tail.q_a tail.q_j ) ) ) ( * ( / 1 2 ) tail.w ( + ( * 2 tail.q_j tail.q_k ) ( * 2 tail.q_a tail.q_i ) ) ) tail.dz ) )
+( == ( + ( * ( / 1 2 ) beam.length ( + ( * 2 beam.q_i beam.q_j ) ( * -2 beam.q_a beam.q_k ) ) ) beam.dx ( * beam.depth ( + ( * -2 beam.q_a beam.q_j ) ( * -2 beam.q_i beam.q_k ) ) ) ( * ( / 1 2 ) beam.width ( + ( * -1 ( ^ beam.q_k 2 ) ) ( ^ beam.q_i 2 ) ( ^ beam.q_a 2 ) ( * -1 ( ^ beam.q_j 2 ) ) ) ) ) ( + ( * ( / -1 2 ) tail.l ( + ( * -1 ( ^ tail.q_k 2 ) ) ( ^ tail.q_i 2 ) ( * -1 ( ^ tail.q_j 2 ) ) ( ^ tail.q_a 2 ) ) ) tail.dx ( * ( / 1 2 ) tail.w ( + ( * 2 tail.q_i tail.q_j ) ( * -2 tail.q_a tail.q_k ) ) ) ) )
+( == ( + ( * ( / 1 2 ) beam.width ( + ( * 2 beam.q_i beam.q_j ) ( * 2 beam.q_a beam.q_k ) ) ) beam.dy ( * ( / 1 2 ) beam.length ( + ( * -1 ( ^ beam.q_k 2 ) ) ( * -1 ( ^ beam.q_i 2 ) ) ( ^ beam.q_a 2 ) ( ^ beam.q_j 2 ) ) ) ( * beam.depth ( + ( * -2 beam.q_j beam.q_k ) ( * 2 beam.q_a beam.q_i ) ) ) ) ( + tail.dy ( * ( / -1 2 ) tail.l ( + ( * 2 tail.q_a tail.q_k ) ( * 2 tail.q_i tail.q_j ) ) ) ( * ( / 1 2 ) tail.w ( + ( * -1 ( ^ tail.q_k 2 ) ) ( ^ tail.q_j 2 ) ( * -1 ( ^ tail.q_i 2 ) ) ( ^ tail.q_a 2 ) ) ) ) )
+( == ( + ( * ( / 1 2 ) beam.width ( + ( * -2 beam.q_a beam.q_j ) ( * 2 beam.q_i beam.q_k ) ) ) ( * ( / 1 2 ) beam.length ( + ( * 2 beam.q_a beam.q_i ) ( * 2 beam.q_j beam.q_k ) ) ) ( * beam.depth ( + ( * -1 ( ^ beam.q_k 2 ) ) ( ^ beam.q_i 2 ) ( * -1 ( ^ beam.q_a 2 ) ) ( ^ beam.q_j 2 ) ) ) beam.dz ) ( + ( * ( / -1 2 ) tail.l ( + ( * 2 tail.q_i tail.q_k ) ( * -2 tail.q_a tail.q_j ) ) ) ( * ( / 1 2 ) tail.w ( + ( * 2 tail.q_j tail.q_k ) ( * 2 tail.q_a tail.q_i ) ) ) tail.dz ) )
+( == ( + ( * ( + ( * -2 beam.q_a beam.q_j ) ( * 2 beam.q_i beam.q_k ) ) ( + ( * -1 ( ^ tail.q_i 2 ) ) ( * -1 ( ^ tail.q_j 2 ) ) ( ^ tail.q_k 2 ) ( ^ tail.q_a 2 ) ) ) ( * ( + ( * 2 beam.q_i beam.q_j ) ( * 2 beam.q_a beam.q_k ) ) ( + ( * 2 tail.q_j tail.q_k ) ( * -2 tail.q_a tail.q_i ) ) ) ( * ( + ( * 2 tail.q_a tail.q_j ) ( * 2 tail.q_i tail.q_k ) ) ( + ( * -1 ( ^ beam.q_k 2 ) ) ( ^ beam.q_i 2 ) ( ^ beam.q_a 2 ) ( * -1 ( ^ beam.q_j 2 ) ) ) ) ) 0 )
+( == siminput0_input leftmotor.input )
+( == siminput1_input rightmotor.input )
+( >= ( + ( * ( / 1 2 ) tail.l ( + ( * 2 tail.q_i tail.q_k ) ( * -2 tail.q_a tail.q_j ) ) ) ( * ( / -1 2 ) tail.w ( + ( * 2 tail.q_j tail.q_k ) ( * 2 tail.q_a tail.q_i ) ) ) tail.dz ) 0 )
+( >= ( + ( * ( / -1 2 ) tail.w ( + ( * 2 tail.q_j tail.q_k ) ( * 2 tail.q_a tail.q_i ) ) ) ( * ( / -1 2 ) tail.l ( + ( * 2 tail.q_i tail.q_k ) ( * -2 tail.q_a tail.q_j ) ) ) tail.dz ) 0 )
+( Or ( == ( + ( * ( / -1 2 ) tail.w ( + ( * 2 tail.q_j tail.q_k ) ( * 2 tail.q_a tail.q_i ) ) ) ( * ( / -1 2 ) tail.l ( + ( * 2 tail.q_i tail.q_k ) ( * -2 tail.q_a tail.q_j ) ) ) tail.dz ) 0 ) ( == ( + ( * ( / 1 2 ) tail.l ( + ( * 2 tail.q_i tail.q_k ) ( * -2 tail.q_a tail.q_j ) ) ) ( * ( / -1 2 ) tail.w ( + ( * 2 tail.q_j tail.q_k ) ( * 2 tail.q_a tail.q_i ) ) ) tail.dz ) 0 ) )
+( >= ( + ( * leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) leftwheel.dz ) 0 )
+( >= ( + leftwheel.dz ( * ( / 1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) ) ( * ( / 1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 )
+( >= ( + leftwheel.dz ( * ( / 1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) ) ( * ( / -1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 )
+( >= ( + leftwheel.dz ( * -1 leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 )
+( >= ( + ( * ( / -1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) ) leftwheel.dz ( * ( / -1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 )
+( >= ( + ( * ( / -1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) ) leftwheel.dz ( * ( / 1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 )
+( Or ( And ( == ( + ( * leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) leftwheel.dz ) 0 ) ( == ( D ( + leftwheel.dy ( * leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * 2 leftwheel.q_a leftwheel.q_k ) ) ) ) ) 0 ) ( == ( D ( + leftwheel.dx ( * leftwheel.radius ( + ( * -1 ( ^ leftwheel.q_j 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ( ^ leftwheel.q_i 2 ) ) ) ) ) 0 ) ) ( And ( == ( + leftwheel.dz ( * -1 leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 ) ( == ( D ( + leftwheel.dy ( * -1 leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * 2 leftwheel.q_a leftwheel.q_k ) ) ) ) ) 0 ) ( == ( D ( + leftwheel.dx ( * -1 leftwheel.radius ( + ( * -1 ( ^ leftwheel.q_j 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ( ^ leftwheel.q_i 2 ) ) ) ) ) 0 ) ) ( And ( == ( + ( * ( / -1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) ) leftwheel.dz ( * ( / -1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 ) ( == ( D ( + leftwheel.dx ( * ( / -1 2 ) leftwheel.radius ( + ( * -1 ( ^ leftwheel.q_j 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ( ^ leftwheel.q_i 2 ) ) ) ( * ( / -1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * -2 leftwheel.q_a leftwheel.q_k ) ) ) ) ) 0 ) ( == ( D ( + ( * ( / -1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( ^ leftwheel.q_j 2 ) ( * -1 ( ^ leftwheel.q_i 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ) ) ( * ( / -1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * 2 leftwheel.q_a leftwheel.q_k ) ) ) leftwheel.dy ) ) 0 ) ) ( And ( == ( + ( * ( / -1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) ) leftwheel.dz ( * ( / 1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 ) ( == ( D ( + ( * ( / 1 2 ) leftwheel.radius ( + ( * -1 ( ^ leftwheel.q_j 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ( ^ leftwheel.q_i 2 ) ) ) leftwheel.dx ( * ( / -1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * -2 leftwheel.q_a leftwheel.q_k ) ) ) ) ) 0 ) ( == ( D ( + ( * ( / -1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( ^ leftwheel.q_j 2 ) ( * -1 ( ^ leftwheel.q_i 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ) ) ( * ( / 1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * 2 leftwheel.q_a leftwheel.q_k ) ) ) leftwheel.dy ) ) 0 ) ) ( And ( == ( + leftwheel.dz ( * ( / 1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) ) ( * ( / -1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 ) ( == ( D ( + leftwheel.dx ( * ( / 1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * -2 leftwheel.q_a leftwheel.q_k ) ) ) ( * ( / -1 2 ) leftwheel.radius ( + ( * -1 ( ^ leftwheel.q_j 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ( ^ leftwheel.q_i 2 ) ) ) ) ) 0 ) ( == ( D ( + ( * ( / 1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( ^ leftwheel.q_j 2 ) ( * -1 ( ^ leftwheel.q_i 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ) ) ( * ( / -1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * 2 leftwheel.q_a leftwheel.q_k ) ) ) leftwheel.dy ) ) 0 ) ) ( And ( == ( + leftwheel.dz ( * ( / 1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_a leftwheel.q_i ) ( * 2 leftwheel.q_j leftwheel.q_k ) ) ) ( * ( / 1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_k ) ( * -2 leftwheel.q_a leftwheel.q_j ) ) ) ) 0 ) ( == ( D ( + ( * ( / 1 2 ) leftwheel.radius ( + ( * -1 ( ^ leftwheel.q_j 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ( ^ leftwheel.q_i 2 ) ) ) leftwheel.dx ( * ( / 1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * -2 leftwheel.q_a leftwheel.q_k ) ) ) ) ) 0 ) ( == ( D ( + ( * ( / 1 2 ) leftwheel.radius ( + ( * 2 leftwheel.q_i leftwheel.q_j ) ( * 2 leftwheel.q_a leftwheel.q_k ) ) ) ( * ( / 1 2 ) leftwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( ^ leftwheel.q_j 2 ) ( * -1 ( ^ leftwheel.q_i 2 ) ) ( ^ leftwheel.q_a 2 ) ( * -1 ( ^ leftwheel.q_k 2 ) ) ) ) leftwheel.dy ) ) 0 ) ) )
+( >= ( + ( * rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) rightwheel.dz ) 0 )
+( >= ( + ( * ( / 1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_i ) ) ) rightwheel.dz ( * ( / 1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) ) 0 )
+( >= ( + ( * ( / 1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_i ) ) ) ( * ( / -1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) rightwheel.dz ) 0 )
+( >= ( + rightwheel.dz ( * -1 rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) ) 0 )
+( >= ( + ( * ( / -1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) ( * ( / -1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_i ) ) ) rightwheel.dz ) 0 )
+( >= ( + ( * ( / -1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_i ) ) ) rightwheel.dz ( * ( / 1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) ) 0 )
+( Or ( And ( == ( + ( * rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) rightwheel.dz ) 0 ) ( == ( D ( + ( * rightwheel.radius ( + ( * 2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) rightwheel.dy ) ) 0 ) ( == ( D ( + rightwheel.dx ( * rightwheel.radius ( + ( ^ rightwheel.q_i 2 ) ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( * -1 ( ^ rightwheel.q_j 2 ) ) ) ) ) ) 0 ) ) ( And ( == ( + rightwheel.dz ( * -1 rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) ) 0 ) ( == ( D ( + ( * -1 rightwheel.radius ( + ( * 2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) rightwheel.dy ) ) 0 ) ( == ( D ( + ( * -1 rightwheel.radius ( + ( ^ rightwheel.q_i 2 ) ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( * -1 ( ^ rightwheel.q_j 2 ) ) ) ) rightwheel.dx ) ) 0 ) ) ( And ( == ( + ( * ( / -1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) ( * ( / -1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_i ) ) ) rightwheel.dz ) 0 ) ( == ( D ( + ( * ( / -1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * -2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) rightwheel.dx ( * ( / -1 2 ) rightwheel.radius ( + ( ^ rightwheel.q_i 2 ) ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( * -1 ( ^ rightwheel.q_j 2 ) ) ) ) ) ) 0 ) ( == ( D ( + ( * ( / -1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) ( * ( / -1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( ^ rightwheel.q_j 2 ) ( * -1 ( ^ rightwheel.q_i 2 ) ) ) ) rightwheel.dy ) ) 0 ) ) ( And ( == ( + ( * ( / -1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_i ) ) ) rightwheel.dz ( * ( / 1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) ) 0 ) ( == ( D ( + ( * ( / -1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * -2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) ( * ( / 1 2 ) rightwheel.radius ( + ( ^ rightwheel.q_i 2 ) ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( * -1 ( ^ rightwheel.q_j 2 ) ) ) ) rightwheel.dx ) ) 0 ) ( == ( D ( + ( * ( / 1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) ( * ( / -1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( ^ rightwheel.q_j 2 ) ( * -1 ( ^ rightwheel.q_i 2 ) ) ) ) rightwheel.dy ) ) 0 ) ) ( And ( == ( + ( * ( / 1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_i ) ) ) ( * ( / -1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) rightwheel.dz ) 0 ) ( == ( D ( + rightwheel.dx ( * ( / 1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * -2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) ( * ( / -1 2 ) rightwheel.radius ( + ( ^ rightwheel.q_i 2 ) ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( * -1 ( ^ rightwheel.q_j 2 ) ) ) ) ) ) 0 ) ( == ( D ( + ( * ( / -1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) ( * ( / 1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( ^ rightwheel.q_j 2 ) ( * -1 ( ^ rightwheel.q_i 2 ) ) ) ) rightwheel.dy ) ) 0 ) ) ( And ( == ( + ( * ( / 1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * 2 rightwheel.q_j rightwheel.q_k ) ( * 2 rightwheel.q_a rightwheel.q_i ) ) ) rightwheel.dz ( * ( / 1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_i rightwheel.q_k ) ( * -2 rightwheel.q_a rightwheel.q_j ) ) ) ) 0 ) ( == ( D ( + ( * ( / 1 2 ) rightwheel.radius ( + ( ^ rightwheel.q_i 2 ) ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( * -1 ( ^ rightwheel.q_j 2 ) ) ) ) rightwheel.dx ( * ( / 1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( * -2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) ) ) 0 ) ( == ( D ( + ( * ( / 1 2 ) rightwheel.radius ( ^ 3 ( / 1 2 ) ) ( + ( ^ rightwheel.q_a 2 ) ( * -1 ( ^ rightwheel.q_k 2 ) ) ( ^ rightwheel.q_j 2 ) ( * -1 ( ^ rightwheel.q_i 2 ) ) ) ) ( * ( / 1 2 ) rightwheel.radius ( + ( * 2 rightwheel.q_a rightwheel.q_k ) ( * 2 rightwheel.q_i rightwheel.q_j ) ) ) rightwheel.dy ) ) 0 ) ) )
+
+

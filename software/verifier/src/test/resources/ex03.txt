@@ -1,5 +1,0 @@
-(bbox -0.1 -0.1 0.2 0.2 0)
-(input speed 16)
-(output x (+ x (* speed t)))
-(output y y)
-(output yaw 0) 

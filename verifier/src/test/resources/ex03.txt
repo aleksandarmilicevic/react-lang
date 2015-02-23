@@ -1,0 +1,12 @@
+~~~ Parameters:
+speed
+x
+y
+yaw
+~~~ Equations:
+(bbox -0.1 -0.1 0.2 0.2 0)
+(input speed)
+(dynamic x)
+(== (D x) (* speed t))
+(== y y)
+(== yaw 0) 

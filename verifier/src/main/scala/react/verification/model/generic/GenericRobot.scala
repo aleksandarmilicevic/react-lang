@@ -52,6 +52,8 @@ class GenericRobot( pg: Playground,
   protected val xVar    = Variable("x").setType(Real)
   protected val yVar    = Variable("y").setType(Real)
   protected val yawVar  = Variable("yaw").setType(Real)
+  //TODO not like that anymore ...
+  //beam.dx/y/z is the position of the seg
   protected val xVar1   = Variable("xPrimed").setType(Real)
   protected val yVar1   = Variable("yPrimed").setType(Real)
   protected val yawVar1 = Variable("yawPrimed").setType(Real)
@@ -268,20 +270,34 @@ class GenericRobot( pg: Playground,
 
 object GenericRobot {
 
-  def apply(pg: Playground, fileName: String): GenericRobot = {
-    val content = IO.readTextFile(fileName)
-    val sexpres = SExprParser.parse(content)
-    sexpres match {
-      case Some(lst) => apply(pg, lst)
+  def preprocess(content: String): (Iterable[Variable], Iterable[SExpr]) = {
+    val param = "~~~ Parameters:"
+    val eqns = "~~~ Equations:"
+    val pStart = content.indexOf(param)
+    val eStart = content.indexOf(eqns)
+    assert(pStart >= 0, "no parameters")
+    val ps = content.substring(pStart+param.length, eStart).split("\\n").map(_.trim).filter(_ != "")
+    val vs = ps.map( v => Variable(v).setType(Real) )
+    assert(eStart >= 0, "no equations")
+    val es = content.substring(eStart+eqns.length)
+    SExprParser.parse(es) match {
+      case Some(lst) => (vs, lst)
       case None =>
-        Logger.logAndThrow("GenericRobot", Error, "could not parse:\n" + content)
+        Logger.logAndThrow("GenericRobot", Error, "could not parse:\n" + es)
     }
   }
 
-  def apply(pg: Playground, sexprs: List[SExpr]): GenericRobot = {
+  def apply(pg: Playground, fileName: String): GenericRobot = {
+    val content = IO.readTextFile(fileName)
+    val (vars, sexprs)= preprocess(content)
+    apply(pg, vars, sexprs)
+  }
+
+  def apply(pg: Playground, variables: Iterable[Variable], sexprs: Iterable[SExpr]): GenericRobot = {
     
     var bBox = List[Box2D]()
     var inputs = List[Input]()
+    var dynamic = List[Variable]()
     var funs = List[Fun]()
     var cstrs = List[Formula]()
 
@@ -289,13 +305,18 @@ object GenericRobot {
       se match {
         case Application("bbox", List(Atom(x), Atom(y), Atom(w), Atom(h), Atom(theta))) =>
           bBox ::= new Box2D(x.toDouble, y.toDouble, theta.toDouble, w.toDouble, h.toDouble)
-        case Application("input", List(Atom(name), Atom(port))) =>
-          inputs ::= Input(Variable(name).setType(Real), port)
-        case Application("output", List(Atom(name), formula)) =>
-          val v = Variable(name + "Primed").setType(Real) //TODO really ?
-          cstrs ::= Eq(v, parseFormula(formula))
+        case Application("input", List(Atom(name))) =>
+          inputs ::= Input(Variable(name).setType(Real), "") //TODO generate a port name
+        case Application("dynamic", List(Atom(name))) =>
+          dynamic ::= Variable(name).setType(Real)
+      //case Application("input", List(Atom(name), Atom(port))) =>
+      //  inputs ::= Input(Variable(name).setType(Real), port)
+      //case Application("output", List(Atom(name), formula)) =>
+      //  val v = Variable(name + "Primed").setType(Real) //TODO really ?
+      //  cstrs ::= Eq(v, parseFormula(formula))
         case Application("assert", List(formula)) =>
           cstrs ::= parseFormula(formula)
+        //TODO that thing might not be needed after all
         case Application("let", List(Atom(name), args, formula)) =>
           val args2 = args match {
             case Application(i1, is) => (Atom(i1) :: is).flatMap{
@@ -308,18 +329,16 @@ object GenericRobot {
               Logger.logAndThrow("GenericRobot", Error, "expected list of arguments, not " + e)
           }
           funs ::= Fun(name, args2, parseFormula(formula))
-        case Application(_, _) =>
-          Logger("GenericRobot", Warning, "unexpected/ill-formed s-expr: " + se)
-        case Atom(e) =>
-          Logger("GenericRobot", Warning, "dangling atom: " + e)
-        case SNil =>
-          Logger("GenericRobot", Warning, "unexpected: ()")
+        case other =>
+          cstrs ::= parseFormula(other)
       }
     }
 
     val bb = bBox match {
       case Nil =>
-        Logger.logAndThrow("GenericRobot", Error, "need at least one bounding box")
+        Logger("GenericRobot", Warning, "does not have a bounding box")
+        new Box2D(-0.5, 0.5, 0, 1, 1)
+        //Logger.logAndThrow("GenericRobot", Error, "need at least one bounding box")
       case b :: Nil => b
       case b :: _ =>
         Logger("GenericRobot", Warning, "TODO aggregate bounding boxes")
