@@ -1,0 +1,89 @@
+~~~ Parameters:
+base.dx
+base.dy
+base.dz
+base.q_a
+base.q_i
+base.q_j
+base.q_k
+leftmotor.input
+rightmotor.input
+
+~~~ Equations:
+( frame base.dx base.dy base.dz base.q_a base.q_i base.q_j base.q_k )
+( bbox 0 0 50 50 0 )
+( input leftmotor.input )
+( input rightmotor.input )
+( dynamic base.dx )
+( dynamic base.dy )
+( dynamic base.dz )
+( dynamic base.q_a )
+( dynamic base.q_i )
+( dynamic base.q_j )
+( dynamic base.q_k )
+
+( = base.dz 0 )
+( = base.q_i 0 )
+( = base.q_j 0 )
+
+( = (+ (^ base.q_k 2) (^ base.q_a 2)) 1 )
+
+(=
+  (* 40 leftmotor.input)
+  (+
+    (*  120 (^ base.q_k 3) (D base.q_k))
+    (*  120 (^ base.q_a 2) base.q_k (D base.q_k))
+    (*  120 base.q_a (D base.q_a) (^ base.q_k 2))
+    (* -1 (D base.dx) (^ base.q_k 2))
+    (*  2 (D base.dy) base.q_a base.q_k)
+    (*  120 (^ base.q_a 3) (D base.q_a))
+    (*  (D base.dx) (^ base.q_a 2))
+  )
+)
+
+(=
+  0
+  (+
+    (*  120 base.q_a (^ base.q_k 2) (D base.q_k))
+    (*  120 (^ base.q_a 3) (D base.q_k))
+    (* -120 (D base.q_a) (^ base.q_k 3))
+    (* -1 (D base.dy) (^ base.q_k 2))
+    (* -120 (^ base.q_a 2) (D base.q_a) base.q_k)
+    (* -2 (D base.dx) base.q_a base.q_k)
+    (*  (D base.dy) (^ base.q_a 2))
+  )
+)
+
+(=
+  (* 40 rightmotor.input)
+  (+
+    (*  120 (^ base.q_k 3) (D base.q_k))
+    (* -120 base.q_a (^ base.q_k 2) (D base.q_k))
+    (*  120 (^ base.q_a 2) base.q_k (D base.q_k))
+    (* -120 (^ base.q_a 3) (D base.q_k))
+    (*  120 (D base.q_a) (^ base.q_k 3))
+    (*  120 base.q_a (D base.q_a) (^ base.q_k 2))
+    (* -1 (D base.dx) (^ base.q_k 2))
+    (*  120 (^ base.q_a 2) (D base.q_a) base.q_k)
+    (*  2 (D base.dy) base.q_a base.q_k)
+    (*  120 (^ base.q_a 3) (D base.q_a))
+    (*  (D base.dx) (^ base.q_a 2))
+  )
+)
+
+(=
+  0
+  (+
+    (* -120 (^ base.q_k 3) (D base.q_k))
+    (* -120 base.q_a (^ base.q_k 2) (D base.q_k))
+    (* -120 (^ base.q_a 2) base.q_k (D base.q_k))
+    (* -120 (^ base.q_a 3) (D base.q_k))
+    (*  120 (D base.q_a) (^ base.q_k 3))
+    (*  (D base.dy) (^ base.q_k 2))
+    (* -120 base.q_a (D base.q_a) (^ base.q_k 2))
+    (*  120 (^ base.q_a 2) (D base.q_a) base.q_k)
+    (*  2 (D base.dx) base.q_a base.q_k)
+    (* -120 (^ base.q_a 3) (D base.q_a))
+    (* -1 (D base.dy) (^ base.q_a 2))
+  )
+)

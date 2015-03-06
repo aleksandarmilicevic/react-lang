@@ -30,21 +30,11 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
   //about the distance
   var distance = 0
   val safeDistance = Env.getInt("safeDistance", 400)
-  //TODO min max for the sensor and normalization
   val servoAngleNA = -200
   val servoAngleInc = 70
   var servoAngle = servoAngleNA
 
   initialState('scan)
-
-  Console.println("safeDistance: " + safeDistance)
-  Console.println("lSpeed: " + lSpeed)
-  Console.println("rSpeed: " + rSpeed)
-  Console.println("lhalf: " + lhalf)
-  Console.println("lmhalf: " + lmhalf)
-  Console.println("rhalf: " + rhalf)
-  Console.println("rmhalf: " + rmhalf)
-
 
   //always listen to the sensor
   sensor[Primitive.Int16](sensorDist){

@@ -124,10 +124,16 @@ object Main extends Options with react.verification.McOptions {
       case "tests" =>
         tests.RunVerif(this, topic)
       case "arduino" =>
-        //arduino.Run(new arduino.SwipeScan(topic), topic)
-        arduino.Run(new arduino.FollowTheEdge(topic, true), topic)
+        arduino.Run(new arduino.SwipeScan(topic), topic)
+        //arduino.Run(new arduino.FollowTheEdge(topic, true), topic)
         //arduino.Run(new arduino.TriTeleop(topic), topic, None)
-      case "arduinoV" =>
+      case "arduinoS" =>
+        arduino.Run(new arduino.SwipeScan(topic), topic, Some(1000))
+        //arduino.Run(new arduino.FollowTheEdge(topic, true), topic)
+        bypassROS = true
+        arduino.RunV(topic, this)
+      case "arduinoF" =>
+        arduino.Run(new arduino.FollowTheEdge(topic, true), topic)
         bypassROS = true
         arduino.RunV(topic, this)
       case other =>

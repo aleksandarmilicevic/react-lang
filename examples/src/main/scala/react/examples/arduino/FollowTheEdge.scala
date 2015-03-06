@@ -10,8 +10,8 @@ import react.runtime.{Arduino, ArduinoExecutor}
 class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port) {
 
   val sensor     = "2"
-  val servoLeft  = "15"
-  val servoRight = "5"
+  val servoLeft  = "32"
+  val servoRight = "9"
 
   var onTarget = false
   sensor[Primitive.Bool](sensor){
@@ -19,41 +19,17 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
       Console.println("onTarget ← " + b)
       onTarget = b
   }
-  //sensor[Primitive.Int16](sensor){
-  //  case Primitive.Int16(i) =>
-  //    Console.println("onTarget ← " + i)
-  //    onTarget = (i < 450)
-  //}
-  
-  //for calibration
-//on {
-//  case Key.UP =>
-//    lSpeed = (lSpeed + 1).toShort
-//    publish(servoLeft, Primitive.Int16(lSpeed))
-//  case Key.DOWN =>
-//    lSpeed = (lSpeed - 1).toShort
-//    publish(servoLeft, Primitive.Int16(lSpeed))
-//  case Key.LEFT =>
-//    rSpeed = (rSpeed + 1).toShort
-//    publish(servoRight, Primitive.Int16(rSpeed))
-//  case Key.RIGHT =>
-//    rSpeed = (rSpeed - 1).toShort
-//    publish(servoRight, Primitive.Int16(rSpeed))
-//}
 
-  //val defaultSpeed: Short = 8 // 78 for 2.44 rad/s in the MC
-  val defaultSpeed: Short = 78 // 2.44 rad/s in the MC
+  val defaultSpeed: Short = -15
+  //val defaultSpeed: Short = 78 // 2.44 rad/s in the MC
   var lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
   var rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)
-  //what we got last time after calibration
-//var lSpeed: Short = -7
-//var rSpeed: Short =  8
 
   var currDirection = !clockwise
 
   every(100) {
     val newDir = onTarget ^ clockwise
-  //if (newDir != currDirection) {
+    if (newDir != currDirection) {
       if (newDir) {
         //Console.println("turning right")
         publish(servoLeft, Primitive.Int16(lSpeed))
@@ -64,7 +40,7 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
         publish(servoRight, Primitive.Int16(rSpeed))
       }
       currDirection = newDir
-  //}
+    }
   }
 
 }

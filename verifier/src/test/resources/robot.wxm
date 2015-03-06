@@ -1,0 +1,138 @@
+/* [wxMaxima batch file version 1] [ DO NOT EDIT BY HAND! ]*/
+/* [ Created with wxMaxima version 13.04.2 ] */
+
+/* [wxMaxima: title   start ]
+Understanding how we get the equations of the robot
+   [wxMaxima: title   end   ] */
+
+/* [wxMaxima: comment start ]
+First we define some operations over vectors and quaternions.
+Rotations are represented using (unit) quaternions, [a, i, j, k]
+Positions are represented using 3D vectors, [x, y, z]
+A vector is expended into a quaternion as [0, x, y, z]
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+v2q(q) := [0, q[1], q[2], q[3]];
+q2v(q) := [q[2],q[3],q[4]];
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+Hammilton product for quaternions
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+mult(a, b) := [ a[1] * b[1] - a[2] * b[2] - a[3] * b[3] - a[4] * b[4],
+                a[1] * b[2] + a[2] * b[1] + a[3] * b[4] - a[4] * b[3],
+                a[1] * b[3] - a[2] * b[4] + a[3] * b[1] + a[4] * b[2],
+                a[1] * b[4] + a[2] * b[3] - a[3] * b[2] + a[4] * b[1]];
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+The inverse (^-1) of a quaternion
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+inverse(a) := [a[1], -a[2], -a[3], -a[4]];
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+rotation of p by q as q*p*q^-1
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+rotate(p, q) := ratsimp(q2v(mult(mult(q, v2q(p)), inverse(q))));
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+dot product and norm for 3d vectors
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+dotprod(a, b) := ratsimp(a[1] * b[1] + a[2] * b[2] + a[3] * b[3]);
+norm(a) := ratsimp(sqrt(dotprod(a, a)));
+unit(q) := ratsimp(q[1]^2 + q[2]^2 + q[3]^2 + q[4]^2 = 1);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+and now let's go for the real thing
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: comment start ]
+some structural parameters
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+left_rotation_axis : [0,1,0];
+right_rotation_axis : [0,-1,0];
+left_wheel_offset: [dlx, dly, 0];
+right_wheel_offset: [drx, dry, 0];
+wheel_radius;
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+the system's state
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+base_pos: [base_dx, base_dy, 0];
+base_rot: [base_q_a, 0, 0, base_q_k];
+left_angle;
+right_angle;
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+the inputs
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+left_input;
+right_input;
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+dynamic variables
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+depends([base_dx, base_dy, base_q_a, base_q_k, left_angle, right_angle], t);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+derived expressions
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+orientation : rotate([1,0,0], base_rot);
+left_wheel_center : base_pos + rotate(left_wheel_offset, base_rot);
+right_wheel_center : base_pos + rotate(right_wheel_offset, base_rot);
+left_wheel_speed : diff(left_wheel_center, t);
+right_wheel_speed : diff(right_wheel_center, t);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+constraints
+globally:
+-unit quaternion
+for each wheel we have:
+-the change in the angle is proportional to the input
+-the speed projected on the direction of the wheel is the derivative of the angle * wheel_radius
+-the speed is ortogonal to the rotation axis
+   [wxMaxima: comment end   ] */
+
+/* [wxMaxima: input   start ] */
+eqn : [unit(base_rot),
+diff(left_angle,t) = left_input,
+diff(left_angle,t) * wheel_radius = dotprod(orientation, left_wheel_speed),
+0 = dotprod(rotate(left_rotation_axis, base_rot), left_wheel_speed),
+diff(right_angle,t) = right_input,
+diff(right_angle,t) * wheel_radius = dotprod(orientation, right_wheel_speed),
+0 = dotprod(rotate(right_rotation_axis, base_rot), right_wheel_speed)];
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+ratsimp(ev(eqn, [wheel_radius=40,dlx=60,dly=0,drx=60,dry=60]));
+/* [wxMaxima: input   end   ] */
+
+/* Maxima can't load/batch files which end with a comment! */
+"Created with wxMaxima"$

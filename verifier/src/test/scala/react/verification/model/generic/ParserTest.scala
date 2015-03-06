@@ -2,8 +2,11 @@ package react.verification.model.generic
 
 import org.scalatest._
 import dzufferey.smtlib._
+import dzufferey.utils.Logger
 
 class ParserTest extends FunSuite {
+
+  Logger.disallow("Typer")
 
   test("parse 1") {
     val content = dzufferey.utils.IO.readTextFile(Resources.path + "ex01.txt")
@@ -61,21 +64,16 @@ class ParserTest extends FunSuite {
     fixTypes(formula)
   }
 
-//test("build robot 1") {
-//  val r = GenericRobot(Resources.playground, Resources.path + "ex01.txt")
-//  //println(r)
-//  assert(true)
-//}
+  test("parse seg simplest") {
+    val robot = GenericRobot(Resources.playground, Resources.path + "seg_simplest.txt")
+    assert(true)
+  }
 
-//test("build robot 2") {
-//  val r = GenericRobot(Resources.playground, Resources.path + "ex02.txt")
-//  //println(r)
-//  assert(true)
-//}
 
   test("test solver 1") {
-    val r = GenericRobot(Resources.playground, Resources.path + "ex03.txt")
-    r.store = r.store + (Variable("speed").setType(Real) -> (1: Short))
+    val r = GenericRobot(Resources.playground, Resources.path + "seg_simplest.txt")
+    r.store = r.store + (Variable("leftmotor.input").setType(Real) -> (1: Short))
+    r.store = r.store + (Variable("rightmotor.input").setType(Real) -> (1: Short))
     val bp = r.elapseBP(1000)
     assert(bp.alternatives == 1, "  alternatives: " + bp.alternatives)
   }

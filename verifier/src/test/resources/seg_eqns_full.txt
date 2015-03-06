@@ -74,6 +74,7 @@ tail.q_k
 tail.w
 
 ~~~ Equations:
+( frame beam.dx beam.dy beam.dz beam.q_a beam.q_i beam.q_j beam.q_k )
 ( input siminput0_input )
 ( input siminput1_input )
 ( dynamic beam.dx )

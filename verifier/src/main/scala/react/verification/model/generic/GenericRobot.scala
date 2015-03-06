@@ -22,12 +22,199 @@ case class Fun(name: String, args: List[Variable], body: Formula) {
     FormulaUtils.map(fct, body)
   }
 }
+case class Frame( x: Variable, y: Variable, z: Variable, //3D vector
+                  a: Variable, i: Variable, j: Variable, k: Variable) //quaternion
 
-class GenericRobot( pg: Playground,
+class GenericRobot( val pg: Playground,
                     bBox: Box2D,
-                    inputs: List[Input],
+                    val frame: Frame,
+                    val inputs: List[Input],
+                    val dynamic: List[Variable],
                     fcts: List[Fun],
                     constraints: Formula ) extends GroundRobot(bBox, None) {
+
+  protected def mkVar(str: String) = Variable(str).setType(Real)
+
+  protected val timeVar = mkVar("t")
+  protected val xVar    = mkVar("x")
+  protected val yVar    = mkVar("y")
+  protected val yawVar  = mkVar("yaw")
+  //TODO not like that anymore ...
+  //beam.dx/y/z is the position of the seg
+  protected val xVar1   = mkVar("xPrimed")
+  protected val yVar1   = mkVar("yPrimed")
+  protected val yawVar1 = mkVar("yawPrimed")
+  
+  //TODO
+
+  //from 2D pose (x,y,θ) to 3D vector + quaternion
+  def poseConstrains = {
+    val q = Angle.quaternionFromTheta(orientation)
+    List(
+      Eq(frame.x, Literal(1000 * x)), //TODO discretization
+      Eq(frame.y, Literal(1000 * y)), //TODO discretization
+      //z should be constrained by the robot structural equations
+      //TODO precision
+      Eq(frame.a, Literal(q.x)),
+      Eq(frame.i, Literal(q.y)),
+      Eq(frame.j, Literal(q.z)),
+      Eq(frame.k, Literal(q.w))
+    )
+  }
+
+  def quaternionRanges = {
+    val quaternionSuffixes = Set(".q_a",".q_i",".q_j",".q_k")
+    val qs = dynamic.filter( v => quaternionSuffixes.contains(v.name.takeRight(4)) )
+    qs.flatMap( v => List(Leq(v, Literal(1.0)), Leq(Literal(-1.0), v)) )
+  }
+
+  def posRanges = {
+    dynamic.flatMap( v => {
+      if (v.name endsWith ".dx") {
+        List( Lt(v, Literal(1000 * (pg.xMax + pg.xDiscretization))),
+              Gt(v, Literal(1000 * (pg.xMin - pg.xDiscretization))))
+      } else if (v.name endsWith ".dy") {
+        List( Lt(v, Literal(1000 * (pg.yMax + pg.yDiscretization))),
+              Gt(v, Literal(1000 * (pg.yMin - pg.yDiscretization))))
+    //} else if (v.name endsWith "dz") {
+    //  List(
+    //  )
+      } else {
+        Nil
+      }
+    })
+  }
+
+  def ranges = posRanges ::: quaternionRanges
+
+  def conjuncts = FormulaUtils.getConjuncts(constraints)
+
+  val timeIndependentConstraints = {
+    conjuncts.filter(c => c.freeVariables.forall(v => !dynamic.contains(v)))
+  }
+
+  protected val timeDependentConstraints = {
+    conjuncts.filter(c => c.freeVariables.exists(v => dynamic.contains(v)))
+  }
+
+  protected def hasDt(f: Formula) = {
+    FormulaUtils.collectSymbols(f).contains(DRealDecl.timeDerivative)
+  }
+  
+  val strucutralTimeDependentConstraints = {
+    timeDependentConstraints.filter(!hasDt(_))
+  }
+
+  val differentialConstraints = {
+    timeDependentConstraints.filter(hasDt)
+  }
+
+  //decompose (Or ...) into a small HA: List of (invariant, dynamics) pairs
+  def collectModes(f: Formula): List[(Formula, List[Formula])] = {
+    val ds = FormulaUtils.getDisjuncts(f)
+    ds.map( d => {
+      val cs = FormulaUtils.getConjuncts(d)
+      val (dt, cond) = cs.partition(hasDt)
+      val c = if (cond.size == 0) True()
+              else if (cond.size == 1) cond.head
+              else And(cond:_*)
+      (c, dt)
+    })
+  }
+
+  def pushDerivativesDown(f: Formula): Formula = f match {
+    case Application(DRealDecl.timeDerivative, List(expr)) if expr.freeVariables.forall(v  => !(dynamic contains v)) =>
+      Literal(0.0)
+    case Application(DRealDecl.timeDerivative, List(`timeVar`)) =>
+      Literal(1.0)
+    case Application(DRealDecl.timeDerivative, List(Plus(args @ _*))) =>
+      Plus(args.map(a => pushDerivativesDown(DRealDecl.timeDerivative(a))):_*)
+    case Application(DRealDecl.timeDerivative, List(Minus(args @ _*))) =>
+      Minus(args.map(a => pushDerivativesDown(DRealDecl.timeDerivative(a))):_*)
+    case Application(DRealDecl.timeDerivative, List(Times(args @ _*))) =>
+      val n = args.length
+      val parts = (0 until n).map( i => {
+        val prefix = args.take(i-1)
+        val d = pushDerivativesDown(DRealDecl.timeDerivative(args(i)))
+        val suffix = args.drop(i+1)
+        val together = (prefix :+ d) ++ suffix
+        Times(together:_*)
+      })
+      Plus(parts:_*)
+    case Application(DRealDecl.timeDerivative, List(Divides(f, g))) =>
+      val p1 = Times(pushDerivativesDown(DRealDecl.timeDerivative(f)), g)
+      val p2 = Times(f, pushDerivativesDown(DRealDecl.timeDerivative(g)))
+      val p3 = DRealDecl.pow(g, Literal(2.0))
+      Divides(Minus(p1, p2), p3)
+    case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.sin, args))) =>
+      DRealDecl.cos(args:_*)
+    case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.cos, args))) =>
+      Times(Literal(-1.0), DRealDecl.sin(args:_*))
+    case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.pow, List(expr, Literal(n: Double))))) =>
+      if (n == 0.0) Literal(0.0)
+      else Times(Literal(n), DRealDecl.pow(expr, Literal(n-1)), pushDerivativesDown(DRealDecl.timeDerivative(expr)))
+    case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.pow, List(expr, Literal(n: Long))))) =>
+      if (n == 0l) Literal(0)
+      else Times(Literal(n), DRealDecl.pow(expr, Literal(n-1)), pushDerivativesDown(DRealDecl.timeDerivative(expr)))
+    case other => other
+  }
+
+
+  def printDRealStub( endTime: Double, maxUnfold: Int): (DRealHack, Map[Variable,Variable]) = {
+    val solver = DReal(QF_NRA_ODE, "test.smt2")
+    timeIndependentConstraints.foreach(solver.assert(_))
+    //the different modes
+    val modes = differentialConstraints.map(collectModes)
+    //versionning the variables by jump number
+    def alpha(i: Int): Map[Variable, Variable] = {
+      dynamic.foldLeft(Map[Variable,Variable]())( (acc, v) => {
+        val v1 = if (i == 0) v
+                 else if (i == maxUnfold) Variable(v.name + "_final").setType(v.tpe)
+                 else Variable(v.name + "_" + i).setType(v.tpe)
+        acc + (v -> v1)
+      }).toMap
+    }
+    val connect = UnInterpretedFct("connect", Some(Real ~> Real ~> Bool), Nil)
+    def holder(f: Formula) = {
+      ???
+      Variable("holder_" + ??? ).setType(Real)
+    }
+    for (i <- 0 until maxUnfold) {
+      for ( part <- modes;
+            (guard, dyn) <- part ) {
+        if (guard == True()) {
+          dyn.foreach( d => {
+            val v = Variable(Namer("flow")).setType(Bool)
+            if(i == 0) solver.declareODE(v.name, d)
+            solver.assert(connect(holder(d), v))
+          })
+        } else {
+          //TODO the jump condition 
+          //TODO how variables changes at jump (x_n = x_{n-1})
+          //TODO connecting the flow to holder
+          ???
+        }
+      }
+    }
+    //time
+    val timeVars = (0 until maxUnfold).map( i => Variable(timeVar.name + "_" + i).setType(Real) )
+    solver.assert(Eq(Plus(timeVars:_*), Literal(endTime)))
+    timeVars.foreach(v => solver.assert(Leq(Literal(0.0), v)))
+    timeVars.foreach(v => solver.assert(Leq(v, Literal(endTime))))
+    //TODO integrating the holders between each jump and time variables
+    ???
+    //TODO should be done for all the version of the variables!
+    for (i <- 0 until maxUnfold) {
+      strucutralTimeDependentConstraints.foreach(solver.assertForallT(1, Literal(0.0), Literal(endTime), _))
+    }
+    //
+    (solver, ???) //solver still needs an objective
+  }
+
+
+
+
+
 
   override protected def moveFor(t: Int) = {
     Logger.logAndThrow("GenericRobot", Error, "should not be used")
@@ -48,45 +235,33 @@ class GenericRobot( pg: Playground,
     (for (i <- 0 to steps) yield -math.Pi + i * pg.fpDiscretization).toArray
   }
   
-  protected val timeVar = Variable("t").setType(Real)
-  protected val xVar    = Variable("x").setType(Real)
-  protected val yVar    = Variable("y").setType(Real)
-  protected val yawVar  = Variable("yaw").setType(Real)
-  //TODO not like that anymore ...
-  //beam.dx/y/z is the position of the seg
-  protected val xVar1   = Variable("xPrimed").setType(Real)
-  protected val yVar1   = Variable("yPrimed").setType(Real)
-  protected val yawVar1 = Variable("yawPrimed").setType(Real)
-  
-
-  //TODO we need to add bounds to the variables
-  def baseConstraints = {
-    val funMap = fcts.map(f => f.name -> f).toMap
-    def substFun(formula: Formula): Formula = formula match {
-      case dzufferey.smtlib.Application(UnInterpretedFct(name,_,_), args) if funMap contains name =>
-        val applied = funMap(name)(args)
-        FormulaUtils.map(substFun, applied)
-      case f => f
-    }
-    val in = inputs.flatMap( i => store.get(i.v).map( v => Eq(i.v, Literal(v.toDouble))) )
-    val pos = List(
-      Eq(xVar, Literal(x)), //TODO discretization
-      Eq(yVar, Literal(y)), //TODO discretization
-      Eq(yawVar, Literal(orientation)) //TODO discretization
-    )
-    val bounds = List(
-      Lt(xVar1, Literal(pg.xMax + pg.xDiscretization)),
-      Gt(xVar1, Literal(pg.xMin - pg.xDiscretization)),
-      Lt(yVar1, Literal(pg.yMax + pg.yDiscretization)),
-      Gt(yVar1, Literal(pg.yMin - pg.yDiscretization)),
-      Lt(yawVar1, Literal(math.Pi + pg.fpDiscretization)),
-      Gt(yawVar1, Literal(-math.Pi - pg.fpDiscretization))
-    )
-    val allCstrs = And((constraints :: pos ::: bounds ::: in):_*)
-    val withDefs = FormulaUtils.map(substFun, allCstrs)
-    fixTypes(withDefs)
-    withDefs 
-  }
+  def baseConstraints = True() //{
+//  val funMap = fcts.map(f => f.name -> f).toMap
+//  def substFun(formula: Formula): Formula = formula match {
+//    case dzufferey.smtlib.Application(UnInterpretedFct(name,_,_), args) if funMap contains name =>
+//      val applied = funMap(name)(args)
+//      FormulaUtils.map(substFun, applied)
+//    case f => f
+//  }
+//  val in = inputs.flatMap( i => store.get(i.v).map( v => Eq(i.v, Literal(v.toDouble))) )
+//  val pos = List(
+//    Eq(xVar, Literal(x)), //TODO discretization
+//    Eq(yVar, Literal(y)), //TODO discretization
+//    Eq(yawVar, Literal(orientation)) //TODO discretization
+//  )
+//  val bounds = List(
+//    Lt(xVar1, Literal(pg.xMax + pg.xDiscretization)),
+//    Gt(xVar1, Literal(pg.xMin - pg.xDiscretization)),
+//    Lt(yVar1, Literal(pg.yMax + pg.yDiscretization)),
+//    Gt(yVar1, Literal(pg.yMin - pg.yDiscretization)),
+//    Lt(yawVar1, Literal(math.Pi + pg.fpDiscretization)),
+//    Gt(yawVar1, Literal(-math.Pi - pg.fpDiscretization))
+//  )
+//  val allCstrs = And((constraints :: pos ::: bounds ::: in):_*)
+//  val withDefs = FormulaUtils.map(substFun, allCstrs)
+//  fixTypes(withDefs)
+//  withDefs 
+//}
 
   //find the first sat value
   protected def firstSatSearch(mkFormula: Double => Formula, seq: Array[Double]): Option[Double] = {
@@ -270,6 +445,8 @@ class GenericRobot( pg: Playground,
 
 object GenericRobot {
 
+  def mkVar(s: String) = Variable(s).setType(Real)
+
   def preprocess(content: String): (Iterable[Variable], Iterable[SExpr]) = {
     val param = "~~~ Parameters:"
     val eqns = "~~~ Equations:"
@@ -300,32 +477,35 @@ object GenericRobot {
     var dynamic = List[Variable]()
     var funs = List[Fun]()
     var cstrs = List[Formula]()
+    var frame = Frame(mkVar("x"), mkVar("y"), mkVar("z"), mkVar("a"), mkVar("i"), mkVar("j"), mkVar("k"))
 
     for (se <- sexprs) {
       se match {
-        case Application("bbox", List(Atom(x), Atom(y), Atom(w), Atom(h), Atom(theta))) =>
+        case SApplication("bbox", List(SAtom(x), SAtom(y), SAtom(w), SAtom(h), SAtom(theta))) =>
           bBox ::= new Box2D(x.toDouble, y.toDouble, theta.toDouble, w.toDouble, h.toDouble)
-        case Application("input", List(Atom(name))) =>
-          inputs ::= Input(Variable(name).setType(Real), "") //TODO generate a port name
-        case Application("dynamic", List(Atom(name))) =>
-          dynamic ::= Variable(name).setType(Real)
+        case SApplication("frame", List(SAtom(x), SAtom(y), SAtom(z), SAtom(a), SAtom(i), SAtom(j), SAtom(k))) =>
+          frame = Frame(mkVar(x), mkVar(y), mkVar(z), mkVar(a), mkVar(i), mkVar(j), mkVar(k))
+        case SApplication("input", List(SAtom(name))) =>
+          inputs ::= Input(mkVar(name), "") //TODO generate a port name
+        case SApplication("dynamic", List(SAtom(name))) =>
+          dynamic ::= mkVar(name)
       //case Application("input", List(Atom(name), Atom(port))) =>
       //  inputs ::= Input(Variable(name).setType(Real), port)
       //case Application("output", List(Atom(name), formula)) =>
       //  val v = Variable(name + "Primed").setType(Real) //TODO really ?
       //  cstrs ::= Eq(v, parseFormula(formula))
-        case Application("assert", List(formula)) =>
+        case SApplication("assert", List(formula)) =>
           cstrs ::= parseFormula(formula)
         //TODO that thing might not be needed after all
-        case Application("let", List(Atom(name), args, formula)) =>
+        case SApplication("let", List(SAtom(name), args, formula)) =>
           val args2 = args match {
-            case Application(i1, is) => (Atom(i1) :: is).flatMap{
-              case Atom(n) => List(Variable(n).setType(Real))
+            case SApplication(i1, is) => (SAtom(i1) :: is).flatMap{
+              case SAtom(n) => List(mkVar(n))
               case SNil => Nil
               case e => Logger.logAndThrow("GenericRobot", Error, "argument should be atom, not " + e)
             }
             case SNil => Nil
-            case Atom(e) =>
+            case SAtom(e) =>
               Logger.logAndThrow("GenericRobot", Error, "expected list of arguments, not " + e)
           }
           funs ::= Fun(name, args2, parseFormula(formula))
@@ -345,7 +525,7 @@ object GenericRobot {
         b
     }
 
-    new GenericRobot(pg, bb, inputs, funs, And(cstrs:_*))
+    new GenericRobot(pg, bb, frame, inputs, dynamic, funs, And(cstrs:_*))
   }
 
 }

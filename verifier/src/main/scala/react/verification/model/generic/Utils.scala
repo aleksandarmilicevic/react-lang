@@ -17,13 +17,13 @@ object Utils {
   }
 
   def parseFormula(e: SExpr): Formula = e match {
-    case Atom("pi") => Literal(math.Pi)
-    case Atom(str) =>
+    case SAtom("pi") => Literal(math.Pi)
+    case SAtom(str) =>
       Misc.toDouble(str) match {
         case Some(l) => Literal(l)
         case None => Variable(str).setType(Real)
       }
-    case Application(op, args) =>
+    case SApplication(op, args) =>
       val args2 = args map parseFormula
       val symbol: Symbol = op match {
         case "D" =>
