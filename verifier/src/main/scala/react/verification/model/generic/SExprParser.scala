@@ -19,10 +19,14 @@ object SExprParser extends RegexParsers {
     | nonWhite                          ^^ { op => SAtom(op) }
   )
 
-  def sExprs: Parser[List[SExpr]] = rep(sExpr)
+  def sExprs: Parser[List[SExpr]] = (
+    sExpr ~ sExprs ^^ { case a ~ b => a :: b }
+  | whiteSpace ~> sExprs
+  | success(Nil)
+  )
 
   def parse(str: String): Option[List[SExpr]] = {
-    val result = parse(sExprs, str)
+    val result = parseAll(sExprs, str)
     if (result.successful) {
       val cmds = result.get
       Some(cmds)

@@ -7,7 +7,6 @@ beam.q_i
 beam.q_j
 beam.q_k
 leftmotor.angle
-leftmotor.input
 leftmotor.q_a
 leftmotor.q_i
 leftmotor.q_j
@@ -20,7 +19,6 @@ leftwheel.q_i
 leftwheel.q_j
 leftwheel.q_k
 rightmotor.angle
-rightmotor.input
 rightmotor.q_a
 rightmotor.q_i
 rightmotor.q_j
@@ -51,7 +49,6 @@ tail.q_k
 ( dynamic beam.q_j )
 ( dynamic beam.q_k )
 ( dynamic leftmotor.angle )
-( dynamic leftmotor.input )
 ( dynamic leftmotor.q_a )
 ( dynamic leftmotor.q_i )
 ( dynamic leftmotor.q_j )
@@ -64,7 +61,6 @@ tail.q_k
 ( dynamic leftwheel.q_j )
 ( dynamic leftwheel.q_k )
 ( dynamic rightmotor.angle )
-( dynamic rightmotor.input )
 ( dynamic rightmotor.q_a )
 ( dynamic rightmotor.q_i )
 ( dynamic rightmotor.q_j )
@@ -91,10 +87,8 @@ tail.q_k
 ( == ( + ( ^ beam.q_k 2 ) ( ^ beam.q_i 2 ) ( ^ beam.q_a 2 ) ( ^ beam.q_j 2 ) ) 1 )
 ( == ( + ( ^ tail.q_j 2 ) ( ^ tail.q_i 2 ) ( ^ tail.q_k 2 ) ( ^ tail.q_a 2 ) ) 1 )
 ( == ( + ( ^ rightmotor.q_j 2 ) ( ^ rightmotor.q_i 2 ) ( ^ rightmotor.q_a 2 ) ( ^ rightmotor.q_k 2 ) ) 1 )
-( == siminput0_input leftmotor.input )
-( == siminput1_input rightmotor.input )
-( == ( D rightmotor.angle ) rightmotor.input )
-( == ( D leftmotor.angle ) leftmotor.input )
+( == ( D rightmotor.angle ) siminput1_input )
+( == ( D leftmotor.angle ) siminput0_input )
 ( == ( + ( ^ rightwheel.q_i 2 ) ( ^ rightwheel.q_a 2 ) ( ^ rightwheel.q_j 2 ) ( ^ rightwheel.q_k 2 ) ) 1 )
 ( == ( + ( ^ leftwheel.q_j 2 ) ( ^ leftwheel.q_a 2 ) ( ^ leftwheel.q_k 2 ) ( ^ leftwheel.q_i 2 ) ) 1 )
 ( == ( + ( ^ leftmotor.q_i 2 ) ( ^ leftmotor.q_a 2 ) ( ^ leftmotor.q_j 2 ) ( ^ leftmotor.q_k 2 ) ) 1 )

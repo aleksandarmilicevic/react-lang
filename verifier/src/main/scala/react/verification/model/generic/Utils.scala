@@ -38,9 +38,25 @@ object Utils {
           Logger("GenericRobot", Debug, "unknown symbol: " + op)
           UnInterpretedFct(other)
       }
-      symbol(args2:_*)
+      (symbol, args2) match {
+        case (Minus, List(Literal(d: Double))) => Literal(-d)
+        case _ => symbol(args2:_*)
+      }
     case SNil => 
       Logger.logAndThrow("GenericRobot", Error, "expected expression, not ()")
   }
+
+  def occursInDerivative(v: Variable, f: Formula): Boolean = {
+    FormulaUtils.collect(false, (acc: Boolean, f) => f match {
+      case Application(DRealDecl.timeDerivative, args) =>
+        if (And(args:_*).freeVariables contains v) true else acc
+      case _ => acc
+    }, f)
+  }
+
+  def hasDt(f: Formula) = {
+    FormulaUtils.collectSymbols(f).contains(DRealDecl.timeDerivative)
+  }
+  
 
 }

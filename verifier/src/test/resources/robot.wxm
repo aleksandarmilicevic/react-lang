@@ -5,6 +5,10 @@
 Understanding how we get the equations of the robot
    [wxMaxima: title   end   ] */
 
+/* [wxMaxima: section start ]
+preliminary definitons
+   [wxMaxima: section end   ] */
+
 /* [wxMaxima: comment start ]
 First we define some operations over vectors and quaternions.
 Rotations are represented using (unit) quaternions, [a, i, j, k]
@@ -54,12 +58,15 @@ norm(a) := ratsimp(sqrt(dotprod(a, a)));
 unit(q) := ratsimp(q[1]^2 + q[2]^2 + q[3]^2 + q[4]^2 = 1);
 /* [wxMaxima: input   end   ] */
 
-/* [wxMaxima: comment start ]
-and now let's go for the real thing
-   [wxMaxima: comment end   ] */
+/* [wxMaxima: section start ]
+The robot equations
+   [wxMaxima: section end   ] */
 
 /* [wxMaxima: comment start ]
-some structural parameters
+some structural parameters:
+-axis of rotation for the left and right wheel
+-relative position of the left and right wheel w.r.t the robot frame
+-wheel radius
    [wxMaxima: comment end   ] */
 
 /* [wxMaxima: input   start ] */
@@ -72,6 +79,8 @@ wheel_radius;
 
 /* [wxMaxima: comment start ]
 the system's state
+-position and orientation of the frame
+-angle for the left and right motor
    [wxMaxima: comment end   ] */
 
 /* [wxMaxima: input   start ] */
@@ -91,7 +100,7 @@ right_input;
 /* [wxMaxima: input   end   ] */
 
 /* [wxMaxima: comment start ]
-dynamic variables
+dynamic variables, i.e., variables that changes over time.
    [wxMaxima: comment end   ] */
 
 /* [wxMaxima: input   start ] */
@@ -112,12 +121,12 @@ right_wheel_speed : diff(right_wheel_center, t);
 
 /* [wxMaxima: comment start ]
 constraints
-globally:
--unit quaternion
-for each wheel we have:
--the change in the angle is proportional to the input
--the speed projected on the direction of the wheel is the derivative of the angle * wheel_radius
--the speed is ortogonal to the rotation axis
+-globally:
+  unit quaternion
+-for each wheel we have:
+  the change in the angle is proportional to the input
+  the speed projected on the direction of the wheel is the derivative of the angle * wheel_radius
+  the speed is ortogonal to the rotation axis
    [wxMaxima: comment end   ] */
 
 /* [wxMaxima: input   start ] */
@@ -129,6 +138,13 @@ diff(right_angle,t) = right_input,
 diff(right_angle,t) * wheel_radius = dotprod(orientation, right_wheel_speed),
 0 = dotprod(rotate(right_rotation_axis, base_rot), right_wheel_speed)];
 /* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: comment start ]
+instantiate some structural parameters to simplify the equations:
+wheel radius = 40
+left motor offset w.r.t. frame reference point = (60, 0)
+right motor offset w.r.t. frame reference point = (60, 60)
+   [wxMaxima: comment end   ] */
 
 /* [wxMaxima: input   start ] */
 ratsimp(ev(eqn, [wheel_radius=40,dlx=60,dly=0,drx=60,dry=60]));

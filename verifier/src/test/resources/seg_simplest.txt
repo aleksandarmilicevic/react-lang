@@ -27,6 +27,7 @@ rightmotor.input
 ( = base.q_j 0 )
 
 ( = (+ (^ base.q_k 2) (^ base.q_a 2)) 1 )
+( = (+ (* 2 (D base.q_k)) (* 2 (D base.q_a)) ) 0)
 
 (=
   (* 40 leftmotor.input)
@@ -87,3 +88,4 @@ rightmotor.input
     (* -1 (D base.dy) (^ base.q_a 2))
   )
 )
+
