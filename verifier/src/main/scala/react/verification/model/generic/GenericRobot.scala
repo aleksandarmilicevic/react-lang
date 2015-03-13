@@ -4,6 +4,7 @@ import react.message.Primitive
 import react.runtime.MessageListenerRW
 import react.Executor
 import react.robot._
+import react.utils._
 import react.verification.Playground
 import react.verification.model._
 import react.verification.environment._
@@ -90,14 +91,21 @@ class GenericRobot( val pg: Playground,
   }
 
   def initSolution: Map[Variable, Double] = {
-    val in = inputs.flatMap( i => store.get(i.v).map( v => Eq(i.v, Literal(v.toDouble))) )
-    val cstr1 = in ::: angleRanges ::: poseConstrains ::: ranges ::: conjuncts
-    val cstr2 = cstr1.map(replaceDt)
-    val dtRange = And(cstr2:_*).freeVariables.toList.filter(_.name.endsWith(dtSuffix)).flatMap( v => {
+    val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
+    val known = poseValues ++ in
+    val bounds1 = angleRanges ::: ranges
+    val cstr1 = conjuncts.map(replaceDt)
+    val bounds2 = And(cstr1:_*).freeVariables.toList.filter(_.name.endsWith(dtSuffix)).flatMap( v => {
         List( Lt(v, Literal(10000)),
               Gt(v, Literal(-10000)))
       })
-    val cstr = dtRange ::: cstr2
+    def replace(f: Formula) = {
+      FormulaUtils.map({ case v @ Variable(_) => known.getOrElse(v,v)
+                         case x => x }, f)
+    }
+    val cstr2 = cstr1.map(replace).map(ArithmeticSimplification.polynomialNF)
+    val bounds = (bounds1 ::: bounds2).map(replace)
+    val cstr = bounds ::: cstr2
 
     val fname = Namer("init_test") + ".smt2"
     val solver = DReal(QF_NRA, 0.1, fname)
@@ -111,11 +119,13 @@ class GenericRobot( val pg: Playground,
     solver.checkSat match {
       case Sat(Some(model)) =>
         val allVars = And(cstr:_*).freeVariables
-        allVars.map( v => model(v) match {
+        val values = allVars.map( v => model(v) match {
           case ValD(d) => v -> d
           case ValI(i) => v -> i.toDouble
           case other => sys.error("expected Double, found: " + other)
         }).toMap
+        val knownValues = known.map{ case (k, Literal(d: Double)) => k -> d }
+        values ++ knownValues
       case Sat(None) => sys.error("could not get model for the initial value!")
       case UnSat => sys.error("no initial value!")
       case Unknown => sys.error("unknown initial value!")
@@ -153,6 +163,19 @@ class GenericRobot( val pg: Playground,
       Eq(frame.k, Literal(q.w))
     )
   }
+  
+  def poseValues = {
+    val q = Angle.quaternionFromTheta(orientation)
+    Map(
+      frame.x -> Literal(1000 * x),
+      frame.y -> Literal(1000 * y),
+      frame.a -> Literal(q.x),
+      frame.i -> Literal(q.y),
+      frame.j -> Literal(q.z),
+      frame.k -> Literal(q.w)
+    )
+  }
+
 
   def quaternionRanges = {
     val quaternionSuffixes = Set(".q_a",".q_i",".q_j",".q_k")

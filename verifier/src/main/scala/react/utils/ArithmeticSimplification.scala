@@ -6,28 +6,28 @@ import dzufferey.utils.LogLevel._
 
 object ArithmeticSimplification {
 
-  def pushDerivativesDown(timeVar: Variable, dynamic: Set[Variable], f: Formula): Formula = f match {
-    case Application(DRealDecl.timeDerivative, List(expr)) if expr.freeVariables.forall(v  => !(dynamic contains v)) =>
+  def pushDerivativesDown(dt: Variable, dynamic: Set[Variable], f: Formula): Formula = f match {
+    case Application(DRealDecl.timeDerivative, List(expr)) if expr.freeVariables.forall(v  => !(dynamic contains v) && v != dt) =>
       Literal(0.0)
-    case Application(DRealDecl.timeDerivative, List(v)) if v == timeVar =>
+    case Application(DRealDecl.timeDerivative, List(v)) if v == dt =>
       Literal(1.0)
     case Application(DRealDecl.timeDerivative, List(Plus(args @ _*))) =>
-      Plus(args.map(a => pushDerivativesDown(timeVar, dynamic, DRealDecl.timeDerivative(a))):_*)
+      Plus(args.map(a => pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(a))):_*)
     case Application(DRealDecl.timeDerivative, List(Minus(args @ _*))) =>
-      Minus(args.map(a => pushDerivativesDown(timeVar, dynamic, DRealDecl.timeDerivative(a))):_*)
+      Minus(args.map(a => pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(a))):_*)
     case Application(DRealDecl.timeDerivative, List(Times(args @ _*))) =>
       val n = args.length
       val parts = (0 until n).map( i => {
         val prefix = args.take(i-1)
-        val d = pushDerivativesDown(timeVar, dynamic, DRealDecl.timeDerivative(args(i)))
+        val d = pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(args(i)))
         val suffix = args.drop(i+1)
         val together = (prefix :+ d) ++ suffix
         Times(together:_*)
       })
       Plus(parts:_*)
     case Application(DRealDecl.timeDerivative, List(Divides(f, g))) =>
-      val p1 = Times(pushDerivativesDown(timeVar, dynamic, DRealDecl.timeDerivative(f)), g)
-      val p2 = Times(f, pushDerivativesDown(timeVar, dynamic, DRealDecl.timeDerivative(g)))
+      val p1 = Times(pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(f)), g)
+      val p2 = Times(f, pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(g)))
       val p3 = DRealDecl.pow(g, Literal(2.0))
       Divides(Minus(p1, p2), p3)
     case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.sin, args))) =>
@@ -36,12 +36,12 @@ object ArithmeticSimplification {
       Times(Literal(-1.0), DRealDecl.sin(args:_*))
     case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.pow, List(expr, Literal(n: Double))))) =>
       if (n == 0.0) Literal(0.0)
-      else Times(Literal(n), DRealDecl.pow(expr, Literal(n-1)), pushDerivativesDown(timeVar, dynamic, DRealDecl.timeDerivative(expr)))
+      else Times(Literal(n), DRealDecl.pow(expr, Literal(n-1)), pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(expr)))
     case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.pow, List(expr, Literal(n: Long))))) =>
       if (n == 0l) Literal(0)
-      else Times(Literal(n), DRealDecl.pow(expr, Literal(n-1)), pushDerivativesDown(timeVar, dynamic, DRealDecl.timeDerivative(expr)))
-    case a @ Application(fct, args) => fct(args.map(pushDerivativesDown(timeVar, dynamic, _)):_*).setType(a.tpe)
-    case b @ Binding(bt, vs, f) => Binding(bt, vs, pushDerivativesDown(timeVar, dynamic, f)).setType(b.tpe)
+      else Times(Literal(n), DRealDecl.pow(expr, Literal(n-1)), pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(expr)))
+    case a @ Application(fct, args) => fct(args.map(pushDerivativesDown(dt, dynamic, _)):_*).setType(a.tpe)
+    case b @ Binding(bt, vs, f) => Binding(bt, vs, pushDerivativesDown(dt, dynamic, f)).setType(b.tpe)
     case other => other
   }
 
@@ -176,6 +176,7 @@ object ArithmeticSimplification {
     }
 
     def mkPolynomial(f: Formula): Polynomial = f match {
+      case Minus(a, b) => mkPolynomial(a) + (mkPolynomial(b) * minusOne)
       case Plus(lst @ _*) => lst.foldLeft(Polynomial(Seq()))( _ + mkPolynomial(_) )
       case Times(lst @ _*) => lst.foldLeft(constant(1))( _ * mkPolynomial(_) )
       case Application(DRealDecl.pow, List(e, Literal(l))) =>
@@ -214,7 +215,9 @@ object ArithmeticSimplification {
         fct(lhs.toFormula, Literal(0l))
         //TODO factor the gcd of coeffs in lhs
       case Not(ap) => Not(processEq(f))
-      case other => sys.error("processEq, not supported: " + other)
+      case And(lst @ _*) => And(lst.map(processEq):_*)
+      case Or(lst @ _*) => Or(lst.map(processEq):_*)
+      case other => mkPolynomial(other).toFormula
     }
 
     def result = processEq(f)
@@ -279,12 +282,12 @@ object ArithmeticSimplification {
       case Application((Eq | Leq | Lt | Geq | Gt), List(_, _)) => true
       case Variable(_) | Plus(_*) | Minus(_*) | Times(_*) => true
       case Application(DRealDecl.pow, List(f, i)) => check(f) && !isInteger(f) && isInteger(i)
+      case And(_*) | Or(_*) | Not(_) => true
       case other => isInteger(other)
     }
     check(f)
   }
 
-  //TODO apply below the bool structure
   def polynomialNF(f: Formula): Formula = {
     val level = Info
     Logger("ArithmeticSimplification", level, "simplifing: " + f)
