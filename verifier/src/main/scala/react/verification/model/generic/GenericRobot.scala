@@ -82,15 +82,21 @@ class GenericRobot( val pg: Playground,
   //first step is to find the implicit variables.
 
   val dtSuffix = "_dt"
+  def isDt(v: Variable): Boolean = v.name endsWith dtSuffix
+  def dtize(v: Variable): Variable = Variable(v.name + dtSuffix).setType(v.tpe)
+  def unDt(v: Variable): Variable = {
+    if (isDt(v)) Variable(v.name.dropRight(dtSuffix.length)).setType(v.tpe)
+    else v
+  }
   def replaceDt(f: Formula): Formula = {
     FormulaUtils.map({
-      case Application(DRealDecl.timeDerivative, List(Variable(n))) => Variable(n + dtSuffix).setType(Real)
+      case Application(DRealDecl.timeDerivative, List(v @ Variable(_))) => dtize(v)
       case a @ Application(DRealDecl.timeDerivative, _) => sys.error("not normalized: " + a)
       case other => other
     }, f)
   }
 
-  def initSolution: Map[Variable, Double] = {
+  def initSolution: (Map[Variable, Double], Map[Variable, Double]) = {
     val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
     val known = poseValues ++ in
     val bounds1 = angleRanges ::: ranges
@@ -108,13 +114,19 @@ class GenericRobot( val pg: Playground,
     val cstr = bounds ::: cstr2
 
     val fname = Namer("init_test") + ".smt2"
-    val solver = DReal(QF_NRA, 0.1, fname)
+    val solver = if (Logger("GenericRobot", Debug)) DReal(QF_NRA, 0.1, fname)
+                 else DReal(QF_NRA, 0.1)
     //TODO set precision
 
     cstr.foreach( c => {
       fixTypes(c)
       solver.assert(c)
     })
+
+    def partitionSolution(m: Map[Variable, Double]) = {
+      val (mDt,mNormal) = m.partition( p => isDt(p._1))
+      (mNormal, mDt.map{ case (v,d) => unDt(v) -> d})
+    }
 
     solver.checkSat match {
       case Sat(Some(model)) =>
@@ -125,7 +137,8 @@ class GenericRobot( val pg: Playground,
           case other => sys.error("expected Double, found: " + other)
         }).toMap
         val knownValues = known.map{ case (k, Literal(d: Double)) => k -> d }
-        values ++ knownValues
+        val allValues = values ++ knownValues
+        partitionSolution(allValues)
       case Sat(None) => sys.error("could not get model for the initial value!")
       case UnSat => sys.error("no initial value!")
       case Unknown => sys.error("unknown initial value!")
@@ -133,13 +146,6 @@ class GenericRobot( val pg: Playground,
     }
   }
 
-  def residualFunction = {
-    ???
-  }
-
-  def jacobianFunction = {
-    ???
-  }
 
   //TODO not like that anymore ...
   //beam.dx/y/z is the position of the seg

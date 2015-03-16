@@ -26,6 +26,8 @@ rightmotor.input
 ( = base.q_i 0 )
 ( = base.q_j 0 )
 
+( = (D base.dz) 0)
+
 ( = (+ (^ base.q_k 2) (^ base.q_a 2)) 1 )
 ( = (+ (* 2 (D base.q_k)) (* 2 (D base.q_a)) ) 0)
 

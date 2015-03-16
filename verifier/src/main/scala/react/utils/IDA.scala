@@ -8,8 +8,6 @@ import java.io._
 /** wrapper around the IDA solver from the sundials library */
 class IDA(inputs: Seq[Variable], formula: Formula) {
 
-  //TODO inputs
-
   val dtSuffix = "_dt"
   def dt(v: Variable): Variable = Variable(v.name + dtSuffix).setType(Real)
   def replaceDt(f: Formula): Formula = {
@@ -33,6 +31,7 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
   val nConj = conjuncts.size
   val varSeq = (formula.freeVariables -- inputs).toIndexedSeq
   val vars = varSeq.zipWithIndex.toMap
+  assert(vars.forall{ case (v, i) => varSeq(i) == v}, "index confusion")
   val pvars = vars.map{ case (v,i) => dt(v) -> i }
   val nv = vars.size
   val nr = 0
@@ -49,14 +48,14 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
 
   def access(v: Variable) = {
     if (inputs contains v) "((realtype*) user_data)[" + inputs.indexOf(v) + "]"
-    if (vars contains v) "yval[" + vars(v) + "]"
+    else if (vars contains v) "yval[" + vars(v) + "]"
     else if (pvars contains v) "ypval[" + pvars(v) + "]"
     else if (v.name == "cj") "cj"
     else sys.error("unknown variable: " + v)
   }
 
   def residual(out: BufferedWriter) = {
-    out.write("int residual(realtype tres, N_Vector yy, N_Vector yp, N_Vector resval, void *user_data) { ")
+    out.write("int residual(realtype tres, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data) { ")
     out.newLine; out.newLine
     out.write("  realtype *yval = NV_DATA_S(yy);")
     out.newLine
@@ -68,9 +67,10 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
       out.write("  rval["+i+"] = "+CPrinter.expr(conjuncts(i), literal, access)+" ;")
       out.newLine
     }
+    //dummy variables
     if (neq > nConj) {
       assert(neq == nConj + 1)
-      val expr = (nConj until neq).map(i => "yval["+i+"]").mkString(" + ")
+      val expr = (nConj until neq).map(i => "yval["+i+"]*yval["+i+"]").mkString(" + ")
       out.write("  rval["+nConj+"] = " + expr + ";")
       out.newLine
     }
@@ -125,12 +125,8 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     }
 
     if (nConj < neq) {
-      for(j <- 0 until nv) {
-        out.write("  DENSE_ELEM(JJ,"+nConj+","+j+") = RCONST(0.0);")
-        out.newLine
-      }
       for(j <- nv until neq) {
-        out.write("  DENSE_ELEM(JJ,"+nConj+","+j+") = cj;")
+        out.write("  DENSE_ELEM(JJ,"+nConj+","+j+") = yval["+j+"];")
         out.newLine
       }
     }
@@ -147,8 +143,8 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     val out = new BufferedWriter(new PrintWriter(file))
     out.write(IDA.includes); out.newLine
     out.write(IDA.errorChecking); out.newLine
-    out.write(IDA.printing); out.newLine
     out.write(parameter); out.newLine
+    out.write(IDA.printing); out.newLine
     residual(out); out.newLine
     jacobian(out); out.newLine
     root(out); out.newLine
@@ -168,10 +164,12 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     }
   }
 
-  var source = ""
-  var binary = ""
+  protected var ready = false
+  protected var source = ""
+  protected var binary = ""
 
   def clean {
+    ready = false
     if (source != "") new File(source).delete()
     if (binary != "") new File(binary).delete()
   }
@@ -179,13 +177,32 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
   def prepare {
     source = makeFile
     binary = compile(source)
+    ready = true
   }
 
   def solve(time: Double, inVal: Map[Variable, Double],
             initialValues: Map[Variable, Double],
-            initialDt: Map[Variable, Double]): Map[Variable, Double] = {
+            initialDt: Map[Variable, Double]): (Double, Map[Variable, Double], Map[Variable, Double]) = {
+    assert(ready)
     //time inVal initialValues initialDt
-    ???
+    val init = inputs.toArray.map(x => inVal(x).toString)
+    val yy = varSeq.toArray.map(x => initialValues(x).toString)
+    val yp = varSeq.toArray.map(x => initialDt.getOrElse(x, 0.0).toString)
+    val cmd = Array(binary, time.toString) ++ init ++ yy ++ yp
+    val (res, out, err) = SysCmd(cmd)
+    if (res == 0) {
+      val nums = out.split("\\s+").map(_.toDouble)
+      var t = nums(0)
+      val emp = Map[Variable, Double]()
+      val (res, resDt) = vars.foldLeft( (emp,emp) )( (acc, v) => {
+        val yres  = acc._1 + (v._1 -> nums(v._2+1) )
+        val ypres = acc._2 + (v._1 -> nums(v._2+nv+1) )
+        (yres, ypres)
+      } )
+      (t, res, resDt)
+    } else {
+      Logger.logAndThrow("IDA", Error, "IDA error("+res+"): " + cmd.mkString(" ") + "\n" + out + "\n" + err)
+    }
   }
 
 }
@@ -246,16 +263,16 @@ int main(int argc, char *argv[]) {
     if(check_flag((void *)avtol, "N_VNew_Serial", 0)) return(1);
 
     tcur = RCONST( 0.0 );
-    tout = RCONST( atof(argv[0]) );
+    tout = RCONST( atof(argv[1]) );
     
     for(i = 0; i < NI; i++) {
-      user_data[i] = RCONST( atof(argv[ 1 + i ]) );
+      user_data[i] = RCONST( atof(argv[ 2 + i ]) );
     }
 
     yval  = NV_DATA_S(yy);
     for(i = 0; i < NEQ; i++) {
       if (i < NV) {
-        yval[i] = RCONST( atof(argv[ 1 + NI + i ]) );
+        yval[i] = RCONST( atof(argv[ 2 + NI + i ]) );
       } else {
         yval[i] = RCONST( 0.0 );
       }
@@ -264,7 +281,7 @@ int main(int argc, char *argv[]) {
     ypval = NV_DATA_S(yp);
     for(i = 0; i < NEQ; i++) {
       if (i < NV) {
-        ypval[i] = RCONST( atof(argv[ 1 + NI + NV + i ]) );
+        ypval[i] = RCONST( atof(argv[ 2 + NI + NV + i ]) );
       } else {
         ypval[i] = RCONST( 0.0 );
       }
@@ -281,7 +298,6 @@ int main(int argc, char *argv[]) {
 
     retval = IDASetUserData(solver, user_data);
     if(check_flag(&retval, "IDASetUserData", 1)) return 1;
-
 
     retval = IDAInit(solver, residual, tcur, yy, yp);
     if(check_flag(&retval, "IDAInit", 1)) return 1;
@@ -318,13 +334,16 @@ int main(int argc, char *argv[]) {
           //PrintRootInfo(rootsfound);
         }
 
-        if (retval == IDA_SUCCESS) {
-          tout *= RCONST(10.0);
+        if (tcur >= tout) {
+          if (retval == IDA_SUCCESS) {
+            printResult(solver, tcur, yy, yp);
+          } else {
+            return -1;
+          }
         }
 
     }
 
-    printResult(solver, tcur, yy, yp);
     //PrintFinalStats(solver);
 
     IDAFree(&solver);

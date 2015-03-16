@@ -1,0 +1,38 @@
+~~~ Parameters:
+base.dx
+base.dy
+base.dz
+base.q_a
+base.q_i
+base.q_j
+base.q_k
+dx.input
+dy.input
+
+~~~ Equations:
+( frame base.dx base.dy base.dz base.q_a base.q_i base.q_j base.q_k )
+( bbox 0 0 50 50 0 )
+( input dx.input )
+( input dy.input )
+( dynamic base.dx )
+( dynamic base.dy )
+( dynamic base.dz )
+( dynamic base.q_a )
+( dynamic base.q_i )
+( dynamic base.q_j )
+( dynamic base.q_k )
+
+( = base.dz 0 )
+( = base.q_a 1.0 )
+( = base.q_i 0 )
+( = base.q_j 0 )
+( = base.q_k 0 )
+
+( = (D base.dx) dx.input )
+( = (D base.dy) dy.input )
+( = (D base.dz) 0 )
+( = (D base.q_a) 0 )
+( = (D base.q_i) 0 )
+( = (D base.q_j) 0 )
+( = (D base.q_k) 0 )
+
