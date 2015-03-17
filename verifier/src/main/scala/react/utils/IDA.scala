@@ -43,6 +43,20 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     "#define NR  " + nr  + "\n" + //nbr roots
     "#define NV  " + nv  + "\n"   //nbr variables (if NEQ > NV then the difference is composed of dummy variables that should be 0)
   }
+
+  def header = """/*
+ * inputs: """ + inputs.mkString(", ") + """
+ * variables: """ + varSeq.mkString(", ") + """
+ *
+ * residual function:
+ *  """ + conjuncts.mkString("\n *  ") + """
+ *
+ * jacobian:
+ *  """ + (for(i <- 0 until nConj; j <- 0 until nv) yield
+            i + ", " + varSeq(j) + ": " + partialDif(i, j, Variable("cj"))
+          ).mkString("\n *  ") + """
+ */
+"""
   
   def literal(d: Double) = "RCONST( "+d+" )"
 
@@ -56,13 +70,10 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
 
   def residual(out: BufferedWriter) = {
     out.write("int residual(realtype tres, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data) { ")
-    out.newLine; out.newLine
-    out.write("  realtype *yval = NV_DATA_S(yy);")
     out.newLine
-    out.write("  realtype *ypval = NV_DATA_S(yp);")
-    out.newLine
-    out.write("  realtype *rval = NV_DATA_S(rr);")
-    out.newLine; out.newLine
+    out.write("  realtype *yval = NV_DATA_S(yy);"); out.newLine
+    out.write("  realtype *ypval = NV_DATA_S(yp);"); out.newLine
+    out.write("  realtype *rval = NV_DATA_S(rr);"); out.newLine; out.newLine
     for (i <- 0 until nConj) {
       out.write("  rval["+i+"] = "+CPrinter.expr(conjuncts(i), literal, access)+" ;")
       out.newLine
@@ -70,8 +81,31 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     //dummy variables
     if (neq > nConj) {
       assert(neq == nConj + 1)
-      val expr = (nConj until neq).map(i => "yval["+i+"]*yval["+i+"]").mkString(" + ")
+      val expr = (nv until neq).map(i => "yval["+i+"]*yval["+i+"]").mkString(" + ")
       out.write("  rval["+nConj+"] = " + expr + ";")
+      out.newLine
+    }
+    out.newLine
+    out.write("  return 0;")
+    out.newLine
+    out.write("}")
+    out.newLine
+  }
+
+  def printResidual(out: BufferedWriter) = {
+    out.write("int printResidual(realtype tres, N_Vector yy, N_Vector yp, void *user_data) { ")
+    out.newLine
+    out.write("  realtype *yval = NV_DATA_S(yy);"); out.newLine
+    out.write("  realtype *ypval = NV_DATA_S(yp);"); out.newLine
+    for (i <- 0 until nConj) {
+      out.write("  printf(\"rval["+i+"] = %10.4le\\n\", "+CPrinter.expr(conjuncts(i), literal, access)+");")
+      out.newLine
+    }
+    //dummy variables
+    if (neq > nConj) {
+      assert(neq == nConj + 1)
+      val expr = (nv until neq).map(i => "yval["+i+"]*yval["+i+"]").mkString(" + ")
+      out.write("  printf(\"rval["+nConj+"] = %10.4le\\n\", "+expr+");")
       out.newLine
     }
     out.newLine
@@ -91,6 +125,15 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     out.newLine
   }
 
+  def partialDif(i: Int, j: Int, cj: Variable): Formula = {
+    val c = DRealDecl.timeDerivative(conjuncts(i))
+    val v = varSeq(j)
+    val d1 = ArithmeticSimplification.pushDerivativesDown(v, Set(), c)
+    val d2 = ArithmeticSimplification.pushDerivativesDown(dt(v), Set(), c)
+    val sum = Plus(d1, Times(cj, d2)) //dy + cj * dyp
+    ArithmeticSimplification.polynomialNF(sum)
+  }
+
   def jacobian(out: BufferedWriter) = {
     out.write("int jacobian(long int Neq, realtype tt, realtype cj,"); out.newLine
     out.write("             N_Vector yy, N_Vector yp, N_Vector rr,"); out.newLine
@@ -103,16 +146,7 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
 
     for(i <- 0 until nConj;
         j <- 0 until nv) {
-      val c = DRealDecl.timeDerivative(conjuncts(i))
-      val v = varSeq(j)
-      val d1 = ArithmeticSimplification.pushDerivativesDown(v, Set(), c)
-      val d2 = ArithmeticSimplification.pushDerivativesDown(dt(v), Set(), c)
-      //println("c = " + c)
-      //println("v = " + v)
-      //println("d1 = " + d1)
-      //println("d2 = " + d2)
-      val sum = Plus(d1, Times(Variable("cj"), d2)) //dy + cj * dyp
-      val jc = ArithmeticSimplification.polynomialNF(sum)
+      val jc = partialDif(i, j, Variable("cj"))
       val cexpr = CPrinter.expr(jc, literal, access)
       out.write("  DENSE_ELEM(JJ,"+i+","+j+") = "+cexpr+";")
       out.newLine
@@ -126,28 +160,83 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
 
     if (nConj < neq) {
       for(j <- nv until neq) {
-        out.write("  DENSE_ELEM(JJ,"+nConj+","+j+") = yval["+j+"];")
+        out.write("  DENSE_ELEM(JJ,"+nConj+","+j+") = 2 * yval["+j+"];")
         out.newLine
       }
     }
 
-    out.write("  return 0;")
-    out.newLine
-    out.write("}")
-    out.newLine
+    out.write("  return 0;"); out.newLine
+    out.write("}"); out.newLine
+  }
+  
+  def jacTimesV(out: BufferedWriter) = {
+    out.write("int jacTimesV(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr,"); out.newLine
+    out.write("              N_Vector v, N_Vector Jv, realtype cj,"); out.newLine
+    out.write("              void *user_data, N_Vector tmp1, N_Vector tmp2) {"); out.newLine
+    out.write("  realtype *yval = NV_DATA_S(yy);"); out.newLine
+    out.write("  realtype *ypval = NV_DATA_S(yp);"); out.newLine
+    out.write("  realtype *vval = NV_DATA_S(v);"); out.newLine
+    out.write("  realtype *Jvval = NV_DATA_S(Jv);"); out.newLine
+    out.write("  realtype tmp = RCONST( 0.0 );"); out.newLine
+    //return J * v in Jv
+    for(i <- 0 until nConj){
+      out.write("  tmp = RCONST(0.0);"); out.newLine
+      for(j <- 0 until nv) {
+        val jc = partialDif(i, j, Variable("cj"))
+        val cexpr = CPrinter.expr(jc, literal, access)
+        out.write("  tmp += vval["+j+"] * ("+cexpr+");")
+        out.newLine
+      }
+      out.write("  Jvval["+i+"] = tmp;"); out.newLine
+    }
+    if (nConj < neq) {
+      out.write("  tmp = RCONST(0.0);"); out.newLine
+      for(j <- nv until neq) {
+        out.write("  tmp += vval["+j+"] * 2 * yval["+j+"];")
+        out.newLine
+      }
+      out.write("  Jvval["+nConj+"] = tmp;"); out.newLine
+    }
+    out.write("  return 0;"); out.newLine
+    out.write("}"); out.newLine
+  }
+
+
+  def psetup(out: BufferedWriter) = {
+    out.write("int psetup(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr,"); out.newLine
+    out.write("           realtype cj, void *user_data,"); out.newLine
+    out.write("           N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) {"); out.newLine
+    out.write("  return 0;"); out.newLine
+    out.write("}"); out.newLine
+  }
+
+  def psolve(out: BufferedWriter) = {
+    out.write("int psolve(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr,"); out.newLine
+    out.write("           N_Vector rvec, N_Vector zvec, realtype cj,"); out.newLine
+    out.write("           realtype delta, void *user_data, N_Vector tmp) {"); out.newLine
+    //solve the system J*z = r
+    //or rather z = J^-1 * r
+    ???
+    out.write("  return 0;"); out.newLine
+    out.write("}"); out.newLine
   }
 
   def makeFile: String = {
     //includes + parameter + residual + jacobian [+ roots] + errorChecking + printing + mainFunction
     val file = java.io.File.createTempFile("ida_react_model", ".c")
     val out = new BufferedWriter(new PrintWriter(file))
+    out.write(header); out.newLine
     out.write(IDA.includes); out.newLine
     out.write(IDA.errorChecking); out.newLine
     out.write(parameter); out.newLine
     out.write(IDA.printing); out.newLine
     residual(out); out.newLine
     jacobian(out); out.newLine
+    jacTimesV(out); out.newLine
+    //psetup(out); out.newLine
+    //psolve(out); out.newLine
     root(out); out.newLine
+    printResidual(out); out.newLine
     out.write(IDA.mainFunction); out.newLine
     out.close
     file.getPath
@@ -312,18 +401,47 @@ int main(int argc, char *argv[]) {
       if (check_flag(&retval, "IDARootInit", 1)) return 1;
     }
 
-    retval = IDADense(solver, NEQ);
-    if(check_flag(&retval, "IDADense", 1)) return 1;
+    // Direct solver
 
-    retval = IDADlsSetDenseJacFn(solver, jacobian);
-    if(check_flag(&retval, "IDADlsSetDenseJacFn", 1)) return 1;
+    //retval = IDADense(solver, NEQ);
+    //if(check_flag(&retval, "IDADense", 1)) return 1;
+    //retval = IDALapackDense(solver, NEQ);
+    //if(check_flag(&retval, "IDALapackDense", 1)) return 1;
+
+    // jacobian for direct solver
+    //retval = IDADlsSetDenseJacFn(solver, jacobian);
+    //if(check_flag(&retval, "IDADlsSetDenseJacFn", 1)) return 1;
+
+
+    // Krylov iteration solver
+    retval = IDASpgmr(solver, 0);
+    if(check_flag(&retval, "IDASpgmr", 1)) return(1);
+    //retval = IDASpbcg(solver, 0);
+    //if(check_flag(&retval, "IDASpbcg", 1)) return(1);
+    //retval = IDASptfqmr(solver, 0);
+    //if(check_flag(&retval, "IDASptfqmr", 1)) return(1);
+
+    //retval = IDASpilsSetPreconditioner(solver, psetup, psolve)
+    //if(check_flag(&retval, "IDASpilsSetPreconditioner", 1)) return(1);
+
+    retval = IDASpilsSetJacTimesVecFn(solver, jacTimesV);
+    if(check_flag(&retval, "IDASpilsSetJacTimesVecFn", 1)) return(1);
+
+
+
+    //printResidual(tcur, yy, yp, user_data);
+
+    //retval = IDACalcIC(solver, IDA_Y_INIT, tout);
+    //if(check_flag(&retval, "IDACalcIC", 1)) return 1;
+        
+    //printResidual(tcur, yy, yp, user_data);
 
     while(tcur < tout) {
 
         retval = IDASolve(solver, tout, &tcur, yy, yp, IDA_NORMAL);
 
         //TODO
-        //PrintOutput(solver,tcur,yy);
+        //printResidual(tcur, yy, yp, user_data);
 
         if(check_flag(&retval, "IDASolve", 1)) return 1;
 

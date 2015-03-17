@@ -30,10 +30,12 @@ class GenericRobotTest extends FunSuite {
     robot.store = robot.store + (l -> (10: Short))
     robot.store = robot.store + (r -> (10: Short))
 
-    val (init, initDt) = robot.initSolution
+    val (init, initDt) = robot.initSolution()
 
     val in = robot.inputs.map(_.v)
     val ida = new IDA(in, robot.constraints)
+
+    //Console.println(ida.makeFile.toString)
 
     try {
       ida.prepare
@@ -47,27 +49,30 @@ class GenericRobotTest extends FunSuite {
   }
 
 
-//test("make IDA file 1") {
-//  val robot = GenericRobot(Resources.playground, Resources.path + "seg_simplest.txt")
-//  val l = Variable("leftmotor.input").setType(Real)
-//  val r = Variable("rightmotor.input").setType(Real)
-//  robot.store = robot.store + (l -> (1: Short))
-//  robot.store = robot.store + (r -> (1: Short))
+  test("make IDA file 1") {
+    val robot = GenericRobot(Resources.playground, Resources.path + "seg_simplest.txt")
+    val l = Variable("leftmotor.input").setType(Real)
+    val r = Variable("rightmotor.input").setType(Real)
+    robot.store = robot.store + (l -> (1: Short))
+    robot.store = robot.store + (r -> (1: Short))
 
-//  val (init, initDt) = robot.initSolution
+    val tolerance = 1e-16
+    val (init, initDt) = robot.initSolution(tolerance)
 
-//  val in = robot.inputs.map(_.v)
-//  val ida = new IDA(in, robot.constraints)
+    val in = robot.inputs.map(_.v)
+    val ida = new IDA(in, robot.constraints)
 
-//  try {
-//    ida.prepare
-//    val (t, r1, r2) = ida.solve(0.1, robot.store.mapValues(_.toDouble), init, initDt)
-//    Console.println("t = " + t)
-//    Console.println("result:    " + r1.mkString(" "))
-//    Console.println("result dt: " + r2.mkString(" "))
-//  } finally {
-//    ida.clean
-//  }
-//}
+    //Console.println(ida.makeFile.toString)
+
+    try {
+      ida.prepare
+      val (t, r1, r2) = ida.solve(0.1, robot.store.mapValues(_.toDouble), init, initDt)
+      Console.println("t = " + t)
+      Console.println("result:    " + r1.mkString(" "))
+      Console.println("result dt: " + r2.mkString(" "))
+    } finally {
+      ida.clean
+    }
+  }
 
 }

@@ -96,7 +96,7 @@ class GenericRobot( val pg: Playground,
     }, f)
   }
 
-  def initSolution: (Map[Variable, Double], Map[Variable, Double]) = {
+  def initSolution(precision: Double = 0.1): (Map[Variable, Double], Map[Variable, Double]) = {
     val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
     val known = poseValues ++ in
     val bounds1 = angleRanges ::: ranges
@@ -115,7 +115,7 @@ class GenericRobot( val pg: Playground,
 
     val fname = Namer("init_test") + ".smt2"
     val solver = if (Logger("GenericRobot", Debug)) DReal(QF_NRA, 0.1, fname)
-                 else DReal(QF_NRA, 0.1)
+                 else DReal(QF_NRA, precision)
     //TODO set precision
 
     cstr.foreach( c => {
