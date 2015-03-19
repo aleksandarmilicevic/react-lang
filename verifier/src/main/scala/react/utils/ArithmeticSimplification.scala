@@ -106,8 +106,10 @@ object ArithmeticSimplification {
               else if (e == 1l) Some(i2v(i))
               else Some(DRealDecl.pow(i2v(i), Literal(e).setType(Real)))
             }
-          if (coeff == Ratio.one) Times(prod:_*)
-          else Times( c +: prod : _*)
+          val elts = if (coeff == Ratio.one && !prod.isEmpty) prod
+                     else c +: prod
+          if (elts.size == 1) elts.head
+          else Times(elts:_*)
         }
       }
 
@@ -288,10 +290,19 @@ object ArithmeticSimplification {
     check(f)
   }
 
+  def simplifyPow(f: Formula) = {
+    FormulaUtils.map({
+      case Application(DRealDecl.pow, List(Literal(l: Long), Literal(e: Long))) if e > 0 => Literal(math.pow(l, e).toLong) //TODO check overflow
+      case Application(DRealDecl.pow, List(Literal(l: Double), Literal(e: Double))) => Literal(math.pow(l, e))
+      case other => other
+    }, f)
+  }
+
   def polynomialNF(f: Formula): Formula = {
-    val level = Info
+    val level = Debug
     Logger("ArithmeticSimplification", level, "simplifing: " + f)
-    val (f2, unabstract) = abstractFormula(f, isIntegerPolynomial)
+    val f1 = simplifyPow(f)
+    val (f2, unabstract) = abstractFormula(f1, isIntegerPolynomial)
     val f3 = new PolySimp(f2).result
     val f4 = unabstract(f3)
     Logger("ArithmeticSimplification", level, "result: " + f4)

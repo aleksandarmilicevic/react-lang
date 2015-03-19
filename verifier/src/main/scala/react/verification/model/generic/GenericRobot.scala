@@ -1,6 +1,6 @@
 package react.verification.model.generic
 
-import react.message.Primitive
+import react.message._
 import react.runtime.MessageListenerRW
 import react.Executor
 import react.robot._
@@ -23,7 +23,8 @@ case class Frame( x: Variable, y: Variable, z: Variable, //3D vector
 }
 
 
-class GenericRobot( val pg: Playground,
+class GenericRobot( val id: String,
+                    val pg: Playground,
                     val bBox: Box2D,
                     val frame: Frame,
                     val inputs: List[Input],
@@ -33,10 +34,6 @@ class GenericRobot( val pg: Playground,
   protected def mkVar(str: String) = Variable(str).setType(Real)
 
   val timeVar = mkVar("t")
-  protected val xVar    = mkVar("x")
-  protected val yVar    = mkVar("y")
-  protected val yawVar  = mkVar("yaw")
-
 
   def modelDescription: String = {
     val d = UnInterpretedFct("D", Some(Real ~> Real), Nil)
@@ -88,15 +85,30 @@ class GenericRobot( val pg: Playground,
     if (isDt(v)) Variable(v.name.dropRight(dtSuffix.length)).setType(v.tpe)
     else v
   }
-  def replaceDt(f: Formula): Formula = {
+  protected def replaceDt(f: Formula): Formula = {
     FormulaUtils.map({
       case Application(DRealDecl.timeDerivative, List(v @ Variable(_))) => dtize(v)
       case a @ Application(DRealDecl.timeDerivative, _) => sys.error("not normalized: " + a)
       case other => other
     }, f)
   }
+  protected def partitionSolution(m: Map[Variable, Double]) = {
+    val (mDt,mNormal) = m.partition( p => isDt(p._1))
+    (mNormal, mDt.map{ case (v,d) => unDt(v) -> d})
+  }
+
+
+  def initSolutionKinsol: (Map[Variable, Double], Map[Variable, Double]) = {
+    val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
+    val known = poseValues ++ in
+    val knownValues = known.map{ case (k, Literal(d: Double)) => k -> d }
+    val values = kinsol.solve(knownValues, Map())
+    val allValues = values ++ knownValues
+    partitionSolution(allValues)
+  }
 
   def initSolution(precision: Double = 0.1): (Map[Variable, Double], Map[Variable, Double]) = {
+    //Logger("GenericRobot", Error, "computing initial solution for " + x + "," + y + " " + orientation + " " + store)
     val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
     val known = poseValues ++ in
     val bounds1 = angleRanges ::: ranges
@@ -114,7 +126,7 @@ class GenericRobot( val pg: Playground,
     val cstr = bounds ::: cstr2
 
     val fname = Namer("init_test") + ".smt2"
-    val solver = if (Logger("GenericRobot", Debug)) DReal(QF_NRA, 0.1, fname)
+    val solver = if (Logger("GenericRobot", Debug)) DReal(QF_NRA, precision, fname)
                  else DReal(QF_NRA, precision)
     //TODO set precision
 
@@ -122,11 +134,6 @@ class GenericRobot( val pg: Playground,
       fixTypes(c)
       solver.assert(c)
     })
-
-    def partitionSolution(m: Map[Variable, Double]) = {
-      val (mDt,mNormal) = m.partition( p => isDt(p._1))
-      (mNormal, mDt.map{ case (v,d) => unDt(v) -> d})
-    }
 
     solver.checkSat match {
       case Sat(Some(model)) =>
@@ -146,14 +153,6 @@ class GenericRobot( val pg: Playground,
     }
   }
 
-
-  //TODO not like that anymore ...
-  //beam.dx/y/z is the position of the seg
-  protected val xVar1   = mkVar("xPrimed")
-  protected val yVar1   = mkVar("yPrimed")
-  protected val yawVar1 = mkVar("yawPrimed")
-  
-  //TODO
 
   //from 2D pose (x,y,θ) to 3D vector + quaternion
   def poseConstrains = {
@@ -301,207 +300,59 @@ class GenericRobot( val pg: Playground,
     (solver, ???) //solver still needs an objective
   }
 
+  val inK = (inputs.map(_.v) ++ Seq(frame.x, frame.y, frame.a, frame.i, frame.j, frame.k)).toIndexedSeq
+  val kinsol = new KINSOL(inK, replaceDt(constraints))
+  kinsol.prepare
 
+  val inV = inputs.map(_.v)
+  val ida = new IDA(inV, constraints)
+  ida.prepare
 
-
-
+  override def finalize {
+    ida.clean
+    kinsol.clean
+  }
 
   override protected def moveFor(t: Int) = {
-    Logger.logAndThrow("GenericRobot", Error, "should not be used")
-  }
-
-  val xIntervals: Array[Double] = {
-    val steps = ((pg.xMax - pg.xMin) / pg.xDiscretization).toInt
-    (for (i <- 0 to steps) yield pg.xMin + i * pg.xDiscretization).toArray
-  }
-
-  val yIntervals: Array[Double] = {
-    val steps = ((pg.yMax - pg.yMin) / pg.yDiscretization).toInt
-    (for (i <- 0 to steps) yield pg.yMin + i * pg.yDiscretization).toArray
-  }
-  
-  val yawIntervals: Array[Double] = {
-    val steps = (2 * math.Pi / pg.fpDiscretization).toInt
-    (for (i <- 0 to steps) yield -math.Pi + i * pg.fpDiscretization).toArray
-  }
-  
-  def baseConstraints = True() //{
-//  val funMap = fcts.map(f => f.name -> f).toMap
-//  val in = inputs.flatMap( i => store.get(i.v).map( v => Eq(i.v, Literal(v.toDouble))) )
-//  val pos = List(
-//    Eq(xVar, Literal(x)), //TODO discretization
-//    Eq(yVar, Literal(y)), //TODO discretization
-//    Eq(yawVar, Literal(orientation)) //TODO discretization
-//  )
-//  val bounds = List(
-//    Lt(xVar1, Literal(pg.xMax + pg.xDiscretization)),
-//    Gt(xVar1, Literal(pg.xMin - pg.xDiscretization)),
-//    Lt(yVar1, Literal(pg.yMax + pg.yDiscretization)),
-//    Gt(yVar1, Literal(pg.yMin - pg.yDiscretization)),
-//    Lt(yawVar1, Literal(math.Pi + pg.fpDiscretization)),
-//    Gt(yawVar1, Literal(-math.Pi - pg.fpDiscretization))
-//  )
-//  val allCstrs = And((constraints :: pos ::: bounds ::: in):_*)
-//  fixTypes(allCstrs)
-//  allCstrs
-//}
-
-  //find the first sat value
-  protected def firstSatSearch(mkFormula: Double => Formula, seq: Array[Double]): Option[Double] = {
-    //var cnt = 0
-    def test(idx: Int) = {
-      //cnt += 1
-      val solver = DReal(QF_NRA)//, "search_" + cnt + ".smt2")
-      solver.testB(mkFormula(seq(idx)))
+    val tolerance = 1e-16
+    val (init, initDt) = initSolution(tolerance)
+    try {
+      val (_, value, valueDt) = ida.solve( t / 1000.0, store.mapValues(_.toDouble), init, initDt)
+      x = value(frame.x) / 1000.0
+      y = value(frame.y) / 1000.0 
+      //z = value(frame.z) / 1000.0
+      val q = Quaternion(value(frame.a), value(frame.i), value(frame.j), value(frame.k))
+      orientation = Angle.thetaFromQuaternion(q)
+      //TODO should we save the dt and other value to solve the next thing ??
+    } catch {
+      case e: Throwable =>
+        Logger("GenericRobot", Error, "could not compute motion") //TODO print more
+        throw e
     }
-    var lo = 0
-    var hi = seq.length - 1
-    var isSat = false 
-    while (lo < hi) {
-      val middle = lo + (hi-lo)/2
-      assert(middle < hi, "no progress")
-      if (test(middle)) {
-        //println("sat at " + middle + ", " + seq(middle) )
-        hi = middle
-      } else {
-        //println("unsat at " + middle + ", " + seq(middle) )
-        lo = middle + 1
-      }
-    }
-    val res1 = if (lo == hi && test(lo)) {
-      Some(seq(lo))
-    } else {
-      None
-    }
-    ////to double check
-    //val res2 = seq.find( value => {
-    //  val solver = DReal(QF_NRA)
-    //  val formula = mkFormula(value)
-    //  val res = solver.testB(formula)
-    //  res
-    //})
-    //assert(res1 == res2, "res1: " + res1 + ", res2: " + res2 + ", seq: " + seq.mkString("[",",","]") + ", lo: " + lo + ", hi: " + hi)
-    res1
-  }
 
-  protected def getMin(t: Double, v: Variable, intervals: Array[Double]): Option[Double] = {
-    val time = Eq(timeVar, Divides(Literal(t), Literal(1000.0)).setType(Real)) //Int vs Real
-    val cstr = And(time, baseConstraints)
-    def mkFormula(value: Double) = And(cstr, Leq(v, Literal(value)))
-    firstSatSearch(mkFormula, intervals)
-  }
-
-  protected def getMax(t: Double, v: Variable, intervals: Array[Double]): Option[Double] = {
-    val time = Eq(timeVar, Divides(Literal(t), Literal(1000.0)).setType(Real)) //Int vs Real
-    val cstr = And(time, baseConstraints)
-    def mkFormula(value: Double) = And(cstr, Geq(v, Literal(value)))
-    firstSatSearch(mkFormula, intervals.reverse)
-  }
-
-  //TODO make that cleaner and figure out how δ-sat influence > vs ≥
-
-  protected def getMinX(t: Double): Double = {
-    val res = getMin(t, xVar1, xIntervals)
-    //println("getMinX: " + res)
-    res.getOrElse(pg.xMax.toDouble) //- pg.xDiscretization
-  }
-
-  protected def getMaxX(t: Double): Double = {
-    val res = getMax(t, xVar1, xIntervals)
-    //println("getMaxX: " + res)
-    res.getOrElse(pg.xMin.toDouble) //+ pg.xDiscretization
-  }
-  
-  protected def getMinY(t: Double): Double = {
-    val res = getMin(t, yVar1, yIntervals)
-    //println("getMinY: " + res)
-    res.getOrElse(pg.yMax.toDouble) //- pg.yDiscretization
-  }
-
-  protected def getMaxY(t: Double): Double = {
-    val res = getMax(t, yVar1, yIntervals)
-    //println("getMaxY: " + res)
-    res.getOrElse(pg.yMin.toDouble) //+ pg.yDiscretization
-  }
-  
-  protected def getMinYaw(t: Double): Double = {
-    val res = getMin(t, yawVar1, yawIntervals)
-    //println("getMinΘ: " + res)
-    res.getOrElse(10.0) - pg.fpDiscretization
-  }
-
-  protected def getMaxYaw(t: Double): Double = {
-    val res = getMax(t, yawVar1, yawIntervals)
-    //println("getMaxΘ: " + res)
-    res.getOrElse(-10.0) //+ pg.fpDiscretization
   }
   
   override def elapseBP(t: Int): BranchingPoint = {
 
-    val minX: Double = getMinX(t)
-    val maxX: Double = getMaxX(t)
-    val minY: Double = getMinY(t)
-    val maxY: Double = getMaxY(t)
-    val minYaw: Double = getMinYaw(t)
-    val maxYaw: Double = getMaxYaw(t)
-      
-    Logger("GenericRobot", Notice, "minX: " + minX + ", maxX: " + maxX)
-    Logger("GenericRobot", Notice, "minY: " + minY + ", maxY: " + maxY)
-    Logger("GenericRobot", Notice, "minΘ: " + minYaw + ", maxΘ: " + maxYaw)
-
-    val xs = if (minX < maxX) 2
-             else if (minX == maxX) 1
-             else 0
-    val ys = if (minY < maxY) 2
-             else if (minY == maxY) 1
-             else 0
-    val yaws = if (minYaw < maxYaw) 2
-             else if (minYaw == maxYaw) 1
-             else 0
-    
-    val alt =
-      if (xs*ys*yaws == 1) 1
-      else if (xs*ys*yaws > 1) xs*ys*yaws + 1
-      else Logger.logAndThrow("GenericRobot", Error, "movement equations do not have a solution ?!!")
-
     new BranchingPoint {
-      def alternatives = alt
+      def alternatives = 1
   
       //corners of cube and center
       def act(alt: Int): List[String] = {
-        if (yaws == 1) 
-          alt match {
-            case 1 => x = minX; y = minY; orientation = (maxYaw - minYaw)/2
-            case 2 => x = maxX; y = maxY; orientation = (maxYaw - minYaw)/2
-            case 3 => x = minX; y = maxY; orientation = (maxYaw - minYaw)/2
-            case 4 => x = maxX; y = minY; orientation = (maxYaw - minYaw)/2
-            case _ => x = (minX + maxX)/2; y = (minY + maxY)/2; orientation = (maxYaw - minYaw)/2
-          }
-        else
-          alt match {
-            case 1 => x = minX; y = minY; orientation = minYaw
-            case 2 => x = maxX; y = maxY; orientation = minYaw
-            case 3 => x = minX; y = maxY; orientation = minYaw
-            case 4 => x = maxX; y = minY; orientation = minYaw
-            case 5 => x = minX; y = minY; orientation = maxYaw
-            case 6 => x = maxX; y = maxY; orientation = maxYaw
-            case 7 => x = minX; y = maxY; orientation = maxYaw
-            case 8 => x = maxX; y = minY; orientation = maxYaw
-            case _ => x = (minX + maxX)/2; y = (minY + maxY)/2; orientation = (maxYaw - minYaw)/2
-          }
+        moveFor(t)
         List("elapse("+t+", "+alt+")")
       }
     }
   }
 
-  var store = Map[Variable, Short]()
+  var store = Map[Variable, Short](inputs.map( _.v -> (0: Short)):_*)
   
   override def register(exec: Executor) {
     super.register(exec)
 
     for(i <- inputs) {
       val listener = new MessageListenerRW[std_msgs.Int16]{
-        def robotID = GenericRobot.this.toString //TODO better
+        def robotID = id
         override def read = Some(Set())
         override def written = Some(Set(i.v.toString))
         val name = i.topic
@@ -513,7 +364,7 @@ class GenericRobot( val pg: Playground,
           exec.messageDelivered
         }
       }
-      val sub = exec.getSubscriber[std_msgs.Int16](i.topic, std_msgs.Int16._TYPE)
+      val sub = exec.getSubscriber[std_msgs.Int16](id + "/" + i.topic, std_msgs.Int16._TYPE)
       sub.addMessageListener(listener)
     }
 
@@ -547,13 +398,13 @@ object GenericRobot {
     }
   }
 
-  def apply(pg: Playground, fileName: String): GenericRobot = {
+  def apply(id: String, pg: Playground, fileName: String): GenericRobot = {
     val content = IO.readTextFile(fileName)
     val (vars, sexprs)= preprocess(content)
-    apply(pg, vars, sexprs)
+    apply(id, pg, vars, sexprs)
   }
 
-  def apply(pg: Playground, variables: Iterable[Variable], sexprs: Iterable[SExpr]): GenericRobot = {
+  def apply(id: String, pg: Playground, variables: Iterable[Variable], sexprs: Iterable[SExpr]): GenericRobot = {
     
     var bBox = List[Box2D]()
     var inputs = List[Input]()
@@ -564,9 +415,12 @@ object GenericRobot {
     for (se <- sexprs) {
       se match {
         case SApplication("bbox", List(SAtom(x), SAtom(y), SAtom(w), SAtom(h), SAtom(theta))) =>
-          bBox ::= new Box2D(x.toDouble, y.toDouble, theta.toDouble, w.toDouble, h.toDouble)
+          bBox ::= new Box2D(x.toDouble / 1000.0, y.toDouble / 1000.0, theta.toDouble / 1000.0,
+                             w.toDouble / 1000.0, h.toDouble / 1000.0)
         case SApplication("frame", List(SAtom(x), SAtom(y), SAtom(z), SAtom(a), SAtom(i), SAtom(j), SAtom(k))) =>
           frame = Frame(mkVar(x), mkVar(y), mkVar(z), mkVar(a), mkVar(i), mkVar(j), mkVar(k))
+        case SApplication("input", List(SAtom(name), SAtom(topic))) =>
+          inputs ::= Input(mkVar(name), topic)
         case SApplication("input", List(SAtom(name))) =>
           inputs ::= Input(mkVar(name), "") //TODO generate a port name
         case SApplication("dynamic", List(SAtom(name))) =>
@@ -595,7 +449,7 @@ object GenericRobot {
         b
     }
 
-    new GenericRobot(pg, bb, frame, inputs, dynamic, And(cstrs:_*))
+    new GenericRobot(id, pg, bb, frame, inputs, dynamic, And(cstrs:_*))
   }
 
 }

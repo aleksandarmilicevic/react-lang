@@ -182,7 +182,7 @@ class Simplify(robot: GenericRobot) {
     } 
     fixTypes(constraints)
     val dynamic = robot.dynamic.filter(constraints.freeVariables)
-    new GenericRobot(robot.pg, robot.bBox, robot.frame, robot.inputs, dynamic, constraints)
+    new GenericRobot(robot.id, robot.pg, robot.bBox, robot.frame, robot.inputs, dynamic, constraints)
   }
 
 }

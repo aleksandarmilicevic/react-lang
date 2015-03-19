@@ -20,7 +20,7 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
       onTarget = b
   }
 
-  val defaultSpeed: Short = -15
+  val defaultSpeed: Short = 15
   //val defaultSpeed: Short = 78 // 2.44 rad/s in the MC
   var lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
   var rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)

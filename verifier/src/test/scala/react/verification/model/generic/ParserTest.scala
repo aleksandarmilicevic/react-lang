@@ -65,13 +65,13 @@ class ParserTest extends FunSuite {
   }
 
   test("parse seg simplest") {
-    val robot = GenericRobot(Resources.playground, Resources.path + "seg_simplest.txt")
+    val robot = GenericRobot("id", Resources.playground, Resources.path + "seg_simplest.txt")
     assert(true)
   }
 
 
   test("test solver 1") {
-    val r = GenericRobot(Resources.playground, Resources.path + "seg_simplest.txt")
+    val r = GenericRobot("id", Resources.playground, Resources.path + "seg_simplest.txt")
     r.store = r.store + (Variable("leftmotor.input").setType(Real) -> (1: Short))
     r.store = r.store + (Variable("rightmotor.input").setType(Real) -> (1: Short))
     val bp = r.elapseBP(1000)

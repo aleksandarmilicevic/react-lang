@@ -31,7 +31,6 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
   val nConj = conjuncts.size
   val varSeq = (formula.freeVariables -- inputs).toIndexedSeq
   val vars = varSeq.zipWithIndex.toMap
-  assert(vars.forall{ case (v, i) => varSeq(i) == v}, "index confusion")
   val pvars = vars.map{ case (v,i) => dt(v) -> i }
   val nv = vars.size
   val nr = 0
@@ -303,6 +302,9 @@ object IDA {
 #include <math.h>
 #include <ida/ida.h>
 #include <ida/ida_dense.h>
+#include <ida/ida_spgmr.h>
+#include <ida/ida_spbcgs.h>
+#include <ida/ida_sptfqmr.h>
 #include <nvector/nvector_serial.h>
 #include <sundials/sundials_math.h>
 #include <sundials/sundials_types.h>

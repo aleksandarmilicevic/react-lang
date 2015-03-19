@@ -31,7 +31,7 @@ class SimplifyTest extends FunSuite {
 //}
 
   test("stats") {
-    val robot = GenericRobot(Resources.playground, Resources.path + "seg_eqns_simple_normal.txt")
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_eqns_simple_normal.txt")
     robot.aboutTheEqns
   }
 

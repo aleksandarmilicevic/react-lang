@@ -7,13 +7,24 @@ import react.utils.IDA
 
 class GenericRobotTest extends FunSuite {
   
-//test("init 1") {
-//  val robot = GenericRobot(Resources.playground, Resources.path + "seg_simplest.txt")
-//  robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (1: Short))
-//  robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (1: Short))
-//  robot.aboutTheEqns
-//  robot.initSolution
-//}
+  test("init 1") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (1: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (1: Short))
+    //robot.aboutTheEqns
+    robot.initSolution()
+  }
+
+  test("init kinsol 1") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (1: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (1: Short))
+    //robot.aboutTheEqns
+    val (init, initDt) = robot.initSolutionKinsol
+    Console.println("init:    " + init.mkString(" "))
+    Console.println("init dt: " + initDt.mkString(" "))
+    ()
+  }
 
 //test("init 2") {
 //  val robot = GenericRobot(Resources.playground, Resources.path + "seg_eqns_simple_normal.txt")
@@ -24,7 +35,7 @@ class GenericRobotTest extends FunSuite {
 //}
   
   test("make IDA file 0") {
-    val robot = GenericRobot(Resources.playground, Resources.path + "trivial.txt")
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "trivial.txt")
     val l = Variable("dx.input").setType(Real)
     val r = Variable("dy.input").setType(Real)
     robot.store = robot.store + (l -> (10: Short))
@@ -50,7 +61,7 @@ class GenericRobotTest extends FunSuite {
 
 
   test("make IDA file 1") {
-    val robot = GenericRobot(Resources.playground, Resources.path + "seg_simplest.txt")
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
     val l = Variable("leftmotor.input").setType(Real)
     val r = Variable("rightmotor.input").setType(Real)
     robot.store = robot.store + (l -> (1: Short))

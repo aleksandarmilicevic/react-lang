@@ -12,8 +12,8 @@ dy.input
 ~~~ Equations:
 ( frame base.dx base.dy base.dz base.q_a base.q_i base.q_j base.q_k )
 ( bbox 0 0 50 50 0 )
-( input dx.input )
-( input dy.input )
+( input dx.input 32)
+( input dy.input 9 )
 ( dynamic base.dx )
 ( dynamic base.dy )
 ( dynamic base.dz )

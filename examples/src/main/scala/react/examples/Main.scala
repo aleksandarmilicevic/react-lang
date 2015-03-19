@@ -130,12 +130,14 @@ object Main extends Options with react.verification.McOptions {
       case "arduinoS" =>
         arduino.Run(new arduino.SwipeScan(topic), topic, Some(1000))
         //arduino.Run(new arduino.FollowTheEdge(topic, true), topic)
-        bypassROS = true
-        arduino.RunV(topic, this)
       case "arduinoF" =>
         arduino.Run(new arduino.FollowTheEdge(topic, true), topic)
+      case "arduinoV" =>
         bypassROS = true
         arduino.RunV(topic, this)
+      case "arduinoV2" =>
+        bypassROS = true
+        arduino.RunV2(topic, this)
       case other =>
         throw new RuntimeException("Unknown robot: " + other)
     }
