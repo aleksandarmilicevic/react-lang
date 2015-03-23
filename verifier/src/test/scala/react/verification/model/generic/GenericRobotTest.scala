@@ -12,17 +12,9 @@ class GenericRobotTest extends FunSuite {
     robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (1: Short))
     robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (1: Short))
     //robot.aboutTheEqns
-    robot.initSolution()
-  }
-
-  test("init kinsol 1") {
-    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
-    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (1: Short))
-    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (1: Short))
-    //robot.aboutTheEqns
-    val (init, initDt) = robot.initSolutionKinsol
-    Console.println("init:    " + init.mkString(" "))
-    Console.println("init dt: " + initDt.mkString(" "))
+    val (init, initDt) = robot.initSolution(1e-10)
+    //Console.println("init:    " + init.mkString(" "))
+    //Console.println("init dt: " + initDt.mkString(" "))
     ()
   }
 

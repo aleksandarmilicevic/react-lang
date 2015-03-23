@@ -8,6 +8,13 @@ import java.io._
 /** wrapper around the IDA solver from the sundials library */
 class IDA(inputs: Seq[Variable], formula: Formula) {
 
+  def keep(f: Formula) = f match {
+    case Eq(_,_) => true
+    case other =>
+      Logger("KINSOL", Warning, "KINSOL supports only EQ for the moment, ignoring: " + other)
+      false
+  }
+
   val dtSuffix = "_dt"
   def dt(v: Variable): Variable = Variable(v.name + dtSuffix).setType(Real)
   def replaceDt(f: Formula): Formula = {
@@ -25,16 +32,16 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     case other => Logger.logAndThrow("IDA", Error, "IDA supports only EQ for the moment, found: " + other)
   }
 
-  val conjuncts = FormulaUtils.getConjuncts(formula).map(getLHS).map(replaceDt).toIndexedSeq
+  lazy val conjuncts = FormulaUtils.getConjuncts(formula).map(getLHS).map(replaceDt).toIndexedSeq
 
   val ni = inputs.size
-  val nConj = conjuncts.size
+  lazy val nConj = conjuncts.size
   val varSeq = (formula.freeVariables -- inputs).toIndexedSeq
   val vars = varSeq.zipWithIndex.toMap
   val pvars = vars.map{ case (v,i) => dt(v) -> i }
   val nv = vars.size
   val nr = 0
-  val neq = if (nConj > nv) nConj + 1 else nConj
+  lazy val neq = if (nConj > nv) nConj + 1 else nConj
 
   def parameter = {
     "#define NI  " + ni  + "\n" + //nbr inputs
@@ -271,7 +278,7 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
   def solve(time: Double, inVal: Map[Variable, Double],
             initialValues: Map[Variable, Double],
             initialDt: Map[Variable, Double]): (Double, Map[Variable, Double], Map[Variable, Double]) = {
-    assert(ready)
+    if(!ready) prepare
     //time inVal initialValues initialDt
     val init = inputs.toArray.map(x => inVal(x).toString)
     val yy = varSeq.toArray.map(x => initialValues(x).toString)

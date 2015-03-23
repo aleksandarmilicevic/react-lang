@@ -57,6 +57,19 @@ object Utils {
   def hasDt(f: Formula) = {
     FormulaUtils.collectSymbols(f).contains(DRealDecl.timeDerivative)
   }
+
+  def weaken(f: Formula, delta: Double): Formula = {
+    val d = Literal(delta.abs)
+    FormulaUtils.map({
+      case Eq(a, b) => And(Leq(a, Plus(b, d)), Leq(b, Plus(a, d)))
+      case Leq(a, b) => Leq(a, Plus(b, d))
+      case Lt(a, b) => Leq(a, Plus(b, d))
+      case Geq(a, b) => Geq(Plus(a, d), b)
+      case Gt(a, b) => Gt(Plus(a, d), b)
+      case a @ And(_*) => And(FormulaUtils.getConjuncts(a):_*)
+      case other => other
+    }, f)
+  }
   
 
 }

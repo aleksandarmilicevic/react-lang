@@ -20,26 +20,21 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
       onTarget = b
   }
 
-  val defaultSpeed: Short = 15
+  val defaultSpeed: Short = 5
   //val defaultSpeed: Short = 78 // 2.44 rad/s in the MC
-  var lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
-  var rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)
-
-  var currDirection = !clockwise
+  val lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
+  val rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)
 
   every(100) {
     val newDir = onTarget ^ clockwise
-    if (newDir != currDirection) {
-      if (newDir) {
-        //Console.println("turning right")
-        publish(servoLeft, Primitive.Int16(lSpeed))
-        publish(servoRight, Primitive.Int16(0))
-      } else {
-        //Console.println("turning servoLeft")
-        publish(servoLeft, Primitive.Int16(0))
-        publish(servoRight, Primitive.Int16(rSpeed))
-      }
-      currDirection = newDir
+    if (newDir) {
+      //Console.println("turning right")
+      publish(servoLeft, Primitive.Int16(lSpeed))
+      publish(servoRight, Primitive.Int16(0))
+    } else {
+      //Console.println("turning servoLeft")
+      publish(servoLeft, Primitive.Int16(0))
+      publish(servoRight, Primitive.Int16(rSpeed))
     }
   }
 

@@ -146,8 +146,9 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
     }
     while(!frontierT.isEmpty) {
       Logger("ModelChecker", Debug, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
-      if (cnt % 500 == 0) {
+      if (cnt >= 500) {
         Logger("ModelChecker", Info, "inner loop: ghost steps (#transient states = " + transientStates.size + ", frontier = " + frontierT.size + ")")
+        cnt = 0
       }
       cnt += 1 
       val tr = getT
@@ -166,8 +167,9 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
     local foreach putT
     while(!frontierT.isEmpty) {
       Logger("ModelChecker", Debug, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
-      if (cnt % 500 == 0) {
+      if (cnt >= 500) {
         Logger("ModelChecker", Info, "inner loop: robot steps (#transient states = " + transientStates.size +  ", frontier = " + frontierT.size + ")")
+        cnt = 0
       }
       cnt += 1 
       val tr = getT
@@ -245,12 +247,13 @@ class ModelChecker(worlds: Array[WorldProxy], opts: McOptions) {
         }
         false
       case t: Throwable =>
-        Logger("ModelChecker", Critical, "internal model checker error: " + t)
-        throw t
+        Logger("ModelChecker", Critical, "model checker error: " + t + "\n  " + t.getStackTrace.mkString("\n  "))
+        false
     }
   }
 
   def init {
+    Logger.disallow("Typer")
     Logger("ModelChecker", Notice, "initializing model-checker.")
     Logger("ModelChecker", Notice, world.stateSpaceDescription)
     val allTasks = world.allTasks

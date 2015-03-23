@@ -22,10 +22,10 @@ class KINSOL(inputs: IndexedSeq[Variable], formula: Formula) {
     case other => Logger.logAndThrow("KINSOL", Error, "KINSOL supports only EQ for the moment, found: " + other)
   }
 
-  val conjuncts = FormulaUtils.getConjuncts(formula).filter(keep).map(getLHS).toIndexedSeq
+  lazy val conjuncts = FormulaUtils.getConjuncts(formula).filter(keep).map(getLHS).toIndexedSeq
 
   val ni = inputs.size
-  val neq = conjuncts.size
+  lazy val neq = conjuncts.size
   val varSeq = (formula.freeVariables -- inputs).toIndexedSeq
   val vars = varSeq.zipWithIndex.toMap
   val nv = vars.size
@@ -159,7 +159,7 @@ class KINSOL(inputs: IndexedSeq[Variable], formula: Formula) {
   
   def solve(inVal: Map[Variable, Double],
             initialValues: Map[Variable, Double]): Map[Variable, Double] = {
-    assert(ready)
+    if (!ready) prepare
     //time inVal initialValues initialDt
     val init = inputs.toArray.map(x => inVal(x).toString)
     val yy = varSeq.toArray.map(x => initialValues.getOrElse(x, 1.0).toString)
@@ -246,16 +246,21 @@ int main(int argc, char *argv[]) {
   if (check_flag(&retval, "KINDense", 1)) return(1);
   retval = KINDlsSetDenseJacFn(solver, jacobian);
   if (check_flag(&retval, "KINDlsSetDenseJacFn", 1)) return(1);
-
-  /* Indicate exact Newton */
   retval = KINSetMaxSetupCalls(solver, 1);
   if (check_flag(&retval, "KINSetMaxSetupCalls", 1)) return(1);
 
+//retval = KINSpgmr(solver, 15);
+//if (check_flag(&retval, "KINSpgmr", 1)) return(1);
+//retval = KINSpilsSetMaxRestarts(solver, 2);
+//if (check_flag(&retval, "KINSpilsSetMaxRestarts", 1)) return(1);
+
   /* Initial guess */
   N_VConst_Serial(RCONST(0.0), yy);
-//for(i = 0; i < NV; i++) {
-//  NV_Ith_S(yy,i) = RCONST( atof(argv[1+NI+i]) );
-//}
+  for(i = 0; i < NV; i++) {
+    int idx = 1+NI+i;
+    if (idx < argc)
+      NV_Ith_S(yy,i) = RCONST( atof(argv[idx]) );
+  }
   
   //printResidual(yy, user_data);
 

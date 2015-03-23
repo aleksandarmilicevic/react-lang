@@ -97,20 +97,24 @@ class GenericRobot( val id: String,
     (mNormal, mDt.map{ case (v,d) => unDt(v) -> d})
   }
 
+    
+  protected def clean(precision: Double, m: Map[Variable, Double]) = m.mapValues( v => if (v.abs <= precision) 0.0 else v )
 
-  def initSolutionKinsol: (Map[Variable, Double], Map[Variable, Double]) = {
+  def initSolutionKinsol(guess: Map[Variable, Double], guessDt: Map[Variable, Double], precision: Double): (Map[Variable, Double], Map[Variable, Double]) = {
     val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
     val known = poseValues ++ in
     val knownValues = known.map{ case (k, Literal(d: Double)) => k -> d }
-    val values = kinsol.solve(knownValues, Map())
-    val allValues = values ++ knownValues
+    val guesses = guess ++ guessDt.map{ case (k,v) => dtize(k) -> v }
+    val guesses2 = clean(precision, guesses)
+    val values = kinsol.solve(knownValues, guesses2)
+    val allValues = clean(precision, values ++ knownValues)
     partitionSolution(allValues)
   }
 
-  def initSolution(precision: Double = 0.1): (Map[Variable, Double], Map[Variable, Double]) = {
+  def initSolutionDReal(precision: Double = 0.1): (Map[Variable, Double], Map[Variable, Double]) = {
     //Logger("GenericRobot", Error, "computing initial solution for " + x + "," + y + " " + orientation + " " + store)
     val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
-    val known = poseValues ++ in
+    val known = (poseValues ++ in).mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
     val bounds1 = angleRanges ::: ranges
     val cstr1 = conjuncts.map(replaceDt)
     val bounds2 = And(cstr1:_*).freeVariables.toList.filter(_.name.endsWith(dtSuffix)).flatMap( v => {
@@ -123,19 +127,18 @@ class GenericRobot( val id: String,
     }
     val cstr2 = cstr1.map(replace).map(ArithmeticSimplification.polynomialNF)
     val bounds = (bounds1 ::: bounds2).map(replace)
-    val cstr = bounds ::: cstr2
+    val cstr3 = cstr2.flatMap(c => FormulaUtils.getConjuncts(weaken(c, precision/2)))
+    val cstr = bounds ::: cstr3
 
     val fname = Namer("init_test") + ".smt2"
     val solver = if (Logger("GenericRobot", Debug)) DReal(QF_NRA, precision, fname)
                  else DReal(QF_NRA, precision)
-    //TODO set precision
 
-    cstr.foreach( c => {
-      fixTypes(c)
-      solver.assert(c)
-    })
+    cstr.foreach( c => fixTypes(c) )
 
-    solver.checkSat match {
+    cstr.foreach( c => solver.assert(c) )
+
+    solver.checkSat(1000 * 1000) match {
       case Sat(Some(model)) =>
         val allVars = And(cstr:_*).freeVariables
         val values = allVars.map( v => model(v) match {
@@ -150,6 +153,21 @@ class GenericRobot( val id: String,
       case UnSat => sys.error("no initial value!")
       case Unknown => sys.error("unknown initial value!")
       case Failure(f) => sys.error("failed to compute initial value: " + f)
+    }
+  }
+  
+  def initSolution(precision: Double = 1e-10, useKinsol: Boolean = true): (Map[Variable, Double], Map[Variable, Double]) = {
+    val (guess1, guess2) = initSolutionDReal(precision)
+    //Logger("GenericRobot", Error, "initSolution " + precision)
+    //Logger("GenericRobot", Error, guess1.toString)
+    //Logger("GenericRobot", Error, guess2.toString)
+    if (useKinsol) {
+      val (s1, s2) = initSolutionKinsol(guess1, guess2, precision)
+    //Logger("GenericRobot", Error, s1.toString)
+    //Logger("GenericRobot", Error, s2.toString)
+      (s1, s2)
+    } else {
+      (guess1, guess2)
     }
   }
 
@@ -302,11 +320,9 @@ class GenericRobot( val id: String,
 
   val inK = (inputs.map(_.v) ++ Seq(frame.x, frame.y, frame.a, frame.i, frame.j, frame.k)).toIndexedSeq
   val kinsol = new KINSOL(inK, replaceDt(constraints))
-  kinsol.prepare
 
   val inV = inputs.map(_.v)
   val ida = new IDA(inV, constraints)
-  ida.prepare
 
   override def finalize {
     ida.clean
@@ -314,23 +330,44 @@ class GenericRobot( val id: String,
   }
 
   override protected def moveFor(t: Int) = {
-    val tolerance = 1e-16
-    val (init, initDt) = initSolution(tolerance)
     try {
-      val (_, value, valueDt) = ida.solve( t / 1000.0, store.mapValues(_.toDouble), init, initDt)
-      x = value(frame.x) / 1000.0
-      y = value(frame.y) / 1000.0 
-      //z = value(frame.z) / 1000.0
-      val q = Quaternion(value(frame.a), value(frame.i), value(frame.j), value(frame.k))
+      //val tolerance = 1e-14
+      val tolerance = 1e-3
+      //Logger("GenericRobot", Error, this.toString)
+      val (init, initDt) = initSolution(tolerance, false)
+      x = (init(frame.x) + initDt.getOrElse(frame.x, 0.0) * t / 1000) / 1000
+      y = (init(frame.y) + initDt.getOrElse(frame.y, 0.0) * t / 1000) / 1000
+      val a = init(frame.a) + initDt.getOrElse(frame.a, 0.0) * t / 1000
+      val i = init(frame.i) + initDt.getOrElse(frame.i, 0.0) * t / 1000
+      val j = init(frame.j) + initDt.getOrElse(frame.j, 0.0) * t / 1000
+      val k = init(frame.k) + initDt.getOrElse(frame.k, 0.0) * t / 1000
+      val q = Quaternion(a, i, j, k)
       orientation = Angle.thetaFromQuaternion(q)
-      //TODO should we save the dt and other value to solve the next thing ??
+      //Logger("GenericRobot", Error, this.toString)
     } catch {
       case e: Throwable =>
         Logger("GenericRobot", Error, "could not compute motion") //TODO print more
         throw e
     }
-
   }
+
+//override protected def moveFor(t: Int) = {
+//  try {
+//    val tolerance = 1e-16
+//    val (init, initDt) = initSolution(tolerance)
+//    val (_, value, valueDt) = ida.solve( t / 1000.0, store.mapValues(_.toDouble), init, initDt)
+//    x = value(frame.x) / 1000.0
+//    y = value(frame.y) / 1000.0 
+//    //z = value(frame.z) / 1000.0
+//    val q = Quaternion(value(frame.a), value(frame.i), value(frame.j), value(frame.k))
+//    orientation = Angle.thetaFromQuaternion(q)
+//    //TODO should we save the dt and other value to solve the next thing ??
+//  } catch {
+//    case e: Throwable =>
+//      Logger("GenericRobot", Error, "could not compute motion") //TODO print more
+//      throw e
+//  }
+//}
   
   override def elapseBP(t: Int): BranchingPoint = {
 
