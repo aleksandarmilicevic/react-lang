@@ -319,10 +319,10 @@ class GenericRobot( val id: String,
   }
 
   val inK = (inputs.map(_.v) ++ Seq(frame.x, frame.y, frame.a, frame.i, frame.j, frame.k)).toIndexedSeq
-  val kinsol = new KINSOL(inK, replaceDt(constraints))
+  lazy val kinsol = new KINSOL(inK, replaceDt(constraints))
 
   val inV = inputs.map(_.v)
-  val ida = new IDA(inV, constraints)
+  lazy val ida = new IDA(inV, constraints)
 
   override def finalize {
     ida.clean

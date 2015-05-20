@@ -62,7 +62,15 @@ class Simplify(robot: GenericRobot) {
     }
 
     def canEliminate(v: Variable): Boolean = {
-      !isNeeded(v) && relevant(Set(v)).forall(Qepcad.isSupported)
+      def check(f: Formula): Boolean = f match {
+        case Application(And | Or | Not | Eq | Leq | Geq | Lt | Gt | Plus | Times | Divides | Minus | DRealDecl.pow, args) =>
+          args.forall(check)
+        case a @ Application(_, _) => !(a.freeVariables contains v)
+        case Binding(_, _, f) => check(f)
+        case Variable(_) => true
+        case Literal(_) => true
+      }
+      !isNeeded(v) && relevant(Set(v)).forall(check)
     }
 
     def findCandidates: Set[Variable] = {
@@ -79,14 +87,31 @@ class Simplify(robot: GenericRobot) {
     }
 
     def mkQuery(vars: Set[Variable]) = {
-      val clauses = clausesFor(vars)
-      val fvs = clauses.freeVariables -- vars
+      val clauses0 = clausesFor(vars)
+      val (clauses1, unabstract) = ArithmeticSimplification.abstractFormula(clauses0, ArithmeticSimplification.isIntegerPolynomial)
+      //sanity check
+      val nfvs = clauses1.freeVariables -- clauses0.freeVariables
+      assert(nfvs.forall( v => unabstract(v).freeVariables.intersect(vars).isEmpty ))
+
+      val fvs = clauses1.freeVariables -- vars
       if (fvs.size + vars.size > bound) {
         Logger("Simplify", Info, "too many variable to eliminate " + vars.mkString(",") + " using qepcad: " + fvs.size)
         None
       } else {
         Logger("Simplify", Info, "try to eliminate " + vars.mkString(",") + " using qepcad.")
-        Some(Qepcad.query(fvs.toList, vars.toList, clauses, assumptions(fvs)))
+        val query = Qepcad.query(fvs.toList, vars.toList, clauses1, assumptions(fvs))
+        try {
+          val clauses2 = query.execute(false) //TODO option for McCallum proj
+          val clauses3 = unabstract(clauses2)
+          val f2 = FormulaUtils.getConjuncts(clauses3)
+          val ir = irrelevant(vars)
+          Some( And(f2 ::: ir :_*) )
+        } catch {
+          case t: Throwable =>
+            Logger("Simplify", Info, "failed to eliminate " + t)
+            //TODO log
+            None
+        }
       }
     }
 
@@ -94,15 +119,7 @@ class Simplify(robot: GenericRobot) {
       def tryEliminate(vs: List[Variable]): Formula = vs match {
         case x :: xs =>
           mkQuery(Set(x)) match {
-            case Some(q) =>
-              try {
-                val ir = irrelevant(Set(x))
-                val f2 = FormulaUtils.getConjuncts(q.execute(false)) //TODO option for McCallum proj
-                new QeSimplifier(And(f2 ::: ir :_*), bound, useAssumptions).result
-              } catch {
-                case _: Throwable =>
-                  tryEliminate(xs)
-              }
+            case Some(f2) => new QeSimplifier(f2, bound, useAssumptions).result
             case None => tryEliminate(xs)
           }
         case Nil => f
