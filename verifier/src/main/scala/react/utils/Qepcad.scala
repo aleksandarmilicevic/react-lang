@@ -69,8 +69,12 @@ object Qepcad {
 
     val defaultMemory = 100000000l
     val defaultPrime = 2000
+    val defaultTimeout = 300 * 1000 // 5 min
   
-    def execute(mcCallum: Boolean = true, memory: Long = defaultMemory, primeList: Int = defaultPrime): Formula = {
+    def execute(mcCallum: Boolean = true,
+                memory: Long = defaultMemory,
+                primeList: Int = defaultPrime,
+                timeout: Long = defaultTimeout): Formula = {
       try {
         import java.io._
         val solver = java.lang.Runtime.getRuntime.exec(Array("qepcad", "-noecho", "+N"+memory, "+L"+primeList), null, null)
@@ -85,10 +89,20 @@ object Qepcad {
         val txt5 = "Before Normalization >"
         val success = "An equivalent quantifier-free formula:"
         
+        val to = System.currentTimeMillis + timeout
+        
         def readUntil(txt: String) {
-          val line = input.readLine.trim
-          Logger("Qepcad <- ", Info, line)
-          if (line != txt) readUntil(txt)
+          while (!input.ready && System.currentTimeMillis <= to) {
+            Thread.sleep(10)
+          }
+          if (System.currentTimeMillis > to) {
+            solver.destroy
+            sys.error("Timeout")
+          } else {
+            val line = input.readLine.trim
+            Logger("Qepcad <- ", Info, line)
+            if (line != txt) readUntil(txt)
+          }
         }
        
         def write(txt: String) {
@@ -97,6 +111,7 @@ object Qepcad {
           output.newLine()
           output.flush()
         }
+        
        
         readUntil(txt1)
         write("[ react robot model simplification ]")
