@@ -16,19 +16,10 @@ import dzufferey.utils.Logger
 
 class GroundRobot( bBox: Box2D,
                    snap: Option[(String,String)] = None
-                 ) extends FrameTransformer[Sensor] with Positioned with Executed {
+                 ) extends FrameTransformer[Sensor] with Motion2D with Positioned with Executed {
 
   val lock = new java.util.concurrent.locks.ReentrantLock(true)
 
-  var x = 0.0
-  var y = 0.0
-  var _orientation = 0.0
-
-  def orientation = _orientation
-  def orientation_=(d: Double) {
-    _orientation = Angle.normalize(d)
-  }
-  
   var vx = 0.0
   var vo = 0.0
 

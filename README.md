@@ -13,18 +13,6 @@ This project requires java 7.
 You can build it using [sbt](http://www.scala-sbt.org/).
 To install sbt follow the instructions at [http://www.scala-sbt.org/release/tutorial/Setup.html](http://www.scala-sbt.org/release/tutorial/Setup.html).
 
-If you want to interface REACT with ROS and uses custom messages you need:
-* [ROS indigo](http://wiki.ros.org/)
-  Follows the instructions http://wiki.ros.org/indigo/Installation
-* [ROS java](http://wiki.ros.org/rosjava)
-  Follows the Source Installation instructions at http://wiki.ros.org/rosjava/Tutorials/indigo/Installation.
-
-Initial Setup
--------------
-The first time, you will need to run the `setup.sh` script.
-Before running the script make sure you have sourced `$ROS_HOME/setup.bash` and `$ROS_JAVA_HOME/devel/setup.bash` in your current shell.
-In Ubuntu system, `$ROS_HOME` is usually `/opt/ros/indigo/`.
-
 Directory Structure
 -------------------
 `compiler`, `verifier`, and `examples` contains the sources of the project.
@@ -39,6 +27,20 @@ $ sbt
 ```
 After the first compilation you should execute the `generateClassPath.sh` script
 
+REACT and ROS
+=============
+
+If you want to interface REACT with ROS and uses custom messages you need:
+* [ROS](http://wiki.ros.org/)
+  Follows the instructions http://wiki.ros.org/Installation
+* [ROS java](http://wiki.ros.org/rosjava)
+  Follows the Source Installation instructions at http://wiki.ros.org/rosjava/Tutorials/indigo/Installation.
+
+Setup
+-----
+In the `ros-zone` folder, you need to run the `setup.sh` script.
+Before running the script make sure you have sourced `$ROS_HOME/setup.bash` and `$ROS_JAVA_HOME/devel/setup.bash` in your current shell.
+In Ubuntu system, `$ROS_HOME` is usually `/opt/ros/RELEASE/` where `RELEASE` is the version of ROS that you have installed, e.g., jade.
 
 Examples
 ========
@@ -65,7 +67,7 @@ Each robot has two parts:
 Furthermore, the system needs to be closed.
 Any interaction with the environment, such as user input, needs to be simulated using a ghost element.
 
-An example of verification scenarios, can be found in: `react_examples/src/main/scala/react/examples/tests/Verif.scala`
+An example of verification scenarios, can be found in: `examples/src/main/scala/react/examples/tests/Verif.scala`
 They can be run using `./run.sh examples tests XXX 2>/dev/null` where XXX is the ID of one of the scenario as specified in the source file.
 
 Misc

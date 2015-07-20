@@ -29,7 +29,20 @@ class GenericRobot( val id: String,
                     val frame: Frame,
                     val inputs: List[Input],
                     val dynamic: List[Variable],
-                    val constraints: Formula ) extends GroundRobot(bBox, None) {
+                    val constraints: Formula ) extends GroundRobot(bBox, None) with SymmetryAndMemoization {
+
+  //include t, the inputs (?dynamic? not for the moment, assumed to be transient)
+  def getMotionDepsState(t: Int): Array[Byte] = {
+    val deps = Array.ofDim[Byte](4 + inputs.length)
+    ByteArray.store(deps, 0, t)
+    var pos = 4
+    for (i <- inputs) {
+      ByteArray.store(deps, pos, store(i.v))
+      pos += 2
+    }
+    deps
+  }
+  override def motionClass = Some("GenericRobot("+inputs.mkString(",")+","+dynamic.mkString(",")+","+constraints)
 
   protected def mkVar(str: String) = Variable(str).setType(Real)
 
