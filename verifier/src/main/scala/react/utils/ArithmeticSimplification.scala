@@ -274,13 +274,12 @@ object ArithmeticSimplification {
 
   def isIntegerPolynomial(f: Formula): Boolean = {
     def isInteger(f: Formula) = f match {
-      case Literal(_: Long) => true
+      case Literal(_: Int) | Literal(_: Long) => true
       case Literal(d: Double) => d.isWhole
       case _ => false
     }
     def check(f: Formula): Boolean = f match {
-      case Divides(Literal(_: Long), Literal(_: Long)) => true
-      case Divides(Literal(d1: Double), Literal(d2: Double)) => d1.isWhole && d2.isWhole
+      case Divides(l1 @ Literal(_), l2 @ Literal(_)) => isInteger(l1) && isInteger(l2)
       case Application((Eq | Leq | Lt | Geq | Gt), List(_, _)) => true
       case Variable(_) | Plus(_*) | Minus(_*) | Times(_*) => true
       case Application(DRealDecl.pow, List(f, i)) => check(f) && !isInteger(f) && isInteger(i)

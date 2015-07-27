@@ -1,6 +1,8 @@
 package react.utils
 
 object Ratio {
+
+  def apply(num: Long, denom: Long) = new Ratio(num, denom)
  
   def gcd(i : Long, j : Long) : Long = {
     def gcd1(i : Long, j : Long) : Long = {

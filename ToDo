@@ -4,18 +4,9 @@ Language
 To make things a bit simpler, we will aim for a shallow embedding into Scala and pimp it wth a few macros to make it less rough around the edges.
 The macro can be used to generate a shadow state and process the changes in variable into the mouvement commands we discussed.
 
-Frontend
-========
-
-beautify
-
-can we get some kind of interactivity using: https://github.com/scala-ide/scala-worksheet/wiki/Getting-Started
-
-
-Example
-=======
-try gazebo with http://wiki.ros.org/kobuki_desktop?distro=indigo
-when the indigo packages are available
+Documentation
+=============
+write a tutorial
 
 
 Verification
@@ -27,6 +18,8 @@ current part
 -make the model checker:
   -cached values: emit a warning if we are not sure whether it is supported
   -internalize objects references and make sure they are shared/sync across worlds
+  -test memoization
+  -better dReal integration
 -trace and error:
   -free memory before processing the trace file
   -process the trace file in a streaming fashion
@@ -36,10 +29,7 @@ model complex model (extracted from robot description)
 
 once we know what kind of operations we need for the model of the physical robot, refactor using spire and make it modular
 
-might contains routines that we can use:
-    http://www.cgal.org/
-    https://code.google.com/p/cgal-bindings/
-
+more robust dReal, sundials integration
 
 If we go toward Taylor Models,
 -existing tool:

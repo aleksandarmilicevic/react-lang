@@ -101,7 +101,7 @@ class Simplify(robot: GenericRobot) {
         Logger("Simplify", Info, "try to eliminate " + vars.mkString(",") + " using qepcad.")
         val query = Qepcad.query(fvs.toList, vars.toList, clauses1, assumptions(fvs))
         try {
-          val clauses2 = query.execute(false) //TODO option for McCallum proj
+          val clauses2 = query.execute(false) //TODO option for McCallum proj, changing TO
           val clauses3 = unabstract(clauses2)
           val f2 = FormulaUtils.getConjuncts(clauses3)
           val ir = irrelevant(vars)

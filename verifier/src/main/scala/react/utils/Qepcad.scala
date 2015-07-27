@@ -4,7 +4,6 @@ import dzufferey.smtlib._
 import dzufferey.utils._
 import dzufferey.utils.LogLevel._
 
-//TODO put a timeout
 object Qepcad {
 
   def sanitize(str: String): String = str.replaceAll("_", "").replaceAll("\\.", "")
