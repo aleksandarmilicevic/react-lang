@@ -18,20 +18,20 @@ class SimplifyTest extends FunSuite {
 //  //Console.println(robot2.modelDescription)
 //}
 
-  test("normalization 2") {
-  //val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_eqns_simple.txt")
-  //val simplifier = new Simplify(robot)
-  //val robot2 = simplifier.normalize(Some(25)) //TODO put a timeout on Qepcad
-  ////val robot2 = simplifier.normalize(Some(6))
-  //println("before")
-  //robot.aboutTheEqns
-  //println("after")
-  //robot2.aboutTheEqns
-  ////IO.writeInFile( Resources.path + "seg_eqns_simple_normal.txt", robot2.modelDescription)
-  //()
-  ////Console.println(robot.modelDescription)
-  ////Console.println(robot2.modelDescription)
-  }
+//test("normalization 2") {
+//  val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_eqns_simple.txt")
+//  val simplifier = new Simplify(robot)
+//  //val robot2 = simplifier.normalize(Some(25)) //TODO put a smaller timout
+//  val robot2 = simplifier.normalize(Some(6))
+//  println("before")
+//  robot.aboutTheEqns
+//  println("after")
+//  robot2.aboutTheEqns
+//  //IO.writeInFile( Resources.path + "seg_eqns_simple_normal.txt", robot2.modelDescription)
+//  ()
+//  //Console.println(robot.modelDescription)
+//  //Console.println(robot2.modelDescription)
+//}
 
   test("stats") {
     val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_eqns_simple_normal.txt")

@@ -62,6 +62,9 @@ class GenericRobotTest extends FunSuite {
     val tolerance = 1e-16
     val (init, initDt) = robot.initSolution(tolerance)
 
+    //Console.println("init:   " + init.mkString)
+    //Console.println("initDt: " + initDt.mkString)
+
     val in = robot.inputs.map(_.v)
     val ida = new IDA(in, robot.constraints)
 

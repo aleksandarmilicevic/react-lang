@@ -143,9 +143,9 @@ class GenericRobot( val id: String,
     val cstr3 = cstr2.flatMap(c => FormulaUtils.getConjuncts(weaken(c, precision/2)))
     val cstr = bounds ::: cstr3
 
-    val fname = Namer("init_test") + ".smt2"
-    val solver = if (Logger("GenericRobot", Debug)) DReal(QF_NRA, precision, fname)
-                 else DReal(QF_NRA, precision)
+    val fname = if (Logger("GenericRobot", Debug)) Some(Namer("init_test") + ".smt2") else None
+    val arg = Array[String]("--in","--model")
+    val solver = new DRealHack(QF_NRA, "dReal", arg, Some(precision), true, false, fname)
 
     cstr.foreach( c => fixTypes(c) )
 
