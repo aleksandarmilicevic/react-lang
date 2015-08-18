@@ -6,7 +6,15 @@ The macro can be used to generate a shadow state and process the changes in vari
 
 Documentation
 =============
+
 write a tutorial
+
+update the ROS husky example to Jade
+
+Runtime
+=======
+
+make a BBB/rPi runtime using libbulldog
 
 
 Verification
@@ -31,14 +39,3 @@ once we know what kind of operations we need for the model of the physical robot
 
 more robust dReal, sundials integration
 
-If we go toward Taylor Models,
--existing tool:
-    flow*: http://systems.cs.colorado.edu/research/cyberphysical/taylormodels/
--for symbolic manipulation (extracting equations from a bond graph), maybe we can interface with maxima:
-    http://maxima.sourceforge.net/docs/manual/en/maxima_14.html#SEC74 (polynomial)
-    http://maxima.sourceforge.net/docs/manual/en/maxima_21.html#SEC104 (diff eq)
-    http://maxima.sourceforge.net/docs/manual/en/maxima_28.html#taylor
--for CAS library:
-    java: http://krum.rz.uni-mannheim.de/jas/
-    C++: http://issc.uj.ac.za/symbolic/symbolic.html, http://www.ginac.de/
-...

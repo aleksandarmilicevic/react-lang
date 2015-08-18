@@ -49,8 +49,9 @@ object MyBuild extends Build {
           "org.ros.rosjava_messages" % "gazebo_msgs" % "2.4.7",
           /* Other dependencies */
           "org.scream3r" % "jssc" % "2.8.0",
+          "io.silverspoon" % "bulldog-board-beagleboneblack" % "0.1.2",
+          "io.silverspoon" % "bulldog-devices" % "0.1.2",
           "io.github.dzufferey" %% "misc-scala-utils" % "0.1-SNAPSHOT"
-      //  "io.github.dzufferey" %% "report" % "0.1-SNAPSHOT"
       )
     )
   )
