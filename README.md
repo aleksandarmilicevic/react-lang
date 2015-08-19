@@ -3,13 +3,25 @@ Overview
 
 The REACT language for robotics.
 
+REACT is a domain specific language / library to simplify the programming of robots and remove much of the boiler-plate code.
+The basic building blocks of REACT are finite state machine (for the control structure), periodic controller, and event handlers.
+
+REACT can be used stand-alone or used in conjunction with the Robotic Operating System [ROS](http://www.ros.org/).
+
+REACT can help you get started in your robotic project.
+However, it does not aim at replacing a general purpose language and has limitation (especially if low-level fine control is required).
+
+REACT runs on small embedded platform such are the BeagleBone and Raspberry Pi.
+However, it does not directly run on _bare metal_ micro-controllers such as Arduino.
+
+
 Setup
 =====
 
 Dependencies
 ------------
 
-This project requires java 7.
+This project requires Java 7.
 You can build it using [sbt](http://www.scala-sbt.org/).
 To install sbt follow the instructions at [http://www.scala-sbt.org/release/tutorial/Setup.html](http://www.scala-sbt.org/release/tutorial/Setup.html).
 
@@ -28,6 +40,67 @@ Directory Structure
 
 `compiler`, `verifier`, and `examples` contains the sources of the project.
 `ros-zone` contains a `react_msgs` project for ROS custom messages.
+
+ToDo where to put your own code/project
+
+
+REACT
+=====
+
+ToDo describe the language ...
+
+Event handlers
+--------------
+
+* **Periodic events**
+
+  ```scala
+  every( int ) {
+    stmnt
+  }
+  ```
+
+* **Sensor events** or subscribing to a ROS topic
+
+  ```scala
+  sensor[T]( ident ) {
+    ident => stmnt
+  }
+  ```
+
+* Other events
+  
+  ToDo explain where they come and how to send them
+
+  ```scala
+  on {
+    case pattern => stmnt
+    ...
+  }
+    ```
+
+Control stats
+-------------
+
+```scala
+state( ident ) {
+  // event handlers
+  // periodic tasks
+  ...
+}
+```
+
+`initialState(ident)` 
+
+`nextState(ident)`
+
+ToDo limitations (no parallel composition for the moment)
+
+
+Example
+-------
+
+ToDo example
 
 
 REACT and ROS
