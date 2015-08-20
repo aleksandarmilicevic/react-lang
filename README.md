@@ -57,7 +57,12 @@ This is used to route messages to the right place if you use ROS.
 Example
 -------
 
-ToDo explain the example (txt, photo of robot, and link to short video)
+In this example, we use REACT to control a small robot that follows the edge between a black and a white surface on the ground.
+The robot is equiped with a light sensor that can distiguish black ground surface from white and has two wheels mounted on continuous rotation servo.
+
+A picture of the robot can found [here](examples/src/main/resources/follower_img.JPG) and you can see the robot in action [here](examples/src/main/resources/follower_video.mp4). (Thanks Ankur and Joseph for the robot.)
+The robot on board electronic is an Arduino, which is not powerful enough to run REACT, i.e., run a JVM.
+The robot was controlled from an external laptop and the commands (pin output value) are sent to the Arduino using bluetooth.
 
 Here is the code to control that robot:
 
