@@ -1,10 +1,9 @@
 package react.examples.arduino
 
-import react._
-import react.robot._
-import react.message._
+import react.Robot
+import react.robot.FsmController
+import react.message.Primitive.Int16
 import react.utils.Env
-import react.examples._
 
 class SwipeScan(port: String) extends Robot(port) with FsmController {
 
@@ -37,27 +36,27 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
   initialState('scan)
 
   //always listen to the sensor
-  sensor[Primitive.Int16](sensorDist){
-    case Primitive.Int16(d) =>
+  sensor[Int16](sensorDist){
+    case Int16(d) =>
       //Console.println("distance ← " + d)
       distance = math.max(d, distance)
   }
 
   //use the servo that is below the IR sensor to get better picture of the surrounding
   //assume we are stopped (does not set commands to the motors)
-  //we leaving servo position is set back to 0
+  //we leave the servo position is set back to 0
   state('scan) {
 
     every(1000) {
       if (servoAngle == servoAngleNA) {
         distance = 0;
         servoAngle = -servoAngleInc
-        publish(sensorServo, Primitive.Int16(servoAngle.toShort))
+        publish(sensorServo, Int16(servoAngle.toShort))
       } else if (servoAngle < servoAngleInc) {
         servoAngle += servoAngleInc
-        publish(sensorServo, Primitive.Int16(servoAngle.toShort))
+        publish(sensorServo, Int16(servoAngle.toShort))
       } else {
-        publish(sensorServo, Primitive.Int16(0))
+        publish(sensorServo, Int16(0))
         servoAngle = servoAngleNA
         nextState('move)
       }
@@ -72,19 +71,19 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
       if (stepsLeft == steps) {
         if (distance < safeDistance) {
           //Console.println("straight")
-          publish(motorLeft, Primitive.Int16(lSpeed))
-          publish(motorRight, Primitive.Int16(rSpeed))
+          publish(motorLeft, Int16(lSpeed))
+          publish(motorRight, Int16(rSpeed))
         } else {
           //Console.println("right")
-          publish(motorLeft, Primitive.Int16(lhalf))
-          publish(motorRight, Primitive.Int16(rmhalf))
+          publish(motorLeft, Int16(lhalf))
+          publish(motorRight, Int16(rmhalf))
         }
         stepsLeft -= 1
       } else if (stepsLeft > 0) {
         stepsLeft -= 1
       } else {
-        publish(motorLeft, Primitive.Int16(0))
-        publish(motorRight, Primitive.Int16(0))
+        publish(motorLeft, Int16(0))
+        publish(motorRight, Int16(0))
         stepsLeft = steps
         nextState('scan)
       }

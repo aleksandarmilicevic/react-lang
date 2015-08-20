@@ -47,7 +47,63 @@ ToDo where to put your own code/project
 REACT
 =====
 
-ToDo describe the language ...
+REACT is embedded in the [Scala](http://scala-lang.org/) programming language.
+If you are not familiar with Scala, now is a good time to read some [tutorials](http://docs.scala-lang.org/tutorials/).
+
+A REACT robot extends the `Robot` class in the `react` package.
+Each robot has an unique `id`.
+This is used to route messages to the right place if you use ROS.
+
+Example
+-------
+
+ToDo explain the example (txt, photo of robot, and link to short video)
+
+Here is the code to control that robot:
+
+```scala
+import react.Robot
+import react.message.Primitive.{Int16,Bool}
+
+class FollowTheEdge(port: String) extends Robot(port) {
+
+  var onTarget = false
+
+  sensor[Bool](sensor){
+    case Bool(b) =>
+      onTarget = b
+  }
+
+  every(100) {
+    if (onTarget) { // turning right 
+      publish(servoLeft,  Int16(5))
+      publish(servoRight, Int16(0))
+    } else {        // turning left
+      publish(servoLeft,  Int16(0))
+      publish(servoRight, Int16(5))
+    }
+  }
+
+}
+```
+
+The controller listen to a sensor that produce a digital/boolean output.
+The value is `false` when the sensor is over a black surface and `true` when it is over a white surface.
+
+Every 100 milliseconds, the controller checks the last value it received from the sensor and sets the speed of the servo to turn left or right.
+The messages are of type `Int16` as most Arduino are 16-bits micro-controllers.
+The name `publish` comes from the interaction of ROS which is a publish-subscribe service.
+It is a bit overkill in this example, though.
+
+In the code above, `sensor`, `servoLeft`, and `servoRight` are strings that indicate to which port that sensor and servos are connected.
+This is specific to the robot you are using.
+Also the value for the (continuous rotation) servos also depends on the hardware.
+
+The full example is at `examples/src/main/scala/react/examples/arduino/FollowTheEdge.scala`.
+
+Running a REACT program is specific to the platform used.
+When discussing the different platforms below, we will explain how to run a program for each of them.
+
 
 Event handlers
 --------------
@@ -64,7 +120,7 @@ Event handlers
 
   ```scala
   sensor[T]( ident ) {
-    ident => stmnt
+    ident/pattern => stmnt
   }
   ```
 
@@ -79,29 +135,127 @@ Event handlers
   }
     ```
 
-Control stats
--------------
+Control states
+--------------
+
+To better structure a program, it is possible to encapsulate event handlers in control states.
+The handlers are active only when the program is in that state.
+The states are inspired from the _control modes_ in an [hybrid automaton](https://en.wikipedia.org/wiki/Hybrid_automaton).
+
+To use control state, you program must extends `FsmController` on top of `Robot`.
+`FsmController` is located in the `react.robot` package.
+For example, the declaration of the main class of your robot looks like:
 
 ```scala
-state( ident ) {
+MyClass(id) extends Robot(id) with FsmController { ...
+```
+
+Then states are declared with:
+
+```scala
+state( symbol ) {
   // event handlers
   // periodic tasks
   ...
 }
 ```
 
-`initialState(ident)` 
+Each state must have an unique identifier.
+[Symbols](http://www.scala-lang.org/api/current/index.html#scala.Symbol) are written as `'name`.
 
-`nextState(ident)`
+States should contain only event handlers and periodic loops.
+It is *not* recommended to declare variables in states but outside any handler.
 
-ToDo limitations (no parallel composition for the moment)
+The program must also declare which state is the initial state using `initialState(symbol)`.
 
+Transitions between states occurs after an handler has executed and called `nextState(symbol)`.
+If multiple calls to `nextState` are made during the execution of an handler, the identifier in the last call is used.
+
+ToDo limitations (no parallel composition or nesting for the moment)
 
 Example
 -------
 
-ToDo example
+ToDo an example with control states (again text, photo, video)
 
+The full example is at `examples/src/main/scala/react/examples/arduino/SwipeScan.scala`.
+
+```scala
+import react.Robot
+import react.robot.FsmController
+import react.message.Primitive.Int16
+import react.utils.Env
+
+class SwipeScan(port: String) extends Robot(port) with FsmController {
+
+  val steps = 10
+  var stepsLeft = steps
+
+  //about the distance
+  var distance = 0
+
+  val servoAngleNA = -200
+  val servoAngleInc = 70
+  var servoAngle = servoAngleNA
+
+  initialState('scan)
+
+  //always listen to the sensor
+  sensor[Int16](sensorDist){
+    case PInt16(d) =>
+      distance = math.max(d, distance)
+  }
+
+  //use the servo that is below the IR sensor to get better picture of the surrounding
+  //assume we are stopped (does not set commands to the motors)
+  //we leave the servo position is set back to 0
+  state('scan) {
+
+    //this is slow as the servo needs to time to move from one position to the other
+    every(1000) {
+      if (servoAngle == servoAngleNA) {
+        distance = 0;  //reset the distance
+        servoAngle = -servoAngleInc
+        publish(sensorServo, Primitive.Int16(servoAngle.toShort))
+      } else if (servoAngle < servoAngleInc) {
+        servoAngle += servoAngleInc
+        publish(sensorServo, Primitive.Int16(servoAngle.toShort))
+      } else {
+        publish(sensorServo, Primitive.Int16(0))
+        servoAngle = servoAngleNA
+        nextState('move)
+      }
+    }
+
+  }
+
+  
+  state('move) {
+
+    every(100) {
+      if (stepsLeft == steps) {
+        if (distance < safeDistance) { //going straight
+          publish(motorLeft,  Int16(6))
+          publish(motorRight, Int16(6))
+        } else { //turn right
+          publish(motorLeft,  Int16(3))
+          publish(motorRight, Int16(-3))
+        }
+        stepsLeft -= 1
+      } else if (stepsLeft > 0) {
+        stepsLeft -= 1
+      } else { //stop
+        publish(motorLeft,  Int16(0))
+        publish(motorRight, Int16(0))
+        stepsLeft = steps
+        nextState('scan)
+      }
+    }
+
+  }
+
+}
+```
 
 REACT and ROS
 =============

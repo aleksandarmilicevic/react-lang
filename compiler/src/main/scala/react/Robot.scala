@@ -40,9 +40,9 @@ abstract class Robot(val id: String) extends Controller {
   /** generate a sequence of messages for the robot to execute (match the physical state to the model state) */
   //def generateMvmt(period: Int): Seq[Message] = Seq()
 
-  //helper to simplify message generation, to report pose to react master
-  @verification.ignore var publishPose = false
-  @verification.ignore var posePublishPeriod = 500
+////helper to simplify message generation, to report pose to react master
+//@verification.ignore var publishPose = false
+//@verification.ignore var posePublishPeriod = 500
   private var seq = 0
   protected def nextHeader = {
     val s = seq
@@ -69,21 +69,18 @@ abstract class GroundRobot(_id: String) extends Robot(_id) {
     (pX, pY, pO)
   }
 
-  override def setExec(n: Executor) {
-    super.setExec(n)
-
-    //...
-    if (publishPose) {
-      def publish() {
-        val h = nextHeader
-        val p = Pose(Point(x,y,0), Angle.quaternionFromTheta(orientation))
-        val msg = exec.convertMessage[geometry_msgs.PoseStamped](PoseStamped(h, p))
-        exec.publish[geometry_msgs.PoseStamped]("/react/pose", geometry_msgs.PoseStamped._TYPE, msg)
-      }
-      n.schedule(new ScheduledTask("publishPose("+id+")", posePublishPeriod, publish))
-    }
-
-  }
+//override def setExec(n: Executor) {
+//  super.setExec(n)
+//  if (publishPose) {
+//    def publish() {
+//      val h = nextHeader
+//      val p = Pose(Point(x,y,0), Angle.quaternionFromTheta(orientation))
+//      val msg = exec.convertMessage[geometry_msgs.PoseStamped](PoseStamped(h, p))
+//      exec.publish[geometry_msgs.PoseStamped]("/react/pose", geometry_msgs.PoseStamped._TYPE, msg)
+//    }
+//    n.schedule(new ScheduledTask("publishPose("+id+")", posePublishPeriod, publish))
+//  }
+//}
 
 //@transient private var shadow_x = 0.0
 //@transient private var shadow_y = 0.0
