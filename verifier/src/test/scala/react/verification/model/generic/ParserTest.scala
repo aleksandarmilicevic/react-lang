@@ -69,6 +69,12 @@ class ParserTest extends FunSuite {
     assert(true)
   }
 
+  test("parse arm") {
+    val robot = GenericRobot("id", Resources.playground, Resources.path + "folded_arm.txt")
+    //println(robot.modelDescription)
+    assert(true)
+  }
+
 
   test("test solver 1") {
     val r = GenericRobot("id", Resources.playground, Resources.path + "seg_simplest.txt")

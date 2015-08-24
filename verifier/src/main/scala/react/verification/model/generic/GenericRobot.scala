@@ -127,11 +127,12 @@ class GenericRobot( val id: String,
   def initSolutionDReal(precision: Double = 0.1): (Map[Variable, Double], Map[Variable, Double]) = {
     //Logger("GenericRobot", Error, "computing initial solution for " + x + "," + y + " " + orientation + " " + store)
     val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
-    val known = (poseValues ++ in).mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
+    val known = in.mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
+      //(poseValues ++ in).mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
     val bounds1 = angleRanges ::: ranges
     val cstr1 = conjuncts.map(replaceDt)
     val bounds2 = And(cstr1:_*).freeVariables.toList.filter(_.name.endsWith(dtSuffix)).flatMap( v => {
-        List( Lt(v, Literal(10000)),
+        List( Lt(v, Literal( 10000)),
               Gt(v, Literal(-10000)))
       })
     def replace(f: Formula) = {
@@ -140,25 +141,36 @@ class GenericRobot( val id: String,
     }
     val cstr2 = cstr1.map(replace).map(ArithmeticSimplification.polynomialNF)
     val bounds = (bounds1 ::: bounds2).map(replace)
-    val cstr3 = cstr2.flatMap(c => FormulaUtils.getConjuncts(weaken(c, precision/2)))
+    val cstr3 = cstr2 //cstr2.flatMap(c => FormulaUtils.getConjuncts(weaken(c, precision/2)))
     val cstr = bounds ::: cstr3
+    val (_normalized, factors) = normalizeRanges(And(cstr:_*), dynamic)
+    val normalized = FormulaUtils.getConjuncts(_normalized)
 
     val fname = if (Logger("GenericRobot", Debug)) Some(Namer("init_test") + ".smt2") else None
-    val arg = Array[String]("--in","--model")
-    val solver = new DRealHack(QF_NRA, "dReal", arg, Some(precision), true, false, fname)
+    val arg = Array[String]("--in","--model", "--worklist-fp")
+    val solver = new DRealHack(QF_NRA, "dReal", arg, Some(precision), true, false, fname, 1)
 
-    cstr.foreach( c => fixTypes(c) )
-
-    cstr.foreach( c => solver.assert(c) )
+    normalized.foreach( c => fixTypes(c) )
+    normalized.foreach( c => solver.assert(c) )
+    //println(normalized.mkString("\n"))
 
     solver.checkSat(1000 * 1000) match {
       case Sat(Some(model)) =>
+        //println(model)
         val allVars = And(cstr:_*).freeVariables
-        val values = allVars.map( v => model(v) match {
-          case ValD(d) => v -> d
-          case ValI(i) => v -> i.toDouble
-          case other => sys.error("expected Double, found: " + other)
-        }).toMap
+        val scaledValues = allVars.map( v =>
+          try {
+            model(v) match {
+              case ValD(d) => v -> d
+              case ValI(i) => v -> i.toDouble
+              case other => sys.error("expected Double, found: " + other)
+            }
+          } catch { case _: java.util.NoSuchElementException =>
+            Logger("GenericRobot", Warning, "initSolution for " + v + " not found ?? using 0.0")
+            v -> 0.0
+          }
+        ).toMap
+        val values = scaledValues.map{ case (v,d) => v -> (d * factors.getOrElse(v, 1.0)) }
         val knownValues = known.map{ case (k, Literal(d: Double)) => k -> d }
         val allValues = values ++ knownValues
         partitionSolution(allValues)
@@ -169,7 +181,7 @@ class GenericRobot( val id: String,
     }
   }
   
-  def initSolution(precision: Double = 1e-10, useKinsol: Boolean = true): (Map[Variable, Double], Map[Variable, Double]) = {
+  def initSolution(precision: Double, useKinsol: Boolean): (Map[Variable, Double], Map[Variable, Double]) = {
     val (guess1, guess2) = initSolutionDReal(precision)
     //Logger("GenericRobot", Error, "initSolution " + precision)
     //Logger("GenericRobot", Error, guess1.toString)
@@ -348,15 +360,26 @@ class GenericRobot( val id: String,
       val tolerance = 1e-3
       //Logger("GenericRobot", Error, this.toString)
       val (init, initDt) = initSolution(tolerance, false)
-      x = (init(frame.x) + initDt.getOrElse(frame.x, 0.0) * t / 1000) / 1000
-      y = (init(frame.y) + initDt.getOrElse(frame.y, 0.0) * t / 1000) / 1000
-      val a = init(frame.a) + initDt.getOrElse(frame.a, 0.0) * t / 1000
-      val i = init(frame.i) + initDt.getOrElse(frame.i, 0.0) * t / 1000
-      val j = init(frame.j) + initDt.getOrElse(frame.j, 0.0) * t / 1000
-      val k = init(frame.k) + initDt.getOrElse(frame.k, 0.0) * t / 1000
-      val q = Quaternion(a, i, j, k)
-      orientation = Angle.thetaFromQuaternion(q)
-      //Logger("GenericRobot", Error, this.toString)
+      if (!initDt.isEmpty) {
+        x = (init(frame.x) + initDt.getOrElse(frame.x, 0.0) * t / 1000) / 1000
+        y = (init(frame.y) + initDt.getOrElse(frame.y, 0.0) * t / 1000) / 1000
+        val a = init(frame.a) + initDt.getOrElse(frame.a, 0.0) * t / 1000
+        val i = init(frame.i) + initDt.getOrElse(frame.i, 0.0) * t / 1000
+        val j = init(frame.j) + initDt.getOrElse(frame.j, 0.0) * t / 1000
+        val k = init(frame.k) + initDt.getOrElse(frame.k, 0.0) * t / 1000
+        val q = Quaternion(a, i, j, k)
+        orientation = Angle.thetaFromQuaternion(q)
+        //Logger("GenericRobot", Error, this.toString)
+      } else {
+        x = init(frame.x) / 1000
+        y = init(frame.y) / 1000
+        val a = init(frame.a)
+        val i = init(frame.i)
+        val j = init(frame.j)
+        val k = init(frame.k)
+        val q = Quaternion(a, i, j, k)
+        orientation = Angle.thetaFromQuaternion(q)
+      }
     } catch {
       case e: Throwable =>
         Logger("GenericRobot", Error, "could not compute motion") //TODO print more
@@ -472,7 +495,7 @@ object GenericRobot {
         case SApplication("input", List(SAtom(name), SAtom(topic))) =>
           inputs ::= Input(mkVar(name), topic)
         case SApplication("input", List(SAtom(name))) =>
-          inputs ::= Input(mkVar(name), "") //TODO generate a port name
+          inputs ::= Input(mkVar(name), name)
         case SApplication("dynamic", List(SAtom(name))) =>
           dynamic ::= mkVar(name)
       //case Application("input", List(Atom(name), Atom(port))) =>

@@ -50,6 +50,14 @@ abstract class VerifTemplate2 extends World {
     m1.setOrientation(o)
     m1
   }
+  
+  def mkArm(id: String) = {
+    val m1 = GenericRobot(id, this, "verifier/src/test/resources/folded_arm.txt")
+    m1.setPosition(0,0) //TODO get the right value
+    m1.setOrientation(0)//TODO get the right value
+    m1
+  }
+
 
   def addSensorTarget(m: GroundRobot, id: String, topic: String) {
     val targets = List(
@@ -156,6 +164,13 @@ class RightHandRuleAndUserTest2 extends VerifTemplate2 {
 
 }
 
+class ArmTest extends VerifTemplate2 {
+  val i = "/arm"
+  val r = new Arm(i)
+  val m = mkArm(i)
+  robot(r, m)
+}
+
 object RunV2 {
 
   def apply(test: String, args: McOptions) {
@@ -163,6 +178,7 @@ object RunV2 {
       case "rhr" => (() => new RightHandRuleTest2)
       case "ru" => (() => new RightHandRuleAndUserTest2)
       case "s" => (() => new SwipeScanTest2)
+      case "a" => (() => new ArmTest)
       case _ => (() => new FollowTheEdgeTest2)
     }
     val runner = new react.verification.McRunner(args, world)

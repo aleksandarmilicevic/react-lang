@@ -12,7 +12,7 @@ class GenericRobotTest extends FunSuite {
     robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (1: Short))
     robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (1: Short))
     //robot.aboutTheEqns
-    val (init, initDt) = robot.initSolution(1e-10)
+    val (init, initDt) = robot.initSolution(1e-10, true)
     //Console.println("init:    " + init.mkString(" "))
     //Console.println("init dt: " + initDt.mkString(" "))
     ()
@@ -33,7 +33,7 @@ class GenericRobotTest extends FunSuite {
     robot.store = robot.store + (l -> (10: Short))
     robot.store = robot.store + (r -> (10: Short))
 
-    val (init, initDt) = robot.initSolution()
+    val (init, initDt) = robot.initSolution(1e-10, true)
 
     val in = robot.inputs.map(_.v)
     val ida = new IDA(in, robot.constraints)
@@ -60,7 +60,7 @@ class GenericRobotTest extends FunSuite {
     robot.store = robot.store + (r -> (1: Short))
 
     val tolerance = 1e-16
-    val (init, initDt) = robot.initSolution(tolerance)
+    val (init, initDt) = robot.initSolution(tolerance, true)
 
     //Console.println("init:   " + init.mkString)
     //Console.println("initDt: " + initDt.mkString)
