@@ -5,6 +5,8 @@ import react.verification._
 import react.verification.ghost._
 import react.utils._
 import react.verification.modelchecker._
+import react.verification.model.generic.Frame
+import react.verification.environment.Box2D
 import dzufferey.smtlib._
 
 import dzufferey.utils.LogLevel._
@@ -33,6 +35,7 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
         world.restoreState(s)
         val dt = world.timeToNext.toInt
         if (d < depth) {
+          Logger("BoundedModelChecker", Debug, "step " + depth + ", dt = " + dt)
           d += 1
           t ::= dt
         }
@@ -41,18 +44,20 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
         traces.toSeq
       }
     }
-    val initState = world.saveStateCompact
+    val initState = world.saveState
     val prefix = Trace(initState)
     val traces = step(prefix, 0, 0)
-    (t.reverse, traces)
+    val tr = t.reverse
+    Logger("BoundedModelChecker", Info, "#trace = " + traces.length + ", dts = " + tr.mkString(", "))
+    (tr, traces)
   }
 
   def getStateEquations(traces: Seq[Trace]): Formula = {
     assert(!traces.isEmpty)
-    assert(world.world.models.forall(_.hasEquations))
     def oneState(idx: Int, s: State): Formula = {
       world.restoreState(s)
       val eqs = world.world.models.map(_.stateEquations(idx))
+      Logger("BoundedModelChecker", Info, "equation for state at depth " + idx + "\n  " + eqs.mkString("\n  "))
       And(eqs:_*)
     }
     def mkEqs(idx: Int, traces: Seq[Trace]): List[Formula] = {
@@ -69,16 +74,150 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
     And( mkEqs(0, init):_* )
   }
 
-  def getEvolutionEquations(depth: Int): Formula = {
-    assert(world.world.models.forall(_.hasEquations))
-    val eqs = (0 until depth).flatMap( i => world.world.models.map(_.stateEquations(i)) )
+  def getEvolutionEquations: Formula = {
+    val eqs = (0 until nbrSteps).flatMap( i => world.world.models.map(_.unrollEquations(i)) )
     And( eqs:_* )
   }
 
-  //TODO how do we add the goal and the properties
+  def inBox(x: Variable, y: Variable, _b: Box2D): Formula = {
+    val b = _b.toMillimeters
+    assert(b.orientation == 0.0, "TODO orientation")
+    And(Geq(x, Literal(b.x)),
+        Geq(y, Literal(b.y)),
+        Leq(x, Literal(b.x + b.width)),
+        Leq(y, Literal(b.y + b.depth)))
+  }
 
-  def getEquations(depth: Int): Formula = {
+  def outsideBox(x: Variable, y: Variable, b: Box2D): Formula = Not(inBox(x,y,b))
+
+  def outsideBoxNoDisj(x: Variable, y: Variable, _b: Box2D) = {
+    val b = _b.toMillimeters
+    val centerX = b.x + b.width/2
+    val centerY = b.y + b.depth/2
+    if (b.width == b.depth) {
+      val r2 = b.width * b.width / 2
+      val dx = Minus(x, Literal(centerX))
+      val dy = Minus(y, Literal(centerY))
+      Gt(Plus(Times(dx,dx),Times(dy,dy)), Literal(r2))
+    } else {
+      assert(false, "TODO ellipse equations")
+    }
+  }
+
+  def disjointBoxes(frame: Frame, _bBox: Box2D, _obstacle: Box2D) = {
+    val bBox = _bBox.toMillimeters
+    val obstacle = _obstacle.toMillimeters
     ???
+  }
+  
+  def disjointBoxesNoDisj(frame: Frame, _bBox: Box2D, _obstacle: Box2D) = {
+    val bBox = _bBox.toMillimeters
+    val obstacle = _obstacle.toMillimeters
+    val offsetX = bBox.x + bBox.width / 2
+    val offsetY = bBox.y + bBox.depth / 2
+    assert(offsetX == 0.0 && offsetY == 0.0, "TODO equations with offsets: " + bBox + ", " + offsetX + ", " + offsetY)
+    val centerFrameX = frame.x
+    val centerFrameY = frame.y
+    val centerObstacleX = Literal(obstacle.x + obstacle.width/2)
+    val centerObstacleY = Literal(obstacle.y + obstacle.depth/2)
+
+    val dx = Minus(centerFrameX, centerObstacleX)
+    val dy = Minus(centerFrameY, centerObstacleY)
+    val d = Plus(Times(dx,dx),Times(dy,dy))
+
+    assert(bBox.width == bBox.depth && obstacle.width == obstacle.depth, "TODO equations with ellipse")
+    val r =  obstacle.width + bBox.width //this is radius * sqrt(2)
+    val r2 = Literal(r * r / 2)
+
+    Gt(d, r2)
+  }
+
+  def avoidObstacles(frame: Frame, bBox: Box2D, disj: Boolean): Formula = {
+    val boxes = world.world.envBoxes
+    val oustside = if (disj) boxes.map( disjointBoxes(frame, bBox, _) )
+                   else boxes.map( disjointBoxesNoDisj(frame, bBox, _) )
+    And(oustside:_*)
+  }
+  
+  //no disjunction generate a sufficient condition that does not contains dijsunctions
+  def avoidObstacles(disj: Boolean): Formula = {
+    val models = world.world.models
+    val eqns = models.flatMap( m => {
+      val eqn = m.frames.map{ case (f,b) => avoidObstacles(f, b, disj )}
+      //TODO is the indexing right
+      (1 to nbrSteps).flatMap( i => {
+        val vAt = m.variablesAt(i)
+        eqn.map(_.alpha(vAt))
+      })
+    })
+    Logger("BoundedModelChecker", Info, "avoidObstacles:\n  " + eqns.mkString("\n  "))
+    And(eqns:_*)
+  }
+
+  def goalEquations: Formula = {
+    assert(world.world.models.size == 1, "TODO goal for more than one robot")
+    val m = world.world.models.head
+    val fs = m.frames
+    if (fs.size > 1) {
+      Logger("BoundedModelChecker", Warning, "using the first frame for the goal")
+    }
+    val (f,b) = fs.head
+    val offsetX = b.x + b.width / 2
+    val offsetY = b.y + b.depth / 2
+    assert(offsetX == 0.0 && offsetY == 0.0, "TODO goal equations with offsets")
+    val goals = world.world.targets.map{ case (i, b) =>
+      val vAt = m.variablesAt(i)
+      inBox(f.x, f.y, b).alpha(vAt)
+    }
+    Logger("BoundedModelChecker", Info, "goals:\n  " + goals.mkString("\n  "))
+    And(goals:_*)
+  }
+
+  def getEquations: Formula = {
+    val (times, traces) = getControllerTraces
+    val states = getStateEquations(traces)
+    val evolution = getEvolutionEquations
+    val obstacles = avoidObstacles(false)
+    val goals = goalEquations
+    FormulaUtils.simplifyBool(And(states, evolution, obstacles, goals))
+  }
+
+  def getVariablesToScale = {
+    def isQuat(v: Variable) = {
+      !v.name.endsWith("q_a") &&
+      !v.name.endsWith("q_i") &&
+      !v.name.endsWith("q_j") &&
+      !v.name.endsWith("q_k")
+    }
+    for(m <- world.world.models;
+        i <- 0 until nbrSteps;
+        (_,v) <- m.variablesAt(i) if !isQuat(v))
+    yield v
+  }
+
+  //TODO drawing a picture
+
+  def run {
+    try {
+      Logger.disallow("Typer")
+      Logger("BoundedModelChecker", Notice, world.stateSpaceDescription)
+      Logger("BoundedModelChecker", Notice, world.schedulerToString)
+      val cstr = getEquations
+      val vars = getVariablesToScale
+      val startTime = java.lang.System.currentTimeMillis()
+      DRealQuery.getSolutions(cstr, 1e-3, 300 * 1000, vars) match {
+        case Some(values) =>
+          println("Solution:\n  " + values.mkString("\n  "))
+        case None =>
+          Logger("BoundedModelChecker", Error, "no solutions!!")
+      }
+      val endTime = java.lang.System.currentTimeMillis()
+      Logger("BoundedModelChecker", Notice, "dReal took: " + (endTime - startTime))
+    } catch {
+      case e: Exception =>
+        Logger("BoundedModelChecker", Error, e.toString)
+        e.printStackTrace
+    }
   }
 
 }

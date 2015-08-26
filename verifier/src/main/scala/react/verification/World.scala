@@ -26,7 +26,7 @@ abstract class World extends Playground {
   
   /* add an obstacle in the world */
   final def obstacle(b: Box2D) {
-    boxes = b :: boxes
+    boxes ::= b
   }
 
   /* add a robot in the world */
@@ -38,6 +38,11 @@ abstract class World extends Playground {
   /* an object with a state that needs to be saved/restored */
   final def stateful[T](s: T): Unit = macro WorldMacros.addStateful[T]
 
+  /* add an reachability goal for the BMC */
+  final def goal(i: Int, b: Box2D) {
+    targets ::= (i -> b)
+  }
+
   ///////////////////////////////////////////////////
   // data structures for the elements in the world //
   ///////////////////////////////////////////////////
@@ -46,6 +51,7 @@ abstract class World extends Playground {
   var models: List[GroundRobot] = Nil
   var ghosts: List[Ghost] = Nil
   var boxes: List[Box2D] = Nil
+  var targets: List[(Int,Box2D)] = Nil
 
   def enclosure = {
     val wall = 0.1

@@ -138,6 +138,8 @@ object Main extends Options with react.verification.McOptions {
       case "arduinoV2" =>
         bypassROS = true
         arduino.RunV2(topic, this)
+      case "bmc" =>
+        bmcTest.Run(topic, this)
       case other =>
         throw new RuntimeException("Unknown robot: " + other)
     }

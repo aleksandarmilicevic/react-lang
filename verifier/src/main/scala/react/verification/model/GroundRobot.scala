@@ -8,7 +8,7 @@ import react.verification.environment._
 import react.verification.ghost._
 import react.verification._
 import react.verification.modelchecker.BranchingPoint
-import dzufferey.smtlib.Formula
+import dzufferey.smtlib._
 import math._
 import dzufferey.utils.LogLevel._
 import dzufferey.utils.Logger
@@ -173,15 +173,25 @@ class GroundRobot( bBox: Box2D,
     super.deregister(exec)
     sensors.foreach(_.deregister(exec))
   }
+  
+  /////////////////
+  // for the BMC //
+  /////////////////
 
-  def hasEquations: Boolean = false
-
-  def stateEquations(index: Int): Formula = {
-    sys.error("does not have equations")
+  def frames: List[(generic.Frame,Box2D)] = {
+    sys.error("TODO")
   }
 
-  def unrollEquations(fromIndex: Int, toIndex: Int): Formula = {
-    sys.error("does not have equations")
+  def variablesAt(index: Int): Map[Variable,Variable] = {
+    sys.error("TODO the equations correspondnig to moveFor")
+  }
+
+  def stateEquations(index: Int): Formula = {
+    sys.error("TODO the equations correspondnig to moveFor")
+  }
+
+  def unrollEquations(fromIndex: Int): Formula = {
+    sys.error("TODO the equations correspondnig to moveFor")
   }
   
 }

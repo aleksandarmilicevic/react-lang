@@ -3,6 +3,7 @@ package react.verification.model.generic
 import org.scalatest._
 import dzufferey.smtlib._
 import dzufferey.utils.Logger
+import react.utils.DRealQuery.fixTypes
 
 class ParserTest extends FunSuite {
 
@@ -69,12 +70,23 @@ class ParserTest extends FunSuite {
     assert(true)
   }
 
-  test("parse arm") {
+  test("parse arm 1") {
     val robot = GenericRobot("id", Resources.playground, Resources.path + "folded_arm.txt")
     //println(robot.modelDescription)
     assert(true)
   }
 
+  test("parse arm 2") {
+    val robot = GenericRobot("id", Resources.playground, Resources.path + "folded_arm_1param.txt")
+    println(robot.modelDescription)
+    assert(true)
+  }
+  
+  test("parse arm 3") {
+    val robot = GenericRobot("id", Resources.playground, Resources.path + "folded_arm_3params.txt")
+    println(robot.modelDescription)
+    assert(true)
+  }
 
   test("test solver 1") {
     val r = GenericRobot("id", Resources.playground, Resources.path + "seg_simplest.txt")

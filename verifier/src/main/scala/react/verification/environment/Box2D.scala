@@ -140,5 +140,7 @@ class Box2D(val x: Double,
       }
     }
   }
+
+  def toMillimeters = new Box2D(x * 1000, y * 1000, orientation, width * 1000, depth * 1000)
   
 }

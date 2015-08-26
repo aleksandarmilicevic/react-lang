@@ -430,11 +430,11 @@ class GenericRobot( val id: String,
     //TODO deregister the inputs
   }
 
-  override def hasEquations = true
+  override def frames: List[(Frame,Box2D)] = List(frame -> bBox)
 
-  protected def variablesAt(index: Int): Map[Variable,Variable] = {
+  override def variablesAt(index: Int): Map[Variable,Variable] = {
     val vars: List[Variable] = inputs.map(_.v) ++ dynamic
-    vars.map( v => v -> Variable(v.name + "_" + index).setType(v.tpe) ).toMap
+    vars.map( v => v -> Variable("step_" + index + "_" + v.name).setType(v.tpe) ).toMap
   }
 
   override def stateEquations(index: Int): Formula = {
@@ -443,12 +443,14 @@ class GenericRobot( val id: String,
     And(known:_*).alpha(vAt)
   }
 
-  override def unrollEquations(fromIndex: Int, toIndex: Int): Formula = {
+  override def unrollEquations(fromIndex: Int): Formula = {
     //val vf = variablesAt(fromIndex)
+    val toIndex = fromIndex + 1
     val vt = variablesAt(toIndex)
     val cstr = dRealInitEquations
     assert(!hasDt(cstr), "dt not yet implemented")
     val cstr2 = cstr.alpha(vt)
+    Logger("GenericRobot", Debug, "unrollEquations("+fromIndex+")\n" + cstr2)
     cstr2
   }
 

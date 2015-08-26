@@ -333,6 +333,8 @@ TODO some example
 Verification
 ============
 
+TODO explain why and what
+
 REACT comes with a built-in model-checker to verify safety properties.
 In order to use the model checker, one first need to create a verification scenario.
 The scenario specify the dimensions of the environment, any objects, and the robots.
@@ -345,7 +347,16 @@ Each robot has two parts:
 
 Furthermore, the system needs to be _closed_, i.e., any interaction with the environment, such as user input, needs to be simulated using a ghost element.
 
-TODO some more explanation
+Dependencies
+------------
+
+The [dReal](https://github.com/dreal/dreal3) smt-solver for non linear arithmetic over the reals is required for this part.
+The `dReal` executable should be in the path.
+
+The version found at [https://github.com/dreal/dreal3](https://github.com/dreal/dreal3) should be used, rather than the stable version.
+
+Example
+-------
 
 An example of verification scenarios, can be found in: `examples/src/main/scala/react/examples/tests/Verif.scala`
 They can be run using `./run.sh examples tests XXX 2>/dev/null` where XXX is the ID of one of the scenario as specified in the source file.

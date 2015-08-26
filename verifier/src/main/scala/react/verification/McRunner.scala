@@ -26,7 +26,7 @@ class McRunner(opts: McOptions, newWorld: () => World) {
   var prs: Array[WorldProxy] = null
 
   protected def shutdown: Nothing = {
-    prs.foreach(_.shutdown)
+    if (prs != null) prs.foreach(_.shutdown)
     val m = mc
     if (m != null) m.printStats
     Runtime.getRuntime().halt(0)
@@ -44,6 +44,16 @@ class McRunner(opts: McOptions, newWorld: () => World) {
     mc = new ModelChecker(prs, opts)
     mc.init
     while(mc.oneStep) {}
+    shutdown
+  }
+
+  def bmc(steps: Int) {
+    import react.verification.bmc._
+    val pr = mkProxy
+    prs = Array(pr)
+    val bound = if (opts.timeBound == -1) 5 else opts.timeBound
+    val bmc = new BoundedModelChecker(pr, bound)
+    bmc.run
     shutdown
   }
 
