@@ -55,7 +55,7 @@ class GenericRobot( val id: String,
         case Application(DRealDecl.timeDerivative, args) => d(args:_*)
         case other => other
       }, constraints)
-    fixTypes(dt)
+    DRealQuery.fixTypes(dt)
     val cjt = FormulaUtils.getConjuncts(dt)
 
     "~~~ Parameters:\n" +
@@ -124,60 +124,42 @@ class GenericRobot( val id: String,
     partitionSolution(allValues)
   }
 
-  def initSolutionDReal(precision: Double = 0.1): (Map[Variable, Double], Map[Variable, Double]) = {
-    //Logger("GenericRobot", Error, "computing initial solution for " + x + "," + y + " " + orientation + " " + store)
+  protected def getKnown = {
     val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
-    val known = in.mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
-      //(poseValues ++ in).mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
+    in.mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
+    //(poseValues ++ in).mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
+  }
+
+  protected def dRealInitEquations: Formula = {
     val bounds1 = angleRanges ::: ranges
     val cstr1 = conjuncts.map(replaceDt)
     val bounds2 = And(cstr1:_*).freeVariables.toList.filter(_.name.endsWith(dtSuffix)).flatMap( v => {
         List( Lt(v, Literal( 10000)),
               Gt(v, Literal(-10000)))
       })
+    val cstr2 = cstr1//.map(replace).map(ArithmeticSimplification.polynomialNF)
+    val bounds = bounds1 ::: bounds2//.map(replace)
+    val cstr3 = cstr2 //cstr2.flatMap(c => FormulaUtils.getConjuncts(weaken(c, precision/2)))
+    val cstr = bounds ::: cstr3
+    And(cstr:_*)
+  }
+
+  def initSolutionDReal(precision: Double = 0.1): (Map[Variable, Double], Map[Variable, Double]) = {
+    //Logger("GenericRobot", Error, "computing initial solution for " + x + "," + y + " " + orientation + " " + store)
+    val cstr0 = dRealInitEquations
+    val known = getKnown
     def replace(f: Formula) = {
       FormulaUtils.map({ case v @ Variable(_) => known.getOrElse(v,v)
                          case x => x }, f)
     }
-    val cstr2 = cstr1.map(replace).map(ArithmeticSimplification.polynomialNF)
-    val bounds = (bounds1 ::: bounds2).map(replace)
-    val cstr3 = cstr2 //cstr2.flatMap(c => FormulaUtils.getConjuncts(weaken(c, precision/2)))
-    val cstr = bounds ::: cstr3
-    val (_normalized, factors) = normalizeRanges(And(cstr:_*), dynamic)
-    val normalized = FormulaUtils.getConjuncts(_normalized)
-
-    val fname = if (Logger("GenericRobot", Debug)) Some(Namer("init_test") + ".smt2") else None
-    val arg = Array[String]("--in","--model", "--worklist-fp")
-    val solver = new DRealHack(QF_NRA, "dReal", arg, Some(precision), true, false, fname, 1)
-
-    normalized.foreach( c => fixTypes(c) )
-    normalized.foreach( c => solver.assert(c) )
-    //println(normalized.mkString("\n"))
-
-    solver.checkSat(1000 * 1000) match {
-      case Sat(Some(model)) =>
-        //println(model)
-        val allVars = And(cstr:_*).freeVariables
-        val scaledValues = allVars.map( v =>
-          try {
-            model(v) match {
-              case ValD(d) => v -> d
-              case ValI(i) => v -> i.toDouble
-              case other => sys.error("expected Double, found: " + other)
-            }
-          } catch { case _: java.util.NoSuchElementException =>
-            Logger("GenericRobot", Warning, "initSolution for " + v + " not found ?? using 0.0")
-            v -> 0.0
-          }
-        ).toMap
-        val values = scaledValues.map{ case (v,d) => v -> (d * factors.getOrElse(v, 1.0)) }
+    val cstr = replace(cstr0) //?? ArithmeticSimplification.polynomialNF ??
+    DRealQuery.getSolutions(cstr, precision, 1000, dynamic) match {
+      case Some(values) =>
         val knownValues = known.map{ case (k, Literal(d: Double)) => k -> d }
-        val allValues = values ++ knownValues
-        partitionSolution(allValues)
-      case Sat(None) => sys.error("could not get model for the initial value!")
-      case UnSat => sys.error("no initial value!")
-      case Unknown => sys.error("unknown initial value!")
-      case Failure(f) => sys.error("failed to compute initial value: " + f)
+        val solution = values ++ knownValues
+        partitionSolution(solution)
+      case None =>
+        sys.error("no initial value!")
     }
   }
   
@@ -446,6 +428,28 @@ class GenericRobot( val id: String,
   override def deregister(exec: Executor) {
     super.deregister(exec)
     //TODO deregister the inputs
+  }
+
+  override def hasEquations = true
+
+  protected def variablesAt(index: Int): Map[Variable,Variable] = {
+    val vars: List[Variable] = inputs.map(_.v) ++ dynamic
+    vars.map( v => v -> Variable(v.name + "_" + index).setType(v.tpe) ).toMap
+  }
+
+  override def stateEquations(index: Int): Formula = {
+    val vAt = variablesAt(index)
+    val known = getKnown.toList.map{ case (k, l) => Eq(k, l) }
+    And(known:_*).alpha(vAt)
+  }
+
+  override def unrollEquations(fromIndex: Int, toIndex: Int): Formula = {
+    //val vf = variablesAt(fromIndex)
+    val vt = variablesAt(toIndex)
+    val cstr = dRealInitEquations
+    assert(!hasDt(cstr), "dt not yet implemented")
+    val cstr2 = cstr.alpha(vt)
+    cstr2
   }
 
 }

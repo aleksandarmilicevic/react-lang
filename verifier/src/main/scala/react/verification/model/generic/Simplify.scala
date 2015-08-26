@@ -3,7 +3,7 @@ package react.verification.model.generic
 import dzufferey.smtlib._
 import dzufferey.utils._
 import dzufferey.utils.LogLevel._
-import react.utils.{Qepcad, QepcadPrinter, ArithmeticSimplification}
+import react.utils.{Qepcad, QepcadPrinter, ArithmeticSimplification, DRealQuery}
 import Utils._
 
 //the formula
@@ -197,7 +197,7 @@ class Simplify(robot: GenericRobot) {
       constraints = tryQE(constraints4)
       nFv = constraints.freeVariables.size
     } 
-    fixTypes(constraints)
+    DRealQuery.fixTypes(constraints)
     val dynamic = robot.dynamic.filter(constraints.freeVariables)
     new GenericRobot(robot.id, robot.pg, robot.bBox, robot.frame, robot.inputs, dynamic, constraints)
   }

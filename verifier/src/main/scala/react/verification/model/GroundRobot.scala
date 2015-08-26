@@ -8,6 +8,7 @@ import react.verification.environment._
 import react.verification.ghost._
 import react.verification._
 import react.verification.modelchecker.BranchingPoint
+import dzufferey.smtlib.Formula
 import math._
 import dzufferey.utils.LogLevel._
 import dzufferey.utils.Logger
@@ -173,4 +174,14 @@ class GroundRobot( bBox: Box2D,
     sensors.foreach(_.deregister(exec))
   }
 
+  def hasEquations: Boolean = false
+
+  def stateEquations(index: Int): Formula = {
+    sys.error("does not have equations")
+  }
+
+  def unrollEquations(fromIndex: Int, toIndex: Int): Formula = {
+    sys.error("does not have equations")
+  }
+  
 }
