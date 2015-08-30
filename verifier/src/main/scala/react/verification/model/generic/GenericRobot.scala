@@ -443,7 +443,7 @@ class GenericRobot( val id: String,
     And(known:_*).alpha(vAt)
   }
 
-  override def unrollEquations(fromIndex: Int): Formula = {
+  override def unrollEquations(fromIndex: Int, dt: Int): Formula = {
     //val vf = variablesAt(fromIndex)
     val toIndex = fromIndex + 1
     val vt = variablesAt(toIndex)

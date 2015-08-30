@@ -14,12 +14,12 @@ class FollowTheEdge(port: String, clockwise: Boolean = false) extends Robot(port
 
   sensor[Bool](sensor){
     case Bool(b) =>
-      Console.println("onTarget ← " + b)
+      //Console.println("onTarget ← " + b)
       onTarget = b
   }
 
-  val defaultSpeed: Short = 5
-  //val defaultSpeed: Short = 78 // 2.44 rad/s in the MC
+  //val defaultSpeed: Short = 5
+  val defaultSpeed: Short = 78 // 2.44 rad/s in the MC
   val lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
   val rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)
 

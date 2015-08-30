@@ -33,18 +33,39 @@ class Box2D(val x: Double,
     }
   }
 
-  lazy val corners: Array[(Double, Double)] = {
+  val cornersX: Array[Double] = {
     val wx = width * cos(orientation)
-    val wy = width * sin(orientation)
     val dx = -depth * sin(orientation)
-    val dy = depth * cos(orientation)
     Array(
-      (x, y),
-      (x + wx, y + wy),
-      (x + dx, y + dy),
-      (x + wx + dx, y + wy + dy)
+      x,
+      x + wx,
+      x + dx,
+      x + wx + dx
     )
   }
+  val cornersY: Array[Double] = {
+    val wy = width * sin(orientation)
+    val dy = depth * cos(orientation)
+    Array(
+      y,
+      y + wy,
+      y + dy,
+      y + wy + dy
+    )
+  }
+
+//val corners: Array[(Double, Double)] = {
+//  val wx = width * cos(orientation)
+//  val wy = width * sin(orientation)
+//  val dx = -depth * sin(orientation)
+//  val dy = depth * cos(orientation)
+//  Array(
+//    (x, y),
+//    (x + wx, y + wy),
+//    (x + dx, y + dy),
+//    (x + wx + dx, y + wy + dy)
+//  )
+//}
 
   def inThisFrame(x: Double, y: Double): (Double, Double) = {
     val dx = x - this.x
@@ -56,7 +77,9 @@ class Box2D(val x: Double,
   }
 
   def inGlobalFrame(x: Double, y: Double): (Double, Double) = {
-    ???
+    val dx = this.x + x * cos(orientation) - y * sin(orientation)
+    val dy = this.y + x * sin(orientation) + y * cos(orientation)
+    (dx, dy)
   }
 
   def contains(x: Double, y: Double, error: Double = 1e-6): Boolean = {
@@ -77,19 +100,25 @@ class Box2D(val x: Double,
   }
 
   def center = {
-    var x4 = 0.0
-    var y4 = 0.0
-    for( (x,y) <- corners ) {
-      x4 += x
-      y4 += y
-    }
+  //inGlobalFrame(width/2, depth/2)
+    var x4 = cornersX(0) + cornersX(1) + cornersX(2) + cornersX(3)
+    var y4 = cornersY(0) + cornersY(1) + cornersY(2) + cornersY(3)
     (x4 / 4.0, y4 / 4.0)
+  }
+  
+  protected def radius = {
+    sqrt(width*width + depth*depth) / 2
   }
 
   //TODO this is wrong! (fix when have more time)
   def collides(b: Box2D): Boolean = {
     def c(a: Box2D, b: Box2D) = {
-      b.corners.exists( p => a.contains(p._1, p._2) ) || a.contains(b.center)
+      a.contains(b.cornersX(0), b.cornersY(0)) ||
+      a.contains(b.cornersX(1), b.cornersY(1)) ||
+      a.contains(b.cornersX(2), b.cornersY(2)) ||
+      a.contains(b.cornersX(3), b.cornersY(3)) ||
+      a.contains(b.center)
+      //b.corners.exists( p => a.contains(p._1, p._2) ) || a.contains(b.center)
     }
     c(this, b) || c(b, this)
   }

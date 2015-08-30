@@ -14,7 +14,9 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
   val motorRight   = "4" 
 
   //constant for the motors
-  val defaultSpeed: Short = Env.getShort("speed", 15)
+  val defaultSpeed: Short = Env.getShort("speed", 80)
+  //val defaultSpeed: Short = Env.getShort("speed", 78)
+  //val defaultSpeed: Short = Env.getShort("speed", 15)
   var lSpeed: Short = Env.getShort("lSpeed", defaultSpeed)
   var rSpeed: Short = Env.getShort("rSpeed", defaultSpeed)
 
@@ -29,6 +31,8 @@ class SwipeScan(port: String) extends Robot(port) with FsmController {
   //about the distance
   var distance = 0
   val safeDistance = Env.getInt("safeDistance", 400)
+  //val safeDistance = Env.getInt("safeDistance", 700)
+  //val safeDistance = Env.getInt("safeDistance", 150)
   val servoAngleNA = -200
   val servoAngleInc = 70
   var servoAngle = servoAngleNA

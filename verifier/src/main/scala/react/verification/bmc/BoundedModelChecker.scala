@@ -74,8 +74,8 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
     And( mkEqs(0, init):_* )
   }
 
-  def getEvolutionEquations: Formula = {
-    val eqs = (0 until nbrSteps).flatMap( i => world.world.models.map(_.unrollEquations(i)) )
+  def getEvolutionEquations(times: Seq[Int]): Formula = {
+    val eqs = (0 until nbrSteps).flatMap( i => world.world.models.map(_.unrollEquations(i, times(i))) )
     And( eqs:_* )
   }
 
@@ -176,7 +176,7 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
   def getEquations: Formula = {
     val (times, traces) = getControllerTraces
     val states = getStateEquations(traces)
-    val evolution = getEvolutionEquations
+    val evolution = getEvolutionEquations(times)
     val obstacles = avoidObstacles(false)
     val goals = goalEquations
     FormulaUtils.simplifyBool(And(states, evolution, obstacles, goals))
@@ -205,7 +205,7 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
       val cstr = getEquations
       val vars = getVariablesToScale
       val startTime = java.lang.System.currentTimeMillis()
-      DRealQuery.getSolutions(cstr, 1e-3, 300 * 1000, vars) match {
+      DRealQuery.getSolutions(cstr, 1e-3, 1800 * 1000, vars) match {
         case Some(values) =>
           println("Solution:\n  " + values.mkString("\n  "))
         case None =>

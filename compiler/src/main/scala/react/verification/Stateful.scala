@@ -46,7 +46,7 @@ object Stateful {
   def lower(value: Double, min: Double, max: Double, step: Double): Double = {
     val floored = ((value / step) - 0.5) * step
     val res = math.max(min, floored + step * 1e-6)
-    assert(round(res, min, max, step) == value, "lower: " + value + " -> " + res + " -> " + round(res, min, max, step))
+    //assert(round(res, min, max, step) == value, "lower: " + value + " -> " + res + " -> " + round(res, min, max, step))
     res
   }
 
@@ -54,7 +54,7 @@ object Stateful {
   def upper(value: Double, min: Double, max: Double, step: Double): Double = {
     val ceiled = ((value / step) + 0.5) * step
     val res = math.min(max, ceiled - step * 1e-6)
-    assert(round(res, min, max, step) == value, "upper: " + value + " -> " + res + " -> " + round(res, min, max, step))
+    //assert(round(res, min, max, step) == value, "upper: " + value + " -> " + res + " -> " + round(res, min, max, step))
     res
   }
 

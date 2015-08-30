@@ -10,19 +10,21 @@ abstract class VerifTemplate extends World {
 
   val xMin = -1
   val xMax = 1
-  val xDiscretization = 0.015625 / 4 // 4
+  //val xDiscretization = 0.015625 // 4 //4
+  val xDiscretization = 2.0 / 100
 
   val yMin = -1
   val yMax = 1
-  val yDiscretization = 0.015625 / 4 // 4
+  //val yDiscretization = 0.015625 // 4 //4
+  val yDiscretization = 2.0 / 100
 
   val enclosed = true
   
-  val fpDiscretization = 0.015625
+  //val fpDiscretization = 0.015625
+  //val fpDiscretization = math.Pi / 36
+  val fpDiscretization = math.Pi / 72
+  //val fpDiscretization = math.Pi / 144
       
-  obstacle(new Box2D( 0.0,   0.0,    0.0 , 0.25,  0.05))
-  obstacle(new Box2D( 0.25,  0.0,   0.3 , 0.1,   0.05))
-  obstacle(new Box2D( 0.015, 0.0476, 2.83, 0.125, 0.05))
 
   /////////
   def noCollision = {
@@ -30,12 +32,21 @@ abstract class VerifTemplate extends World {
     bxs.forall( b =>
       models.forall( r => {
         val br = r.boundingBox
-        (b == br) || !(b collides br)
+        var res = (b == br) || !(b collides br)
+        //if (!res) println("collides: " + b + " and " + br)
+        res
       })
     )
   }
 
-  def safe = true // noCollision
+  // Edge
+  //def safe = true 
+  //obstacle(new Box2D( 0.0,   0.0,    0.0 , 0.25,  0.05))
+  //obstacle(new Box2D( 0.25,  0.0,   0.3 , 0.1,   0.05))
+  //obstacle(new Box2D( 0.015, 0.0476, 2.83, 0.125, 0.05))
+
+  // SwipeScan
+  def safe = noCollision
   
   val bodyLength = 0.12
   val bodyWidth = 0.09

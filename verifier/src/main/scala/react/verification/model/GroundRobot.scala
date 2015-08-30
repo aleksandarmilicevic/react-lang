@@ -178,20 +178,73 @@ class GroundRobot( bBox: Box2D,
   // for the BMC //
   /////////////////
 
+  protected val variables = Array(
+    Variable("body.dx").setType(Real),
+    Variable("body.dy").setType(Real),
+    Variable("body.dz").setType(Real),
+    Variable("body.q_a").setType(Real),
+    Variable("body.q_i").setType(Real),
+    Variable("body.q_j").setType(Real),
+    Variable("body.q_k").setType(Real),
+    Variable("body.vx").setType(Real),
+    Variable("body.vo").setType(Real)
+  )
+
   def frames: List[(generic.Frame,Box2D)] = {
-    sys.error("TODO")
+    val f = generic.Frame(variables(0), variables(1), variables(2), variables(3), variables(4), variables(5), variables(6))
+    List(f -> bBox) 
   }
 
   def variablesAt(index: Int): Map[Variable,Variable] = {
-    sys.error("TODO the equations correspondnig to moveFor")
+    variables.map( v => v -> Variable("step_" + index + "_" + v.name).setType(v.tpe) ).toMap
   }
 
   def stateEquations(index: Int): Formula = {
-    sys.error("TODO the equations correspondnig to moveFor")
+    if (index == 0) {
+      And(
+        Eq(variables(0), Literal(x)),
+        Eq(variables(1), Literal(y)),
+        Eq(variables(2), Literal(0.0)),
+        Eq(variables(3), Literal( math.cos(orientation / 2) )),
+        Eq(variables(4), Literal(0.0)),
+        Eq(variables(5), Literal(0.0)),
+        Eq(variables(6), Literal( math.sin(orientation / 2) )),
+        Eq(variables(7), Literal(vx)),
+        Eq(variables(8), Literal(vo))
+      )
+    } else {
+      And(
+        Eq(variables(7), Literal(vx)),
+        Eq(variables(8), Literal(vo))
+      )
+    }
   }
 
-  def unrollEquations(fromIndex: Int): Formula = {
-    sys.error("TODO the equations correspondnig to moveFor")
+  def unrollEquations(fromIndex: Int, dt: Int): Formula = {
+    val vf = variablesAt(fromIndex)
+    val toIndex = fromIndex + 1
+    val vt = variablesAt(toIndex)
+    val lt = Literal(dt / 1000.0)
+    Or(
+      And(
+        Eq(variables(8), Literal(0.0)),
+        Eq(vt(variables(0)), Plus(vf(variables(0)), Times(lt, vf(variables(7)), ???))), //TODO do not directly use orientation. but quat arithmetic
+        Eq(vt(variables(1)), Plus(vf(variables(1)), Times(lt, vf(variables(7)), ???))), //TODO do not directly use orientation
+        Eq(vt(variables(3)), Plus(vf(variables(3)))),
+        Eq(vt(variables(6)), Plus(vf(variables(6))))
+      ),
+      And(
+        Not(Eq(variables(8), Literal(0.0))),
+        ???
+      )
+    )
+  //val da = (vo * lt).abs
+  //val  r = (vx / vo).abs
+  //val dx = r * sin(da) * vx.signum
+  //val dy = r * (1 - cos(da)) * vx.signum * vo.signum
+  //x += dx * cos(orientation) - dy * sin(orientation)
+  //y += dx * sin(orientation) + dy * cos(orientation)
+  //orientation += da * vo.signum
   }
   
 }

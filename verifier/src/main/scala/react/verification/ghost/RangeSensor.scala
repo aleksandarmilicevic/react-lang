@@ -18,21 +18,26 @@ class RangeSensor(kind: Byte,
 
   val frameName = "GhostRangeSensor" //TODO user defined name
   val dummyHeader = Header(0, Time(0, 0), frameName)
-
-  def inFOV(p: (Double, Double)) = {
-    val x = p._1
-    val y = p._2
+  
+  def inFOV(x: Double, y: Double): Boolean = {
     val a = atan2(y, x) - pose.theta
     val f2 = fov / 2
     a >= -f2 && a <= -f2
   }
+
+  def inFOV(p: (Double, Double)): Boolean = inFOV(p._1, p._2)
 
   def act {
 
     //take into acount the FOV
     //TODO to make this correct we should "restrict" the obstacle to the FOV
     val inView = world.filter( b => {
-      b.corners.exists(inFOV) || inFOV(b.center)
+      //b.corners.exists(inFOV) || inFOV(b.center)
+      inFOV(b.cornersX(0), b.cornersY(0)) ||
+      inFOV(b.cornersX(1), b.cornersY(1)) ||
+      inFOV(b.cornersX(2), b.cornersY(2)) ||
+      inFOV(b.cornersX(3), b.cornersY(3)) ||
+      inFOV(b.center)
     })
 
     val dist = inView.foldLeft(maxRange: Double)( (acc, b) => min(acc, b.distance(pose.x, pose.y)) )
