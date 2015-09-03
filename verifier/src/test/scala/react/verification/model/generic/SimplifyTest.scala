@@ -33,6 +33,21 @@ class SimplifyTest extends FunSuite {
 //  //Console.println(robot2.modelDescription)
 //}
 
+//test("normalization 3") {
+//  val robot = GenericRobot("r1", Resources.playground, Resources.path + "folded_arm_2servos.txt")
+//  val simplifier = new Simplify(robot)
+//  //val robot2 = simplifier.normalize(Some(25)) //TODO put a smaller timout
+//  val robot2 = simplifier.normalize(Some(6))
+//  println("before")
+//  robot.aboutTheEqns
+//  println("after")
+//  robot2.aboutTheEqns
+//  IO.writeInFile( Resources.path + "folded_arm_2servos_simplified.txt", robot2.modelDescription)
+//  ()
+//  //Console.println(robot.modelDescription)
+//  //Console.println(robot2.modelDescription)
+//}
+
   test("stats") {
     val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_eqns_simple_normal.txt")
     robot.aboutTheEqns

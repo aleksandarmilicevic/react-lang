@@ -124,7 +124,7 @@ class GenericRobot( val id: String,
     partitionSolution(allValues)
   }
 
-  protected def getKnown = {
+  protected def getKnown: Map[Variable,Formula] = {
     val in = inputs.flatMap( i => store.get(i.v).map( v => i.v -> Literal(v.toDouble)) ).toMap
     in.mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
     //(poseValues ++ in).mapValues{ case Literal(d: Double) if d.abs < 1e-5 => Literal(0.0); case other => other }
@@ -155,7 +155,10 @@ class GenericRobot( val id: String,
     val cstr = replace(cstr0) //?? ArithmeticSimplification.polynomialNF ??
     DRealQuery.getSolutions(cstr, precision, 1000, dynamic) match {
       case Some(values) =>
-        val knownValues = known.map{ case (k, Literal(d: Double)) => k -> d }
+        val knownValues = known.map{
+          case (k, Literal(d: Double)) => k -> d
+          case (k, _) => sys.error("expected Literal")
+        }
         val solution = values ++ knownValues
         partitionSolution(solution)
       case None =>

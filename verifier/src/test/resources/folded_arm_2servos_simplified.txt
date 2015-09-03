@@ -1,0 +1,178 @@
+~~~ Parameters:
+length1
+length2
+length3
+s0.q_a
+s0.q_i
+s0.q_j
+s0.q_k
+s0.dx
+s0.dy
+s0.dz
+s2.q_a
+s2.q_i
+s2.q_j
+s2.q_k
+s2.dx
+s2.dy
+s2.dz
+e.q_a
+e.q_i
+e.q_j
+e.q_k
+e.dx
+e.dy
+e.dz
+alpha
+beta
+a
+b
+s1.dx
+s1.dy
+s1.dz
+s1.q_a
+s1.q_i
+s1.q_j
+s1.q_k
+
+~~~ Equations:
+( frame e.dx e.dy e.dz e.q_a e.q_i e.q_j e.q_k )
+( bbox -5 -5 10 10 0 )
+( input alpha )
+( input beta )
+( dynamic a )
+( dynamic b )
+( dynamic s0.q_a )
+( dynamic s0.q_i )
+( dynamic s0.q_j )
+( dynamic s0.q_k )
+( dynamic s0.dx )
+( dynamic s0.dy )
+( dynamic s0.dz )
+( dynamic s2.q_a )
+( dynamic s2.q_i )
+( dynamic s2.q_j )
+( dynamic s2.q_k )
+( dynamic s2.dx )
+( dynamic s2.dy )
+( dynamic s2.dz )
+( dynamic e.q_a )
+( dynamic e.q_i )
+( dynamic e.q_j )
+( dynamic e.q_k )
+( dynamic e.dx )
+( dynamic e.dy )
+( dynamic e.dz )
+( dynamic s1.dx )
+( dynamic s1.dy )
+( dynamic s1.dz )
+( dynamic s1.q_a )
+( dynamic s1.q_i )
+( dynamic s1.q_j )
+( dynamic s1.q_k )
+( >= length1 55 )
+( <= length1 500 )
+( >= length2 55 )
+( <= length2 500 )
+( >= length3 55 )
+( <= length3 500 )
+( <= (+ length1 length2 length3) 500 )
+( >= alpha -100 )
+( <= alpha  100 )
+( >= beta  -100 )
+( <= beta   100 )
+( >= a -3.15 )
+( <= a  3.15 )
+( >= b -3.15 )
+( <= b  3.15 )
+( = a (* (/ 3.14159 180) alpha ) )
+( = b (* (/ 3.14159 180) beta ) )
+
+( = ( + ( ^ s0.q_k 2 ) ( ^ s0.q_j 2 ) ( ^ s0.q_i 2 ) ( ^ s0.q_a 2 ) ) 1 )
+( >= s0.q_a -1 )
+( <= s0.q_a 1 )
+( >= s0.q_i -1 )
+( <= s0.q_i 1 )
+( >= s0.q_j -1 )
+( <= s0.q_j 1 )
+( >= s0.q_k -1 )
+( <= s0.q_k 1 )
+( >= s0.dx -1000 )
+( <= s0.dx 1000 )
+( >= s0.dy -1000 )
+( <= s0.dy 1000 )
+( >= s0.dz -1000 )
+( <= s0.dz 1000 )
+( = ( + ( ^ s1.q_k 2 ) ( ^ s1.q_j 2 ) ( ^ s1.q_i 2 ) ( ^ s1.q_a 2 ) ) 1 )
+( >= s1.q_a -1 )
+( <= s1.q_a 1 )
+( >= s1.q_i -1 )
+( <= s1.q_i 1 )
+( >= s1.q_j -1 )
+( <= s1.q_j 1 )
+( >= s1.q_k -1 )
+( <= s1.q_k 1 )
+( >= s1.dx -1000 )
+( <= s1.dx 1000 )
+( >= s1.dy -1000 )
+( <= s1.dy 1000 )
+( >= s1.dz -1000 )
+( <= s1.dz 1000 )
+( = ( + ( ^ s2.q_k 2 ) ( ^ s2.q_j 2 ) ( ^ s2.q_i 2 ) ( ^ s2.q_a 2 ) ) 1 )
+( >= s2.q_a -1 )
+( <= s2.q_a 1 )
+( >= s2.q_i -1 )
+( <= s2.q_i 1 )
+( >= s2.q_j -1 )
+( <= s2.q_j 1 )
+( >= s2.q_k -1 )
+( <= s2.q_k 1 )
+( >= s2.dx -1000 )
+( <= s2.dx 1000 )
+( >= s2.dy -1000 )
+( <= s2.dy 1000 )
+( >= s2.dz -1000 )
+( <= s2.dz 1000 )
+( = ( + ( ^ e.q_k 2 ) ( ^ e.q_j 2 ) ( ^ e.q_i 2 ) ( ^ e.q_a 2 ) ) 1 )
+( >= e.q_a -1 )
+( <= e.q_a 1 )
+( >= e.q_i -1 )
+( <= e.q_i 1 )
+( >= e.q_j -1 )
+( <= e.q_j 1 )
+( >= e.q_k -1 )
+( <= e.q_k 1 )
+( >= e.dx -1000 )
+( <= e.dx 1000 )
+( >= e.dy -1000 )
+( <= e.dy 1000 )
+( >= e.dz -1000 )
+( <= e.dz 1000 )
+( = 0 s0.dx )
+( = 0 s0.dy )
+( = 0 s0.dz )
+( = 1 s0.q_a )
+( = 0 s0.q_i )
+( = 0 s0.q_j )
+( = 0 s0.q_k )
+( = length1 s1.dx )
+( = 0 s1.dy )
+( = 0 s1.dz )
+( = 0 s1.q_i )
+( = 0 s1.q_j )
+( = ( cos ( / a 2 ) ) s1.q_a )
+( = ( sin ( / a 2 ) ) s1.q_k )
+( = ( + s1.dx ( - ( * length2 ( ^ s1.q_k 2 ) ) ) ( * length2 ( ^ s1.q_a 2 ) ) ) s2.dx )
+( = ( * 2 length2 s1.q_a s1.q_k ) s2.dy )
+( = ( + ( * ( cos ( / b 2 ) ) s1.q_a ) ( - ( * ( sin ( / b 2 ) ) s1.q_k ) ) ) s2.q_a )
+( = 0 s2.dz )
+( = 0 s2.q_i )
+( = 0 s2.q_j )
+( = ( + ( * ( cos ( / b 2 ) ) s1.q_k ) ( * ( sin ( / b 2 ) ) s1.q_a ) ) s2.q_k )
+( = ( + s2.dx ( - ( * length3 ( ^ s2.q_k 2 ) ) ) ( * length3 ( ^ s2.q_a 2 ) ) ) e.dx )
+( = ( + s2.dy ( * 2 length3 s2.q_a s2.q_k ) ) e.dy )
+( = 0 e.dz )
+( = s2.q_a e.q_a )
+( = 0 e.q_i )
+( = 0 e.q_j )
+( = s2.q_k e.q_k )

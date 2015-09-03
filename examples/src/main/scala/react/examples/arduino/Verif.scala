@@ -11,12 +11,14 @@ abstract class VerifTemplate extends World {
   val xMin = -1
   val xMax = 1
   //val xDiscretization = 0.015625 // 4 //4
-  val xDiscretization = 2.0 / 100
+  //val xDiscretization = 2.0 / 100
+  val xDiscretization = 1.0 / 100
 
   val yMin = -1
   val yMax = 1
   //val yDiscretization = 0.015625 // 4 //4
-  val yDiscretization = 2.0 / 100
+  //val yDiscretization = 2.0 / 100
+  val yDiscretization = 1.0 / 100
 
   val enclosed = true
   

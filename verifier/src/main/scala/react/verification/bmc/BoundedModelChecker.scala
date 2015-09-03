@@ -207,7 +207,8 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
       val startTime = java.lang.System.currentTimeMillis()
       DRealQuery.getSolutions(cstr, 1e-3, 1800 * 1000, vars) match {
         case Some(values) =>
-          println("Solution:\n  " + values.mkString("\n  "))
+          val sorted = values.map(_.toString).toSeq.sorted
+          println("Solution:\n  " + sorted.mkString("\n  "))
         case None =>
           Logger("BoundedModelChecker", Error, "no solutions!!")
       }

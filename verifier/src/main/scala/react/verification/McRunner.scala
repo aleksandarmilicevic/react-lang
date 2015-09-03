@@ -47,7 +47,7 @@ class McRunner(opts: McOptions, newWorld: () => World) {
     shutdown
   }
 
-  def bmc(steps: Int) {
+  def bmc {
     import react.verification.bmc._
     val pr = mkProxy
     prs = Array(pr)

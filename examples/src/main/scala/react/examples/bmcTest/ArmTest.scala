@@ -55,11 +55,10 @@ abstract class ArmWorld(steps: Int) extends World {
   val fpDiscretization = 0.015625
       
   //obstacle(new Box2D( 0.25, -0.1, 0, 0.2,  0.2))
+  obstacle(new Box2D( 0.27, -0.1, 0, 0.2,  0.2))
 
-  obstacle(new Box2D( 0.32, -0.1, 0, 0.2,  0.2)) //TODO circle outside the ...
-
-  goal( 1, new Box2D( 0.20, -0.3, 0, 0.2, 0.2))
-  goal( steps, new Box2D( 0.20,  0.1, 0, 0.2, 0.2))
+  goal( 1,     new Box2D( 0.20, -0.4, 0, 0.2, 0.2))
+  goal( steps, new Box2D( 0.20,  0.2, 0, 0.2, 0.2))
 
   def safe = true
   
@@ -102,7 +101,7 @@ object Run {
       case _ => (() => sys.error("unknown"))
     }
     val runner = new react.verification.McRunner(args, world)
-    runner.bmc(5)
+    runner.bmc
   }
 
 }

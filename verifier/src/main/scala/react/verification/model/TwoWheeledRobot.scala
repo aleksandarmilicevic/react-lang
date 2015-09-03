@@ -14,8 +14,7 @@ import react.utils._
 /** A robot with two wheels where the axis of rotation is Y and the frame origin is exactly in the middle of the two wheels.
  *  This is a model for a robot of type (2,0) in the nomenclature of [Campion, Bastin, D'Andrea-Novel, 96].
  */
-class TwoWheeledRobot(
-                       bBox: Box2D,
+class TwoWheeledRobot( bBox: Box2D,
                        val port: String,
                        val leftWheelPin: String,
                        val rightWheelPin: String,

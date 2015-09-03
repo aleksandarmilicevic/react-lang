@@ -33,6 +33,7 @@ current part
 -trace and error:
   -free memory before processing the trace file
   -process the trace file in a streaming fashion
+  -counterexample reconstruction is very slow
 
 model complex model (extracted from robot description)
 -------------------
