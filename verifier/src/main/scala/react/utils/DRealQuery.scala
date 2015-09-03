@@ -9,6 +9,7 @@ object DRealQuery {
   def getSolutions(f: Formula, precision: Double, timeout: Long, canScale: Iterable[Variable]): Option[Map[Variable,Double]] = {
     val fname = if (Logger("DRealQuery", Debug)) Some(Namer("query") + ".smt2") else None
     val arg = Array[String]("--in", "--model", "--worklist-fp", "--ncbt")
+    //val solver = new DRealHack(QF_NRA, "/home/zufferey/work/projects/dreal3_dz/bin/dReal", arg, Some(precision), true, false, fname, 1)
     val solver = new DRealHack(QF_NRA, "dReal", arg, Some(precision), true, false, fname, 1)
     
     val (_normalized, factors) = normalizeRanges(f, canScale)
