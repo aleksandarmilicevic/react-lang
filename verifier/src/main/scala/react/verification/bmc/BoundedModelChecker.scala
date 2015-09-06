@@ -181,21 +181,32 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
     val goals = goalEquations
     FormulaUtils.simplifyBool(And(states, evolution, obstacles, goals))
   }
-
-  def getVariablesToScale = {
-    def isQuat(v: Variable) = {
-      !v.name.endsWith("q_a") &&
-      !v.name.endsWith("q_i") &&
-      !v.name.endsWith("q_j") &&
-      !v.name.endsWith("q_k")
-    }
-    for(m <- world.world.models;
-        i <- 0 until nbrSteps;
-        (_,v) <- m.variablesAt(i) if !isQuat(v))
-    yield v
+  
+  //inputs and parameters should not be scaled, all the rest is scaled
+  def getVariablesToUnScale(f: Formula) = {
+    val toKeep = world.world.models.flatMap( m => {
+      val init = m.parameters.toSet
+      val inputs = m.controlInputs
+      (1 until nbrSteps).foldLeft(init)( (acc, i) => {
+        val mAt = m.variablesAt(i)
+        acc ++ inputs.map(_.alpha(mAt))
+      })
+    })
+    toKeep.toSet
   }
 
+  def getVariablesToScale(f: Formula) = {
+    f.freeVariables -- getVariablesToUnScale(f)
+  }
+  
   //TODO drawing a picture
+
+  //val unscaleFactor = 1.0
+  //val unscaleFactor = 0.001
+  val unscaleFactor = 0.000001
+  val scaleRange = 2
+  //val scaleRange = 200
+  //val scaleRange = 0.001
 
   def run {
     try {
@@ -203,10 +214,14 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
       Logger("BoundedModelChecker", Notice, world.stateSpaceDescription)
       Logger("BoundedModelChecker", Notice, world.schedulerToString)
       val cstr = getEquations
-      val vars = getVariablesToScale
+      val varsU = getVariablesToUnScale(cstr)
+      val varsS = getVariablesToScale(cstr)
+      val factors = DRealQuery.getRangeFactor(cstr, varsS, scaleRange) ++ varsU.map( _ -> unscaleFactor ).toMap
+      val cstrScaled = DRealQuery.multiplyRange(cstr, factors)
       val startTime = java.lang.System.currentTimeMillis()
-      DRealQuery.getSolutions(cstr, 1e-3, 1800 * 1000, vars) match {
-        case Some(values) =>
+      DRealQuery.getSolutions(cstrScaled, 1e-3, 1800 * 1000) match {
+        case Some(scaledValues) =>
+          val values = DRealQuery.unscaleRange(scaledValues, factors)
           val sorted = values.map(_.toString).toSeq.sorted
           println("Solution:\n  " + sorted.mkString("\n  "))
         case None =>

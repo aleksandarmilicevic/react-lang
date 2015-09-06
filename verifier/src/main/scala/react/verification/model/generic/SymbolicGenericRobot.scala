@@ -81,7 +81,7 @@ class SymbolicGenericRobot( _id: String,
     val vf = variablesAt(fromIndex)
     val toIndex = fromIndex + 1
     val vt = variablesAt(toIndex)
-    val maxChange = 45
+    val maxChange = 22.5
     val f2 = And(inputs.map( i => {
       val i1 = vf(i.v)
       val i2 = vt(i.v)
@@ -90,7 +90,8 @@ class SymbolicGenericRobot( _id: String,
         Geq(Minus(i1, i2), Literal(-maxChange))
       )
     }):_*)
-    And(f1, f2)
+    //And(f1, f2)
+    And(f1)
   }
 
 }

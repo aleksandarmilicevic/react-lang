@@ -13,8 +13,8 @@ class SymArm(port: String) extends Robot(port) {
   var counter = 0
 
   every(1) {
-    publish("alpha", Primitive.String("alpha_value_" + counter))
-    publish("beta",  Primitive.String("beta_value_" + counter))
+    publish("alpha", Primitive.String("value_alpha_" + counter))
+    publish("beta",  Primitive.String("value_beta_" + counter))
     counter += 1
   }
 
@@ -32,18 +32,23 @@ abstract class SymArmWorld(steps: Int) extends World {
   val enclosed = false
   val fpDiscretization = 0.015625
 
-  val x = 0.25
-  val y0 = -0.1
-  val y1 =  0.1
+  val x = 0.41
+  val y0 = -0.16
+  val y1 =  0.16
+  //val x = 0.20
+  //val y0 = -0.1
+  //val y1 =  0.1
+  val targetSize = 0.01
+  val safeWidth = 0.05
+  val targetOffset = (safeWidth - targetSize) / 2
 
-  val safeZone = new Box2D( x, y0, 0, 0.05, y1 - y0)
+  val safeZone = new Box2D( x, y0, 0, safeWidth, y1 - y0)
 
-  //stays within the safe zone
-  for (i <- 1 to steps) goal( i, safeZone)
-  //start
-  goal( 1, new Box2D( x+0.02, y0, 0, 0.01, 0.01))
-  //end
-  goal( steps, new Box2D( x+0.02, y1-0.01, 0, 0.01, 0.01))
+//for (i <- 1 to steps) goal( i, safeZone)                  //stays within the safe zone
+//goal( 1,     new Box2D( x+targetOffset, y0, 0, targetSize, targetSize))       //start
+//goal( steps, new Box2D( x+targetOffset, y1-targetSize, 0, targetSize, targetSize))  //end
+
+  for (i <- 1 to steps) goal( i, new Box2D( x+targetOffset, y0 + (y1-y0) / (steps-1) * (i-1), 0, targetSize, targetSize) ) 
 
   def safe = true
 
@@ -70,12 +75,19 @@ class SymTest2(steps: Int) extends SymArmWorld(steps) {
   robot(new SymArm(i), mkArm)
 }
 
+class SymTest3(steps: Int) extends SymArmWorld(steps) {
+  //val file = "folded_arm_2servos.txt"
+  val file = "folded_arm_2servos_simplified_1.txt"
+  robot(new SymArm(i), mkArm)
+}
+
 object SymRun {
 
   def apply(test: String, args: McOptions) {
     val world = test match {
       case "1" => (() => new SymTest1(args.timeBound))
       case "2" => (() => new SymTest2(args.timeBound))
+      case "3" => (() => new SymTest3(args.timeBound))
       case _ => (() => sys.error("unknown"))
     }
     val runner = new react.verification.McRunner(args, world)

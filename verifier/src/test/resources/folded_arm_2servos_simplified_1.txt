@@ -1,7 +1,5 @@
 ~~~ Parameters:
-length1
-length2
-length3
+length
 s0.q_a
 s0.q_i
 s0.q_j
@@ -70,13 +68,8 @@ s1.q_k
 ( dynamic s1.q_i )
 ( dynamic s1.q_j )
 ( dynamic s1.q_k )
-( >= length1 55 )
-( <= length1 390 )
-( >= length2 55 )
-( <= length2 390 )
-( >= length3 55 )
-( <= length3 390 )
-( <= (+ length1 length2 length3) 500 )
+( >= length 55 )
+( <= length 160 )
 ( >= alpha -60 )
 ( <= alpha  60 )
 ( >= beta  -60 )
@@ -87,7 +80,6 @@ s1.q_k
 ( <= b  1.6 )
 ( = a (* (/ 3.14159 180) alpha ) )
 ( = b (* (/ 3.14159 180) beta ) )
-
 ( >= s0.q_a -1 )
 ( <= s0.q_a 1 )
 ( >= s0.q_i -1 )
@@ -161,17 +153,17 @@ s1.q_k
 ( = 0 e.dz )
 ( = 0 e.q_i )
 ( = 0 e.q_j )
-( = length1 s1.dx )
+( = length s1.dx )
 ( = ( + ( ^ s1.q_k 2 ) ( ^ s1.q_a 2 ) ) 1 )
 ( = ( + ( ^ s2.q_k 2 ) ( ^ s2.q_a 2 ) ) 1 )
 ( = ( + ( ^ e.q_k 2 ) ( ^ e.q_a 2 ) ) 1 )
 ( = ( cos ( / a 2 ) ) s1.q_a )
 ( = ( sin ( / a 2 ) ) s1.q_k )
-( = ( + s1.dx ( - ( * length2 ( ^ s1.q_k 2 ) ) ) ( * length2 ( ^ s1.q_a 2 ) ) ) s2.dx )
-( = ( * 2 length2 s1.q_a s1.q_k ) s2.dy )
+( = ( + s1.dx ( - ( * length ( ^ s1.q_k 2 ) ) ) ( * length ( ^ s1.q_a 2 ) ) ) s2.dx )
+( = ( * 2 length s1.q_a s1.q_k ) s2.dy )
 ( = ( + ( * ( cos ( / b 2 ) ) s1.q_a ) ( - ( * ( sin ( / b 2 ) ) s1.q_k ) ) ) s2.q_a )
 ( = ( + ( * ( cos ( / b 2 ) ) s1.q_k ) ( * ( sin ( / b 2 ) ) s1.q_a ) ) s2.q_k )
-( = ( + s2.dx ( - ( * length3 ( ^ s2.q_k 2 ) ) ) ( * length3 ( ^ s2.q_a 2 ) ) ) e.dx )
-( = ( + s2.dy ( * 2 length3 s2.q_a s2.q_k ) ) e.dy )
+( = ( + s2.dx ( - ( * length ( ^ s2.q_k 2 ) ) ) ( * length ( ^ s2.q_a 2 ) ) ) e.dx )
+( = ( + s2.dy ( * 2 length s2.q_a s2.q_k ) ) e.dy )
 ( = s2.q_a e.q_a )
 ( = s2.q_k e.q_k )

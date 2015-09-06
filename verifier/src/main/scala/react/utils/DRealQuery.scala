@@ -5,19 +5,22 @@ import dzufferey.utils._
 import dzufferey.utils.LogLevel._
 
 object DRealQuery {
+  
+  def getSolutions(f: Formula, precision: Double, timeout: Long): Option[Map[Variable,Double]] = {
 
-  def getSolutions(f: Formula, precision: Double, timeout: Long, canScale: Iterable[Variable]): Option[Map[Variable,Double]] = {
+    val cmd = "dReal"
+    //val cmd = "/home/zufferey/work/projects/dreal3_dz/bin/dReal"
+
+    val arg = Array[String]("--in", "--model")
+    //val arg = Array[String]("--in", "--model", "--worklist-fp", "--ncbt")
+
     val fname = if (Logger("DRealQuery", Debug)) Some(Namer("query") + ".smt2") else None
-    val arg = Array[String]("--in", "--model", "--worklist-fp", "--ncbt")
-    //val solver = new DRealHack(QF_NRA, "/home/zufferey/work/projects/dreal3_dz/bin/dReal", arg, Some(precision), true, false, fname, 1)
-    val solver = new DRealHack(QF_NRA, "dReal", arg, Some(precision), true, false, fname, 1)
+    val solver = new DRealHack(QF_NRA, cmd, arg, Some(precision), true, false, fname, 1)
+    //val solver = new DRealHack(QF_NRA, "dReal", arg, Some(precision), true, false, fname, 1)
     
-    val (_normalized, factors) = normalizeRanges(f, canScale)
-    val normalized = FormulaUtils.getConjuncts(_normalized)
-
-    normalized.foreach( c => fixTypes(c) )
-    normalized.foreach( c => solver.assert(c) )
-    //println(normalized.mkString("\n"))
+    val conj = FormulaUtils.getConjuncts(f)
+    conj.foreach( c => fixTypes(c) )
+    conj.foreach( c => solver.assert(c) )
 
     solver.checkSat(timeout) match {
       case Sat(Some(model)) =>
@@ -35,13 +38,17 @@ object DRealQuery {
             v -> 0.0
           }
         ).toMap
-        val values = scaledValues.map{ case (v,d) => v -> (d * factors.getOrElse(v, 1.0)) }
-        Some(values)
+        Some(scaledValues)
       case Sat(None) => sys.error("could not get model!")
       case UnSat => None
       case Unknown => sys.error("unknown !?!")
       case Failure(f) => sys.error("dReal failed: " + f)
     }
+  }
+
+  def getSolutions(f: Formula, precision: Double, timeout: Long, canScale: Iterable[Variable]): Option[Map[Variable,Double]] = {
+    val (normalized, factors) = normalizeRanges(f, canScale)
+    getSolutions(normalized, precision, timeout).map( unscaleRange(_, factors) )
   }
 
   def fixTypes(f: Formula) {
@@ -54,21 +61,32 @@ object DRealQuery {
     t.traverse(f)
   }
 
-  def normalizeRanges(f: Formula, vs: Iterable[Variable], range: Double = 2.0): (Formula, Map[Variable,Double]) = {
+  def unscaleRange(model: Map[Variable, Double], factors: Map[Variable, Double]) = {
+    model.map{ case (v,d) => v -> (d * factors.getOrElse(v, 1.0)) }
+  }
+
+  def multiplyRange(f: Formula, factors: Map[Variable, Double]) = {
+    FormulaUtils.map({
+      case v @ Variable(_) if factors.getOrElse(v, 1.0) != 1.0 => Times(Literal(factors(v)), v)
+      case other => other
+    }, f)
+  }
+
+  def getRangeFactor(f: Formula, vs: Iterable[Variable], range: Double = 2.0): Map[Variable,Double] = {
     val bounds = parseBounds(f, vs)
-    val factor = bounds.flatMap{ case (v,(lb,ub)) => 
+    bounds.flatMap{ case (v,(lb,ub)) => 
       if (lb != Double.NegativeInfinity && ub != Double.PositiveInfinity) {
         Some( v -> ( (ub - lb) / range ) )
       } else {
         None
       }
     }
-    val replaced = FormulaUtils.map({
-      case v @ Variable(_) if factor contains v => Times(Literal(factor(v)), v)
-      case other => other
-    }, f)
-    //TODO this messes the bounds 
-    (replaced, factor)
+  }
+
+  def normalizeRanges(f: Formula, vs: Iterable[Variable], range: Double = 2.0): (Formula, Map[Variable,Double]) = {
+    val factors = getRangeFactor(f, vs, range)
+    val replaced = multiplyRange(f, factors)
+    (replaced, factors)
   }
   
   def parseBounds(f: Formula, vs: Iterable[Variable]): Map[Variable, (Double,Double)] = {

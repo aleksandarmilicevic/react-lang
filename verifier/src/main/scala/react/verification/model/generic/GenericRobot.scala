@@ -432,6 +432,12 @@ class GenericRobot( val id: String,
     super.deregister(exec)
     //TODO deregister the inputs
   }
+  
+  override def controlInputs: Iterable[Variable] = inputs.map(_.v)
+  
+  override def parameters: Iterable[Variable] = {
+    constraints.freeVariables -- inputs.map(_.v) -- dynamic
+  }
 
   override def frames: List[(Frame,Box2D)] = List(frame -> bBox)
 

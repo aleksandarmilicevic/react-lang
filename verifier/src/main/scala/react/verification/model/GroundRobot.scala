@@ -190,6 +190,13 @@ class GroundRobot( bBox: Box2D,
     Variable("body.vo").setType(Real)
   )
 
+  def controlInputs: Iterable[Variable] = List(
+    Variable("body.vx").setType(Real),
+    Variable("body.vo").setType(Real)
+  )
+  
+  def parameters: Iterable[Variable] = Nil
+
   def frames: List[(generic.Frame,Box2D)] = {
     val f = generic.Frame(variables(0), variables(1), variables(2), variables(3), variables(4), variables(5), variables(6))
     List(f -> bBox) 
