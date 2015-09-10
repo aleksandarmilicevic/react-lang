@@ -82,7 +82,8 @@ class ArduinoExecutor(val robot: Robot, binary: Boolean = false, poll: Option[In
       case other => sys.error (other + " is not yet supported in the arduino communication")
     }
     //val msg = "DATA$"+topic+"$"+value+"\u0000"
-    val msg = "DATA$"+value+"$$"+topic+"\u0000"
+    //val msg = "DATA$"+value+"$$"+topic+"\u0000"
+    val msg = "DATA$"+value+"$"+topic+"$-1\u0000"
     //val msg = "DATA$"+value+"$0$"+topic+"\u0000"
     val bytes = msg.getBytes("ASCII")
     println("publishing: " + msg)

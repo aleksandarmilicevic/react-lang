@@ -1,7 +1,8 @@
 package react.examples.bmcTest
 
 import react.Robot
-import react.message._
+import react.robot._
+import react.message.Primitive.{Int16,String => MString}
 import react.verification._
 import react.verification.model._
 import react.verification.model.generic._
@@ -13,11 +14,57 @@ class SymArm(port: String) extends Robot(port) {
   var counter = 0
 
   every(1) {
-    publish("alpha", Primitive.String("value_alpha_" + counter))
-    publish("beta",  Primitive.String("value_beta_" + counter))
+    publish("alpha", MString("value_alpha_" + counter))
+    publish("beta",  MString("value_beta_" + counter))
     counter += 1
   }
 
+}
+
+class SymArmSolved(port: String) extends Robot(port) {
+
+  val alpha = "10"
+  val beta = "1"
+  val gripper = "19"
+
+  var counter = 0
+  val period = 3000
+  val sleep = 500
+
+  every(period) {
+    counter match {
+      case 0 =>
+        counter += 1
+        publish(alpha, Int16(-21))
+        Thread.sleep(sleep)
+        publish(beta,  Int16(-18))
+      case 1 =>
+        counter += 1
+        publish(alpha, Int16(-30))
+        Thread.sleep(sleep)
+        publish(beta,  Int16( 60))
+      case 2 =>
+        counter += 1
+        publish(alpha, Int16( 39))
+        Thread.sleep(sleep)
+        publish(beta,  Int16(-17))
+      case _ =>
+        counter = 0
+    }
+  }
+
+//on {
+//  case Key.UP =>
+//    publish(alpha,  Int16( 60))
+//    //publish(gripper, Int16(-80))
+//  case Key.DOWN =>
+//    publish(alpha,  Int16(-60))
+//    //publish(gripper, Int16( 80))
+//  case Key.LEFT =>
+//    publish(beta,  Int16( 60))
+//  case Key.RIGHT =>
+//    publish(beta,  Int16(-60))
+//}
 }
 
 abstract class SymArmWorld(steps: Int) extends World {
@@ -88,7 +135,7 @@ object SymRun {
       case "1" => (() => new SymTest1(args.timeBound))
       case "2" => (() => new SymTest2(args.timeBound))
       case "3" => (() => new SymTest3(args.timeBound))
-      case _ => (() => sys.error("unknown"))
+      case _ =>   (() => sys.error("unknown"))
     }
     val runner = new react.verification.McRunner(args, world)
     runner.bmc

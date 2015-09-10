@@ -88,3 +88,36 @@ class ServoPublisher( board: Board, node: MessageFactory, topic: String) extends
 
 }
 
+class SmoothServoPublisher( board: Board, node: MessageFactory, topic: String) extends PwmPublisher(board, node, topic) {
+
+  protected val servo = new Servo(pwm)
+
+  override def publish(message: std_msgs.Float64) {
+    val d = message.getData
+    servo.moveSmoothAsyncTo(d)
+  }
+
+}
+
+class LinearServoPublisher( board: Board, node: MessageFactory, topic: String, duration: Int) extends PwmPublisher(board, node, topic) {
+
+  protected val servo = new Servo(pwm)
+
+  override def publish(message: std_msgs.Float64) {
+    val d = message.getData
+    servo.moveAsyncTo(d, duration)
+  }
+
+}
+
+class TimedSmoothServoPublisher( board: Board, node: MessageFactory, topic: String, duration: Int) extends PwmPublisher(board, node, topic) {
+
+  protected val servo = new Servo(pwm)
+
+  override def publish(message: std_msgs.Float64) {
+    val d = message.getData
+    servo.moveSmoothAsyncTo(d, duration)
+  }
+
+}
+

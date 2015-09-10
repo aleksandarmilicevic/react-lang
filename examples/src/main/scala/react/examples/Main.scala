@@ -130,6 +130,9 @@ object Main extends Options with react.verification.McOptions {
       case "arduinoS" =>
         arduino.Run(new arduino.SwipeScan(topic), topic, Some(1000))
         //arduino.Run(new arduino.FollowTheEdge(topic, true), topic)
+      case "arduinoS2" =>
+        arduino.Run(new arduino.SwipeScan2(topic), topic, Some(1050))
+        //arduino.Run(new arduino.SwipeScan2(topic), topic, None)
       case "arduinoF" =>
         arduino.Run(new arduino.FollowTheEdge(topic, true), topic)
       case "arduinoV" =>
@@ -142,6 +145,10 @@ object Main extends Options with react.verification.McOptions {
         bmcTest.Run(topic, this)
       case "symbmc" =>
         bmcTest.SymRun(topic, this)
+      case "armSolved" =>
+        arduino.Run(new bmcTest.SymArmSolved(topic), topic, None)
+      case "bbb" =>
+        bbb.Run(new bbb.Arm(topic), new bbb.ArmConfig)
       case other =>
         throw new RuntimeException("Unknown robot: " + other)
     }
