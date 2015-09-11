@@ -10,7 +10,7 @@ import io.silverspoon.bulldog.core.platform.{Platform,Board}
 import io.silverspoon.bulldog.core.gpio.{DigitalOutput,Pwm}
 import io.silverspoon.bulldog.core.Signal
 import io.silverspoon.bulldog.core.util.BulldogUtil
-import io.silverspoon.bulldog.devices.servo.Servo
+import io.silverspoon.bulldog.devices.servo.{Servo,TowerProMicroSG90}
 
 
 abstract class Publisher[T]( topic: String, tpe: String) extends org.ros.node.topic.Publisher[T] {
@@ -64,7 +64,7 @@ class PwmPublisher( board: Board, node: MessageFactory, topic: String) extends P
   //TODO check that the topic/pin is indeed an PWM pin
 
   protected val pwm = board.getPin(topic).as(classOf[Pwm])
-  pwm.enable
+  //pwm.enable XXX this gives an error
 
   def newMessage: std_msgs.Float64 = node.newFromType[std_msgs.Float64](std_msgs.Float64._TYPE)
 
@@ -79,7 +79,8 @@ class PwmPublisher( board: Board, node: MessageFactory, topic: String) extends P
 
 class ServoPublisher( board: Board, node: MessageFactory, topic: String) extends PwmPublisher(board, node, topic) {
 
-  protected val servo = new Servo(pwm)
+  //protected val servo = new Servo(pwm)
+  protected val servo = new TowerProMicroSG90(pwm)
 
   override def publish(message: std_msgs.Float64) {
     val d = message.getData
@@ -88,9 +89,7 @@ class ServoPublisher( board: Board, node: MessageFactory, topic: String) extends
 
 }
 
-class SmoothServoPublisher( board: Board, node: MessageFactory, topic: String) extends PwmPublisher(board, node, topic) {
-
-  protected val servo = new Servo(pwm)
+class SmoothServoPublisher( board: Board, node: MessageFactory, topic: String) extends ServoPublisher(board, node, topic) {
 
   override def publish(message: std_msgs.Float64) {
     val d = message.getData
@@ -99,9 +98,7 @@ class SmoothServoPublisher( board: Board, node: MessageFactory, topic: String) e
 
 }
 
-class LinearServoPublisher( board: Board, node: MessageFactory, topic: String, duration: Int) extends PwmPublisher(board, node, topic) {
-
-  protected val servo = new Servo(pwm)
+class LinearServoPublisher( board: Board, node: MessageFactory, topic: String, duration: Int) extends ServoPublisher(board, node, topic) {
 
   override def publish(message: std_msgs.Float64) {
     val d = message.getData
@@ -110,9 +107,7 @@ class LinearServoPublisher( board: Board, node: MessageFactory, topic: String, d
 
 }
 
-class TimedSmoothServoPublisher( board: Board, node: MessageFactory, topic: String, duration: Int) extends PwmPublisher(board, node, topic) {
-
-  protected val servo = new Servo(pwm)
+class TimedSmoothServoPublisher( board: Board, node: MessageFactory, topic: String, duration: Int) extends ServoPublisher(board, node, topic) {
 
   override def publish(message: std_msgs.Float64) {
     val d = message.getData

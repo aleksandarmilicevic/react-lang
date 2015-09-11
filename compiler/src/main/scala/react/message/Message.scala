@@ -396,6 +396,8 @@ object Message {
     case m: Primitive.Int16     => to(node, m)
     case m: Primitive.Int32     => to(node, m)
     case m: Primitive.Int64     => to(node, m)
+    case m: Primitive.Float32   => to(node, m)
+    case m: Primitive.Float64   => to(node, m)
     case m: Primitive.String    => to(node, m)
     case m: Primitive.Duration  => to(node, m)
     case m: Primitive.Time      => to(node, m)
