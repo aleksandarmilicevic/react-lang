@@ -38,7 +38,7 @@ class ProductBranchingPoint(points: List[BranchingPoint], post: () => Unit) exte
 
   val possibilities = points.map(_.alternatives)
 
-  def alternatives = possibilities.foldLeft(1)(_ * _)
+  def alternatives = possibilities.product
 
   def act(alt: Int) = {
     var labels = List[String]()

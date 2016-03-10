@@ -63,7 +63,7 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
     def mkEqs(idx: Int, traces: Seq[Trace]): List[Formula] = {
       if (traces.head.length > 0) {
         val (heads, tails) = traces.map(_.step).unzip
-        Or( heads.map(_._1).map(oneState(idx, _)):_* ) :: mkEqs(idx + 1, tails)
+        Or( heads.map( x => oneState(idx, x._1)):_* ) :: mkEqs(idx + 1, tails)
       } else {
         val heads = traces.map(_.start)
         Or( heads.map(oneState(idx, _)):_* ) :: Nil
@@ -105,8 +105,8 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
   }
 
   def disjointBoxes(frame: Frame, _bBox: Box2D, _obstacle: Box2D) = {
-    val bBox = _bBox.toMillimeters
-    val obstacle = _obstacle.toMillimeters
+    //val bBox = _bBox.toMillimeters
+    //val obstacle = _obstacle.toMillimeters
     ???
   }
   
@@ -183,7 +183,7 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
   }
   
   //inputs and parameters should not be scaled, all the rest is scaled
-  def getVariablesToUnScale(f: Formula) = {
+  def getVariablesToUnScale/*(f: Formula)*/ = {
     val toKeep = world.world.models.flatMap( m => {
       val init = m.parameters.toSet
       val inputs = m.controlInputs
@@ -196,7 +196,7 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
   }
 
   def getVariablesToScale(f: Formula) = {
-    f.freeVariables -- getVariablesToUnScale(f)
+    f.freeVariables -- getVariablesToUnScale//(f)
   }
   
   //TODO drawing a picture
@@ -214,7 +214,7 @@ class BoundedModelChecker(world: WorldProxy, nbrSteps: Int) {
       Logger("BoundedModelChecker", Notice, world.stateSpaceDescription)
       Logger("BoundedModelChecker", Notice, world.schedulerToString)
       val cstr = getEquations
-      val varsU = getVariablesToUnScale(cstr)
+      val varsU = getVariablesToUnScale//(cstr)
       val varsS = getVariablesToScale(cstr)
       val factors = DRealQuery.getRangeFactor(cstr, varsS, scaleRange) ++ varsU.map( _ -> unscaleFactor ).toMap
       val cstrScaled = DRealQuery.multiplyRange(cstr, factors)

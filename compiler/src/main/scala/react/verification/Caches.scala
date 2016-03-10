@@ -93,8 +93,8 @@ object MetaCache {
       (map get id).asInstanceOf[Cache[T]]
     } else {
       val c = new Cache[T]
-      val cOld = map.putIfAbsent(id, c)
-      if (cOld != null) cOld.asInstanceOf[Cache[T]] else c
+      val cOld = map.putIfAbsent(id, c).asInstanceOf[Cache[T]]
+      if (cOld != null) cOld else c
     }
   }
 

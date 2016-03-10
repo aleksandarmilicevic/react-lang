@@ -95,13 +95,13 @@ class Scheduler extends react.runtime.Scheduler {
   }
 
 
-  val bytePerTask = 1
+  final val bytePerTask = 1
 
   def saveState = {
     // 2: current time
     // for the expiration, we assume that all task are periodic and start at time 0
     removeCanceled
-    val size = 2 + queue.size* bytePerTask
+    val size = 2 + queue.size * bytePerTask
     val buffer = ByteBuffer.allocate(size)
     buffer.putShort(now.toShort)
     var content = List[ScheduledTask]()
@@ -117,7 +117,7 @@ class Scheduler extends react.runtime.Scheduler {
       content = ts ::: content
     }
     for (t <- content) queue.enqueue(t)
-    assert(size == 2 + queue.size* bytePerTask, "error while sazing scheduler state")
+    assert(size == 2 + queue.size * bytePerTask, "error while sazing scheduler state")
     buffer.array
   }
 

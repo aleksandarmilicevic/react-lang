@@ -24,7 +24,7 @@ class Snappy(_id: String) extends GroundRobot(_id) {
   sensor[LaserScan]("laser"){
     case GetRange(distance) =>
       //println(id + " laser")
-      frontDistance = distance.toFloat
+      frontDistance = distance
       distanceUpdated = true
   }
 

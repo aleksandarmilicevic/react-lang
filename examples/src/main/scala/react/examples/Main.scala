@@ -86,14 +86,16 @@ object Main extends Options with react.verification.McOptions {
 
   def main(args: Array[java.lang.String]) {
     apply(args) // preprocess the args
-    val (cls, topic) =
-      if (input.length == 0)
+    val (cls, topic) = {
+      val l = input.length
+      if (l == 0)
         sys.error("need at least on argument: the class to launch")
-      else if (input.length == 1)
+      else if (l == 1)
         (input(0), "")
       else {
         (input(1), input(0))
       }
+    }
     println("topic = " + topic)
     this.topic = topic
     cls match {

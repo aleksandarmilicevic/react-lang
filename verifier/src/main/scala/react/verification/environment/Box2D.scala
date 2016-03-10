@@ -96,7 +96,7 @@ class Box2D(val x: Double,
     //http://stackoverflow.com/questions/5254838/calculating-distance-between-a-point-and-a-rectangular-box-nearest-point
     val dx = max(max(-x2, 0), x2 -width)
     val dy = max(max(-y2, 0), y2 -depth)
-    sqrt(dx*dx + dy*dy);
+    hypot(dx, dy)
   }
 
   def center = {
@@ -107,7 +107,7 @@ class Box2D(val x: Double,
   }
   
   protected def radius = {
-    sqrt(width*width + depth*depth) / 2
+    hypot(width, depth) / 2
   }
 
   //TODO this is wrong! (fix when have more time)

@@ -13,7 +13,7 @@ class Trace(val start: State, val transitions: List[(Label,State)]) extends Iter
 
   def labels = transitions.map(_._1)
 
-  def stop = if (transitions.length == 0) start else transitions.last._2
+  def stop = if (transitions.isEmpty) start else transitions.last._2
 
   def compact = new Trace(start, List(labels.flatten -> stop))
 
@@ -34,7 +34,7 @@ class Trace(val start: State, val transitions: List[(Label,State)]) extends Iter
 
   def extremities: (State,State) = (start, stop)
 
-  def innerStates: List[State] = transitions.map(_._2).dropRight(1)
+  def innerStates: List[State] = transitions.dropRight(1).map(_._2)
 
   def triples: List[(State,Label,State)] = mkTriple(Nil, start, transitions)
 

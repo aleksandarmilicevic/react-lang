@@ -82,7 +82,7 @@ class Griddy(_id: String, safeDistance: Float = 1.6f) extends GroundRobot(_id) w
       //projection of T on the line
       val px = dx - d * nx
       val py = dy - d * ny
-      val p = math.sqrt( px*px + py*py )
+      val p = math.hypot(px, py)
       //compute an arc to the next position
       val ang = -math.atan2(d, p)
       val sign = (px * ny + py * nx).signum

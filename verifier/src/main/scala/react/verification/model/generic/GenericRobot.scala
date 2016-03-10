@@ -72,7 +72,7 @@ class GenericRobot( val id: String,
   def aboutTheEqns {
     Console.println(inputs.size + " inputs")
     Console.println(allVars.size + " state variables")
-    Console.println(allVars.filter(occursInDerivative(_, constraints)).size + " variables under a derivative")
+    Console.println(allVars.count(occursInDerivative(_, constraints)) + " variables under a derivative")
     Console.println(conjuncts.size + " clauses")
     val eqs = conjuncts.filter{ case Eq(_,_) => true; case _ => false }
     Console.println(eqs.size + " equalities")
@@ -270,7 +270,7 @@ class GenericRobot( val id: String,
     ds.map( d => {
       val cs = FormulaUtils.getConjuncts(d)
       val (dt, cond) = cs.partition(hasDt)
-      val c = if (cond.size == 0) True()
+      val c = if (cond.isEmpty) True()
               else if (cond.size == 1) cond.head
               else And(cond:_*)
       (c, dt)
@@ -294,7 +294,6 @@ class GenericRobot( val id: String,
     val connect = UnInterpretedFct("connect", Some(Real ~> Real ~> Bool), Nil)
     def holder(f: Formula) = {
       ???
-      Variable("holder_" + ??? ).setType(Real)
     }
     for (i <- 0 until maxUnfold) {
       for ( part <- modes;

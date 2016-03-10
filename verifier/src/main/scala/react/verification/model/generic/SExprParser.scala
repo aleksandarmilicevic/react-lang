@@ -11,7 +11,7 @@ object SExprParser extends RegexParsers {
 
   protected override val whiteSpace = """(\s|;.*)+""".r
 
-  def nonWhite: Parser[String] = """[^()\s]+""".r ^^ { _.toString }
+  def nonWhite: Parser[String] = """[^()\s]+""".r 
 
   def sExpr: Parser[SExpr] = (
       "(" ~ ")" ^^^ SNil

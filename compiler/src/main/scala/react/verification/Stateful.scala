@@ -43,7 +43,7 @@ object Stateful {
   }
 
   /** given a rounded value returns the lower bound of the interval in which the value belongs */
-  def lower(value: Double, min: Double, max: Double, step: Double): Double = {
+  def lower(value: Double, min: Double, max: Double, step: Double): Double = { // linter:ignore UnusedParameter
     val floored = ((value / step) - 0.5) * step
     val res = math.max(min, floored + step * 1e-6)
     //assert(round(res, min, max, step) == value, "lower: " + value + " -> " + res + " -> " + round(res, min, max, step))
@@ -51,7 +51,7 @@ object Stateful {
   }
 
   /** given a rounded value returns the upper bound of the interval in which the value belongs */
-  def upper(value: Double, min: Double, max: Double, step: Double): Double = {
+  def upper(value: Double, min: Double, max: Double, step: Double): Double = { // linter:ignore UnusedParameter
     val ceiled = ((value / step) + 0.5) * step
     val res = math.min(max, ceiled - step * 1e-6)
     //assert(round(res, min, max, step) == value, "upper: " + value + " -> " + res + " -> " + round(res, min, max, step))

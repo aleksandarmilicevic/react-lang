@@ -93,7 +93,7 @@ object Message {
 
   def from(m: react_msgs.Mvmt): Mvmt = Mvmt(from(m.getHeader), m.getSpeed, m.getAngularSpeed, from(m.getD))
   
-  def from(s: std_msgs.Empty): Primitive.Empty.type = Primitive.Empty
+  def from(s: std_msgs.Empty): Primitive.Empty.type = Primitive.Empty // linter:ignore InvariantReturn,UnusedParameter
   def from(s: std_msgs.Bool): Primitive.Bool = Primitive.Bool(s.getData)
   def from(s: std_msgs.Byte): Primitive.Byte = Primitive.Byte(s.getData)
   def from(s: std_msgs.Char): Primitive.Char = Primitive.Char(s.getData.asInstanceOf[Char])

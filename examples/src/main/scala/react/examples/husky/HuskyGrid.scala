@@ -82,7 +82,7 @@ class HuskyGrid(_id: String) extends GroundRobot(_id) with FsmController {
       //projection of T on the line
       val px = dx - d * nx
       val py = dy - d * ny
-      val p = math.sqrt( px*px + py*py )
+      val p = math.hypot(px, py)
       //compute an arc to the next position
       val ang = -math.atan2(d, p)
       val sign = (px * ny + py * nx).signum

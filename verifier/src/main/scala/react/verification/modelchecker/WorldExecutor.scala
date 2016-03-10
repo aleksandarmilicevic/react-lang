@@ -119,7 +119,9 @@ class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) exte
   }
   def getSubscribed[T](topic: String, typeName: String): Int = {
     if (subscribers contains topic) {
-      subscribers(topic).asInstanceOf[SubscriberWithBypass[T]].cnt
+      val sub = subscribers(topic).asInstanceOf[SubscriberWithBypass[T]]
+      assert(sub.getTopicMessageType == typeName)
+      sub.cnt
     } else {
       0
     }
@@ -128,10 +130,10 @@ class WorldExecutor(world: World, scheduler: Scheduler, bypassROS: Boolean) exte
   def getSubscriberRW(topic: String): List[Option[RW]] = {
     if (subscribers contains topic) {
       val listeners = subscribers(topic).asInstanceOf[SubscriberWithBypass[Any]].listeners
-      listeners.map( l => l match {
+      listeners.map{
         case s: MessageListenerRW[_] => Some(s)
         case _ => None
-      })
+      }
     } else {
       Nil
     }

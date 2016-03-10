@@ -23,9 +23,9 @@ class HuskyPathfinder(_id: String) extends HuskyRobot(_id) with FsmController {
   var history = Set[(Int,Int)]()
 
   def goalDist(x: Int, y: Int): Double = {
-    val dx = Math.abs(x - destX)
-    val dy = Math.abs(y - destY)
-    Math.sqrt(dx*dx + dy*dy)
+    val dx = x - destX
+    val dy = y - destY
+    math.hypot(dx, dy)
   }
 
   initialState('init)

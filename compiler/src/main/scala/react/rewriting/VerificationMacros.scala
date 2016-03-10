@@ -17,7 +17,7 @@ class ExplorableMacros(val c: Context) extends Types
 
   def wordLength[T: c.WeakTypeTag]: c.Expr[Int] = {
     assert(unsupportedFields.isEmpty, "unsupported fields: " + unsupportedFields)
-    val size = permanentFields.map(length).foldLeft(0)( _ + _ )
+    val size = permanentFields.map(length).sum
     c.Expr[Int](q"$size")
   }
 
@@ -126,7 +126,7 @@ class ExplorableMacros(val c: Context) extends Types
                     //println("concretizing " + $name + " at " + tmp + " in " + $rt)
               q"""private val $vinterval = {
                     val tmp = $get
-                    Array( tmp.toFloat,
+                    Array( tmp,
                       react.verification.Stateful.lower(tmp, Double.MinValue, Double.MaxValue, $step).toFloat,
                       react.verification.Stateful.upper(tmp, Double.MinValue, Double.MaxValue, $step).toFloat)
                   }"""

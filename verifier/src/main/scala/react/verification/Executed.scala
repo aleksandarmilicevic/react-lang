@@ -12,6 +12,7 @@ trait Executed {
   }
 
   def deregister(exec: Executor) = {
+    assert(exec == this.exec)
     this.exec = null
   }
 

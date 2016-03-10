@@ -4,13 +4,14 @@ import Keys._
 object BuildSettings {
   val baseDir = System.getProperty("user.dir")
   val buildVersion = "0.1.0-SNAPSHOT"
-  val buildScalaVersion = System.getProperty("scala.version", "2.11.7")
+  val buildScalaVersion = System.getProperty("scala.version", "2.11.8")
   val buildSettings = Defaults.defaultSettings ++ Seq(
     version := buildVersion,
     scalaVersion := buildScalaVersion,
     resolvers += "Local ROS Java maven repo" at "file://"+baseDir+"/rosjava-maven",
     resolvers += "ROS Java maven repo" at "https://github.com/rosjava/rosjava_mvn_repo/raw/master",
     resolvers += "dzufferey maven repo" at "https://github.com/dzufferey/my_mvn_repo/raw/master/repository",
+    addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.13"),
     unmanagedBase := new java.io.File(baseDir + "/lib"),
     parallelExecution in Test := false,
     publishMavenStyle := true,
@@ -38,7 +39,7 @@ object MyBuild extends Build {
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
           "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-          "org.scalatest" %% "scalatest" % "2.2.4" % "test",
+          "org.scalatest" %% "scalatest" % "2.2.6" % "test",
           /* ROS dependencies */
           "org.ros.rosjava_bootstrap" % "message_generation" % "0.2.1",
           "org.ros.rosjava_core" % "rosjava" % "0.2.1",
@@ -62,12 +63,12 @@ object MyBuild extends Build {
     file("verifier"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-          "org.scalatest" %% "scalatest" % "2.2.4" % "test",
-          "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3",
+          "org.scalatest" %% "scalatest" % "2.2.6" % "test",
+          "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
           /* ROS dependencies */
           "org.ros.rosjava_core" % "rosjava" % "0.2.1",
           /* Other dependencies */
-          "org.apache.commons" % "commons-lang3" % "3.2.1",
+          "org.apache.commons" % "commons-lang3" % "3.4",
           "commons-codec" % "commons-codec" % "1.10",
           "net.automatalib" % "automata-parent" % "0.5.2",
           "net.automatalib" % "automata-api" % "0.5.2",

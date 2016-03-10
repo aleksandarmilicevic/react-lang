@@ -155,7 +155,7 @@ trait Types {
   }
   
   /** check whether this is a supported type */
-  protected def isSupported(m: TermSymbol) = true
+  protected def isSupported(m: TermSymbol) = true //TODO ???
 
   /** check whether this is a natively supported type (or if it needs a cache) */
   protected def isNative(m: TermSymbol) = {

@@ -79,7 +79,7 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     out.newLine
     out.write("  realtype *yval = NV_DATA_S(yy);"); out.newLine
     out.write("  realtype *ypval = NV_DATA_S(yp);"); out.newLine
-    out.write("  realtype *rval = NV_DATA_S(rr);"); out.newLine; out.newLine
+    out.write("  realtype *rval = NV_DATA_S(rr);"); out.newLine; out.newLine // linter:ignore IdenticalStatements
     for (i <- 0 until nConj) {
       out.write("  rval["+i+"] = "+CPrinter.expr(conjuncts(i), literal, access)+" ;")
       out.newLine
@@ -147,7 +147,7 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     out.write("             N_Vector tempv1, N_Vector tempv2, N_Vector tempv3) {"); out.newLine
     out.write("  realtype *yval = NV_DATA_S(yy);"); out.newLine
     out.write("  realtype *ypval = NV_DATA_S(yp);"); out.newLine
-    out.write("  realtype *rval = NV_DATA_S(rr);"); out.newLine
+    out.write("  realtype *rval = NV_DATA_S(rr);"); out.newLine // linter:ignore IdenticalStatements
     out.newLine
 
     for(i <- 0 until nConj;
