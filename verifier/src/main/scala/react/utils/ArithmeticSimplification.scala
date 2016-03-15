@@ -66,7 +66,7 @@ object ArithmeticSimplification {
       
       def /(v: Variable) = {
         val i = idx(v)
-        Monomial(coeff,  exponents.updated(i, exponents(i) / 1))
+        Monomial(coeff,  exponents.updated(i, exponents(i) - 1))
       }
 
       def *(c: Long) = {
@@ -104,7 +104,7 @@ object ArithmeticSimplification {
           val prod = exponents.zipWithIndex.flatMap{ case (e, i) =>
               if (e == 0l) None
               else if (e == 1l) Some(i2v(i))
-              else Some(DRealDecl.pow(i2v(i), Literal(e).setType(Real)))
+              else Some(DRealDecl.pow(i2v(i), FloatLit(e)))
             }
           val elts = if (coeff == Ratio.one && !prod.isEmpty) prod
                      else c +: prod

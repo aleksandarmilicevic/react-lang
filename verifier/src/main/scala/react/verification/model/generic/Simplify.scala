@@ -3,7 +3,7 @@ package react.verification.model.generic
 import dzufferey.smtlib._
 import dzufferey.utils._
 import dzufferey.utils.LogLevel._
-import react.utils.{Qepcad, QepcadPrinter, ArithmeticSimplification, DRealQuery}
+import react.utils.{Qepcad, QepcadPrinter, ArithmeticSimplification, DRealQuery, IntegerLit}
 import Utils._
 
 //the formula
@@ -14,17 +14,14 @@ import Utils._
 
 class Simplify(robot: GenericRobot) {
 
-  
-
+  //TODO generalize: instead of x = y, we can do x = f(\vec y)
   protected def findEqualVariables(conjuncts: List[Formula]): List[(Variable, Variable)] = {
     conjuncts.flatMap{
       case Eq(v1 @ Variable(_), v2 @ Variable(_)) =>
         Some(v1 -> v2)
-      case Eq(Plus(Times(Literal(-1l)|Literal(-1)|Literal(-1.0), v1 @ Variable(_)), v2 @ Variable(_)),
-             (Literal(0) | Literal(0l) | Literal(0.0))) =>
+      case Eq(Plus(Times(IntegerLit(-1), v1 @ Variable(_)), v2 @ Variable(_)), IntegerLit(0)) =>
         Some(v1 -> v2)
-      case Eq(Plus(v2 @ Variable(_), Times(Literal(-1l)|Literal(-1)|Literal(-1.0), v1 @ Variable(_))),
-             (Literal(0) | Literal(0l) | Literal(0.0))) =>
+      case Eq(Plus(v2 @ Variable(_), Times(IntegerLit(-1), v1 @ Variable(_))), IntegerLit(0)) =>
         Some(v1 -> v2)
       case _ =>
         None
