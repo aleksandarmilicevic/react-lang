@@ -31,3 +31,14 @@ object Primitive {
   }
 
 }
+
+object PrimitiveConversion {
+  implicit def primitiveToBool(data: Boolean) = Primitive.Bool(data)
+  implicit def primitiveToByte(data: scala.Byte) = Primitive.Byte(data)
+  implicit def primitiveToChar(data: scala.Char) = Primitive.Char(data)
+  implicit def primitiveToFloat32(data: Float) = Primitive.Float32(data)
+  implicit def primitiveToFloat64(data: Double) = Primitive.Float64(data)
+  implicit def primitiveToInt16(data: Short) = Primitive.Int16(data)
+  implicit def primitiveToInt32(data: Int) = Primitive.Int32(data)
+  implicit def primitiveToInt64(data: Long) = Primitive.Int64(data)
+}
