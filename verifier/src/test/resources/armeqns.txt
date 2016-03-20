@@ -1,0 +1,340 @@
+~~~ Parameters:
+l0.beam.dx
+l0.beam.dy
+l0.beam.dz
+l0.beam.l
+l0.beam.q_a
+l0.beam.q_i
+l0.beam.q_j
+l0.beam.q_k
+l0.beam.w
+l0.horn.d
+l0.horn.dx
+l0.horn.dy
+l0.horn.dz
+l0.horn.q_a
+l0.horn.q_i
+l0.horn.q_j
+l0.horn.q_k
+l0.horn.sep
+l0.length
+l0.servo.dx
+l0.servo.dy
+l0.servo.dz
+l0.servo.height
+l0.servo.horndepth
+l0.servo.hornheight
+l0.servo.hornlength
+l0.servo.hornoffset
+l0.servo.input
+l0.servo.length
+l0.servo.q_a
+l0.servo.q_i
+l0.servo.q_j
+l0.servo.q_k
+l0.servo.scale
+l0.servo.shoulderlength
+l0.servo.width
+l0.width
+l1.beam.dx
+l1.beam.dy
+l1.beam.dz
+l1.beam.l
+l1.beam.q_a
+l1.beam.q_i
+l1.beam.q_j
+l1.beam.q_k
+l1.beam.w
+l1.horn.d
+l1.horn.dx
+l1.horn.dy
+l1.horn.dz
+l1.horn.q_a
+l1.horn.q_i
+l1.horn.q_j
+l1.horn.q_k
+l1.horn.sep
+l1.length
+l1.servo.dx
+l1.servo.dy
+l1.servo.dz
+l1.servo.height
+l1.servo.horndepth
+l1.servo.hornheight
+l1.servo.hornlength
+l1.servo.hornoffset
+l1.servo.input
+l1.servo.length
+l1.servo.q_a
+l1.servo.q_i
+l1.servo.q_j
+l1.servo.q_k
+l1.servo.scale
+l1.servo.shoulderlength
+l1.servo.width
+l1.width
+l2.beam.dx
+l2.beam.dy
+l2.beam.dz
+l2.beam.l
+l2.beam.q_a
+l2.beam.q_i
+l2.beam.q_j
+l2.beam.q_k
+l2.beam.w
+l2.horn.d
+l2.horn.dx
+l2.horn.dy
+l2.horn.dz
+l2.horn.q_a
+l2.horn.q_i
+l2.horn.q_j
+l2.horn.q_k
+l2.horn.sep
+l2.length
+l2.servo.dx
+l2.servo.dy
+l2.servo.dz
+l2.servo.height
+l2.servo.horndepth
+l2.servo.hornheight
+l2.servo.hornlength
+l2.servo.hornoffset
+l2.servo.input
+l2.servo.length
+l2.servo.q_a
+l2.servo.q_i
+l2.servo.q_j
+l2.servo.q_k
+l2.servo.scale
+l2.servo.shoulderlength
+l2.servo.width
+l2.width
+siminput0_input
+siminput1_input
+
+~~~ Equations:
+( frame l2.horn.dx l2.horn.dy l2.horn.dz l2.horn.q_a l2.horn.q_i l2.horn.q_j l2.horn.q_k )
+( bbox -5 -5 10 10 0 )
+( input siminput0_input )
+( input siminput1_input )
+( input l0.length )
+( input l1.length )
+( input l2.length )
+( dynamic l0.beam.dx )
+( dynamic l0.beam.dy )
+( dynamic l0.beam.dz )
+( dynamic l0.beam.q_a )
+( dynamic l0.beam.q_i )
+( dynamic l0.beam.q_j )
+( dynamic l0.beam.q_k )
+( dynamic l0.horn.dx )
+( dynamic l0.horn.dy )
+( dynamic l0.horn.dz )
+( dynamic l0.horn.q_a )
+( dynamic l0.horn.q_i )
+( dynamic l0.horn.q_j )
+( dynamic l0.horn.q_k )
+( dynamic l0.servo.dx )
+( dynamic l0.servo.dy )
+( dynamic l0.servo.dz )
+( dynamic l0.servo.input )
+( dynamic l0.servo.q_a )
+( dynamic l0.servo.q_i )
+( dynamic l0.servo.q_j )
+( dynamic l0.servo.q_k )
+( dynamic l1.beam.dx )
+( dynamic l1.beam.dy )
+( dynamic l1.beam.dz )
+( dynamic l1.beam.q_a )
+( dynamic l1.beam.q_i )
+( dynamic l1.beam.q_j )
+( dynamic l1.beam.q_k )
+( dynamic l1.horn.dx )
+( dynamic l1.horn.dy )
+( dynamic l1.horn.dz )
+( dynamic l1.horn.q_a )
+( dynamic l1.horn.q_i )
+( dynamic l1.horn.q_j )
+( dynamic l1.horn.q_k )
+( dynamic l1.servo.dx )
+( dynamic l1.servo.dy )
+( dynamic l1.servo.dz )
+( dynamic l1.servo.input )
+( dynamic l1.servo.q_a )
+( dynamic l1.servo.q_i )
+( dynamic l1.servo.q_j )
+( dynamic l1.servo.q_k )
+( dynamic l2.beam.dx )
+( dynamic l2.beam.dy )
+( dynamic l2.beam.dz )
+( dynamic l2.beam.q_a )
+( dynamic l2.beam.q_i )
+( dynamic l2.beam.q_j )
+( dynamic l2.beam.q_k )
+( dynamic l2.horn.dx )
+( dynamic l2.horn.dy )
+( dynamic l2.horn.dz )
+( dynamic l2.horn.q_a )
+( dynamic l2.horn.q_i )
+( dynamic l2.horn.q_j )
+( dynamic l2.horn.q_k )
+( dynamic l2.servo.dx )
+( dynamic l2.servo.dy )
+( dynamic l2.servo.dz )
+( dynamic l2.servo.input )
+( dynamic l2.servo.q_a )
+( dynamic l2.servo.q_i )
+( dynamic l2.servo.q_j )
+( dynamic l2.servo.q_k )
+( > l1.servo.width 0 )
+( > l2.servo.hornlength 0 )
+( > l1.servo.hornlength 0 )
+( > l0.beam.l 0 )
+( > l0.beam.w 0 )
+( > l0.servo.height 0 )
+( > l0.servo.horndepth 0 )
+( > l0.servo.hornheight 0 )
+( > l0.servo.hornlength 0 )
+( > l0.servo.hornoffset 0 )
+( > l0.servo.length 0 )
+( > l0.servo.scale 0 )
+( > l0.servo.shoulderlength 0 )
+( > l0.servo.width 0 )
+( > l1.beam.l 0 )
+( > l1.beam.w 0 )
+( > l1.servo.height 0 )
+( > l1.servo.horndepth 0 )
+( > l1.servo.hornheight 0 )
+( > l1.servo.hornoffset 0 )
+( > l1.servo.length 0 )
+( > l1.servo.scale 0 )
+( > l1.servo.shoulderlength 0 )
+( > l2.beam.l 0 )
+( > l2.beam.w 0 )
+( > l2.servo.height 0 )
+( > l2.servo.horndepth 0 )
+( > l2.servo.hornheight 0 )
+( > l2.servo.hornoffset 0 )
+( > l2.servo.length 0 )
+( > l2.servo.scale 0 )
+( > l2.servo.shoulderlength 0 )
+( > l2.servo.width 0 )
+
+( = 0 l0.servo.dx )
+( = 0 l0.servo.dy )
+( = 0 l0.servo.dz )
+( = 1 l0.servo.q_a )
+( = 0 l0.servo.q_i )
+( = 0 l0.servo.q_j )
+( = 0 l0.servo.q_k )
+
+( == ( + ( ^ l2.beam.q_j 2 ) ( ^ l2.beam.q_i 2 ) ( ^ l2.beam.q_a 2 ) ( ^ l2.beam.q_k 2 ) ) 1 )
+( == ( + ( ^ l2.servo.q_j 2 ) ( ^ l2.servo.q_a 2 ) ( ^ l2.servo.q_k 2 ) ( ^ l2.servo.q_i 2 ) ) 1 )
+( == ( + ( ^ l2.horn.q_i 2 ) ( ^ l2.horn.q_k 2 ) ( ^ l2.horn.q_a 2 ) ( ^ l2.horn.q_j 2 ) ) 1 )
+( == ( + ( * -1 ( ^ l2.beam.q_i 2 ) ) ( ^ l2.beam.q_a 2 ) ( * -1 ( ^ l2.beam.q_j 2 ) ) ( ^ l2.beam.q_k 2 ) ) ( + ( * -1 ( ^ l2.horn.q_j 2 ) ) ( * -1 ( ^ l2.horn.q_i 2 ) ) ( ^ l2.horn.q_k 2 ) ( ^ l2.horn.q_a 2 ) ) )
+( == ( + ( * 2 l2.beam.q_j l2.beam.q_k ) ( * 2 l2.beam.q_a l2.beam.q_i ) ) ( + ( * 2 l2.horn.q_j l2.horn.q_k ) ( * 2 l2.horn.q_a l2.horn.q_i ) ) )
+( == ( + ( * -2 l2.beam.q_a l2.beam.q_j ) ( * 2 l2.beam.q_i l2.beam.q_k ) ) ( + ( * 2 l2.horn.q_i l2.horn.q_k ) ( * -2 l2.horn.q_a l2.horn.q_j ) ) )
+( == ( + ( * -2 l2.beam.q_a l2.beam.q_k ) ( * 2 l2.beam.q_i l2.beam.q_j ) ) ( + ( * 2 l2.horn.q_i l2.horn.q_j ) ( * -2 l2.horn.q_a l2.horn.q_k ) ) )
+( == ( + ( ^ l2.beam.q_i 2 ) ( * -1 ( ^ l2.beam.q_k 2 ) ) ( ^ l2.beam.q_a 2 ) ( * -1 ( ^ l2.beam.q_j 2 ) ) ) ( + ( * -1 ( ^ l2.horn.q_j 2 ) ) ( ^ l2.horn.q_i 2 ) ( * -1 ( ^ l2.horn.q_k 2 ) ) ( ^ l2.horn.q_a 2 ) ) )
+( == ( + ( * 2 l2.beam.q_i l2.beam.q_j ) ( * 2 l2.beam.q_a l2.beam.q_k ) ) ( + ( * 2 l2.horn.q_i l2.horn.q_j ) ( * 2 l2.horn.q_a l2.horn.q_k ) ) )
+( == ( + ( * 2 l2.beam.q_a l2.beam.q_j ) ( * 2 l2.beam.q_i l2.beam.q_k ) ) ( + ( * 2 l2.horn.q_a l2.horn.q_j ) ( * 2 l2.horn.q_i l2.horn.q_k ) ) )
+( == ( + ( ^ l2.beam.q_j 2 ) ( * -1 ( ^ l2.beam.q_i 2 ) ) ( * -1 ( ^ l2.beam.q_k 2 ) ) ( ^ l2.beam.q_a 2 ) ) ( + ( * -1 ( ^ l2.horn.q_i 2 ) ) ( * -1 ( ^ l2.horn.q_k 2 ) ) ( ^ l2.horn.q_a 2 ) ( ^ l2.horn.q_j 2 ) ) )
+( == l2.beam.dz l2.horn.dz )
+( == l2.beam.dx l2.horn.dx )
+( == ( + ( * ( / 1 2 ) l2.length ) l2.beam.dy ) l2.horn.dy )
+( == ( + ( * 2 l2.beam.q_j l2.beam.q_k ) ( * -2 l2.beam.q_a l2.beam.q_i ) ) ( + ( * -2 l2.horn.q_a l2.horn.q_i ) ( * 2 l2.horn.q_j l2.horn.q_k ) ) )
+( == ( + ( * -1 ( ^ l2.beam.q_i 2 ) ) ( ^ l2.beam.q_a 2 ) ( * -1 ( ^ l2.beam.q_j 2 ) ) ( ^ l2.beam.q_k 2 ) ) ( + ( ^ l2.servo.q_a 2 ) ( * -1 ( ^ l2.servo.q_i 2 ) ) ( ^ l2.servo.q_k 2 ) ( * -1 ( ^ l2.servo.q_j 2 ) ) ) )
+( == ( + ( * 2 l2.beam.q_j l2.beam.q_k ) ( * 2 l2.beam.q_a l2.beam.q_i ) ) ( + ( * 2 l2.servo.q_j l2.servo.q_k ) ( * 2 l2.servo.q_a l2.servo.q_i ) ) )
+( == ( + ( * -2 l2.beam.q_a l2.beam.q_j ) ( * 2 l2.beam.q_i l2.beam.q_k ) ) ( + ( * -2 l2.servo.q_a l2.servo.q_j ) ( * 2 l2.servo.q_i l2.servo.q_k ) ) )
+( == ( + ( * -2 l2.beam.q_a l2.beam.q_k ) ( * 2 l2.beam.q_i l2.beam.q_j ) ) ( + ( * 2 l2.servo.q_i l2.servo.q_j ) ( * -2 l2.servo.q_a l2.servo.q_k ) ) )
+( == ( + ( ^ l2.beam.q_i 2 ) ( * -1 ( ^ l2.beam.q_k 2 ) ) ( ^ l2.beam.q_a 2 ) ( * -1 ( ^ l2.beam.q_j 2 ) ) ) ( + ( ^ l2.servo.q_a 2 ) ( * -1 ( ^ l2.servo.q_k 2 ) ) ( ^ l2.servo.q_i 2 ) ( * -1 ( ^ l2.servo.q_j 2 ) ) ) )
+( == ( + ( * 2 l2.beam.q_i l2.beam.q_j ) ( * 2 l2.beam.q_a l2.beam.q_k ) ) ( + ( * 2 l2.servo.q_i l2.servo.q_j ) ( * 2 l2.servo.q_a l2.servo.q_k ) ) )
+( == ( + ( * 2 l2.beam.q_a l2.beam.q_j ) ( * 2 l2.beam.q_i l2.beam.q_k ) ) ( + ( * 2 l2.servo.q_a l2.servo.q_j ) ( * 2 l2.servo.q_i l2.servo.q_k ) ) )
+( == ( + ( ^ l2.beam.q_j 2 ) ( * -1 ( ^ l2.beam.q_i 2 ) ) ( * -1 ( ^ l2.beam.q_k 2 ) ) ( ^ l2.beam.q_a 2 ) ) ( + ( ^ l2.servo.q_j 2 ) ( ^ l2.servo.q_a 2 ) ( * -1 ( ^ l2.servo.q_i 2 ) ) ( * -1 ( ^ l2.servo.q_k 2 ) ) ) )
+( == l2.beam.dz l2.servo.dz )
+( == l2.beam.dx l2.servo.dx )
+( == ( + ( * ( / -1 2 ) l2.length ) l2.beam.dy ) l2.servo.dy )
+( == ( + ( * 2 l2.beam.q_j l2.beam.q_k ) ( * -2 l2.beam.q_a l2.beam.q_i ) ) ( + ( * -2 l2.servo.q_a l2.servo.q_i ) ( * 2 l2.servo.q_j l2.servo.q_k ) ) )
+( == ( + ( ^ l0.beam.q_i 2 ) ( ^ l0.beam.q_k 2 ) ( ^ l0.beam.q_j 2 ) ( ^ l0.beam.q_a 2 ) ) 1 )
+( == ( + ( ^ l0.servo.q_i 2 ) ( ^ l0.servo.q_k 2 ) ( ^ l0.servo.q_j 2 ) ( ^ l0.servo.q_a 2 ) ) 1 )
+( == ( + ( ^ l0.horn.q_a 2 ) ( ^ l0.horn.q_i 2 ) ( ^ l0.horn.q_j 2 ) ( ^ l0.horn.q_k 2 ) ) 1 )
+( == ( + ( * -1 ( ^ l0.beam.q_j 2 ) ) ( ^ l0.beam.q_k 2 ) ( ^ l0.beam.q_a 2 ) ( * -1 ( ^ l0.beam.q_i 2 ) ) ) ( + ( * -1 ( ^ l0.horn.q_j 2 ) ) ( ^ l0.horn.q_a 2 ) ( ^ l0.horn.q_k 2 ) ( * -1 ( ^ l0.horn.q_i 2 ) ) ) )
+( == ( + ( * 2 l0.beam.q_j l0.beam.q_k ) ( * 2 l0.beam.q_a l0.beam.q_i ) ) ( + ( * 2 l0.horn.q_j l0.horn.q_k ) ( * 2 l0.horn.q_a l0.horn.q_i ) ) )
+( == ( + ( * 2 l0.beam.q_i l0.beam.q_k ) ( * -2 l0.beam.q_a l0.beam.q_j ) ) ( + ( * 2 l0.horn.q_i l0.horn.q_k ) ( * -2 l0.horn.q_a l0.horn.q_j ) ) )
+( == ( + ( * 2 l0.beam.q_i l0.beam.q_j ) ( * -2 l0.beam.q_a l0.beam.q_k ) ) ( + ( * 2 l0.horn.q_i l0.horn.q_j ) ( * -2 l0.horn.q_a l0.horn.q_k ) ) )
+( == ( + ( ^ l0.beam.q_i 2 ) ( * -1 ( ^ l0.beam.q_j 2 ) ) ( ^ l0.beam.q_a 2 ) ( * -1 ( ^ l0.beam.q_k 2 ) ) ) ( + ( * -1 ( ^ l0.horn.q_j 2 ) ) ( ^ l0.horn.q_a 2 ) ( ^ l0.horn.q_i 2 ) ( * -1 ( ^ l0.horn.q_k 2 ) ) ) )
+( == ( + ( * 2 l0.beam.q_i l0.beam.q_j ) ( * 2 l0.beam.q_a l0.beam.q_k ) ) ( + ( * 2 l0.horn.q_i l0.horn.q_j ) ( * 2 l0.horn.q_a l0.horn.q_k ) ) )
+( == ( + ( * 2 l0.beam.q_a l0.beam.q_j ) ( * 2 l0.beam.q_i l0.beam.q_k ) ) ( + ( * 2 l0.horn.q_i l0.horn.q_k ) ( * 2 l0.horn.q_a l0.horn.q_j ) ) )
+( == ( + ( ^ l0.beam.q_j 2 ) ( ^ l0.beam.q_a 2 ) ( * -1 ( ^ l0.beam.q_i 2 ) ) ( * -1 ( ^ l0.beam.q_k 2 ) ) ) ( + ( ^ l0.horn.q_a 2 ) ( ^ l0.horn.q_j 2 ) ( * -1 ( ^ l0.horn.q_k 2 ) ) ( * -1 ( ^ l0.horn.q_i 2 ) ) ) )
+( == l0.beam.dz l0.horn.dz )
+( == l0.beam.dx l0.horn.dx )
+( == ( + l0.beam.dy ( * ( / 1 2 ) l0.length ) ) l0.horn.dy )
+( == ( + ( * -2 l0.beam.q_a l0.beam.q_i ) ( * 2 l0.beam.q_j l0.beam.q_k ) ) ( + ( * -2 l0.horn.q_a l0.horn.q_i ) ( * 2 l0.horn.q_j l0.horn.q_k ) ) )
+( == ( + ( * -1 ( ^ l0.beam.q_j 2 ) ) ( ^ l0.beam.q_k 2 ) ( ^ l0.beam.q_a 2 ) ( * -1 ( ^ l0.beam.q_i 2 ) ) ) ( + ( * -1 ( ^ l0.servo.q_i 2 ) ) ( ^ l0.servo.q_k 2 ) ( * -1 ( ^ l0.servo.q_j 2 ) ) ( ^ l0.servo.q_a 2 ) ) )
+( == ( + ( * 2 l0.beam.q_j l0.beam.q_k ) ( * 2 l0.beam.q_a l0.beam.q_i ) ) ( + ( * 2 l0.servo.q_j l0.servo.q_k ) ( * 2 l0.servo.q_a l0.servo.q_i ) ) )
+( == ( + ( * 2 l0.beam.q_i l0.beam.q_k ) ( * -2 l0.beam.q_a l0.beam.q_j ) ) ( + ( * -2 l0.servo.q_a l0.servo.q_j ) ( * 2 l0.servo.q_i l0.servo.q_k ) ) )
+( == ( + ( * 2 l0.beam.q_i l0.beam.q_j ) ( * -2 l0.beam.q_a l0.beam.q_k ) ) ( + ( * -2 l0.servo.q_a l0.servo.q_k ) ( * 2 l0.servo.q_i l0.servo.q_j ) ) )
+( == ( + ( ^ l0.beam.q_i 2 ) ( * -1 ( ^ l0.beam.q_j 2 ) ) ( ^ l0.beam.q_a 2 ) ( * -1 ( ^ l0.beam.q_k 2 ) ) ) ( + ( ^ l0.servo.q_i 2 ) ( * -1 ( ^ l0.servo.q_j 2 ) ) ( * -1 ( ^ l0.servo.q_k 2 ) ) ( ^ l0.servo.q_a 2 ) ) )
+( == ( + ( * 2 l0.beam.q_i l0.beam.q_j ) ( * 2 l0.beam.q_a l0.beam.q_k ) ) ( + ( * 2 l0.servo.q_i l0.servo.q_j ) ( * 2 l0.servo.q_a l0.servo.q_k ) ) )
+( == ( + ( * 2 l0.beam.q_a l0.beam.q_j ) ( * 2 l0.beam.q_i l0.beam.q_k ) ) ( + ( * 2 l0.servo.q_i l0.servo.q_k ) ( * 2 l0.servo.q_a l0.servo.q_j ) ) )
+( == ( + ( ^ l0.beam.q_j 2 ) ( ^ l0.beam.q_a 2 ) ( * -1 ( ^ l0.beam.q_i 2 ) ) ( * -1 ( ^ l0.beam.q_k 2 ) ) ) ( + ( * -1 ( ^ l0.servo.q_i 2 ) ) ( * -1 ( ^ l0.servo.q_k 2 ) ) ( ^ l0.servo.q_j 2 ) ( ^ l0.servo.q_a 2 ) ) )
+( == l0.beam.dz l0.servo.dz )
+( == l0.beam.dx l0.servo.dx )
+( == ( + l0.beam.dy ( * ( / -1 2 ) l0.length ) ) l0.servo.dy )
+( == ( + ( * -2 l0.beam.q_a l0.beam.q_i ) ( * 2 l0.beam.q_j l0.beam.q_k ) ) ( + ( * 2 l0.servo.q_j l0.servo.q_k ) ( * -2 l0.servo.q_a l0.servo.q_i ) ) )
+( == ( + ( ^ l1.beam.q_k 2 ) ( ^ l1.beam.q_i 2 ) ( ^ l1.beam.q_j 2 ) ( ^ l1.beam.q_a 2 ) ) 1 )
+( == ( + ( ^ l1.servo.q_k 2 ) ( ^ l1.servo.q_a 2 ) ( ^ l1.servo.q_j 2 ) ( ^ l1.servo.q_i 2 ) ) 1 )
+( == ( + ( ^ l1.horn.q_a 2 ) ( ^ l1.horn.q_k 2 ) ( ^ l1.horn.q_i 2 ) ( ^ l1.horn.q_j 2 ) ) 1 )
+( == ( + ( * -1 ( ^ l1.beam.q_j 2 ) ) ( ^ l1.beam.q_k 2 ) ( * -1 ( ^ l1.beam.q_i 2 ) ) ( ^ l1.beam.q_a 2 ) ) ( + ( ^ l1.horn.q_a 2 ) ( ^ l1.horn.q_k 2 ) ( * -1 ( ^ l1.horn.q_i 2 ) ) ( * -1 ( ^ l1.horn.q_j 2 ) ) ) )
+( == ( + ( * 2 l1.beam.q_a l1.beam.q_i ) ( * 2 l1.beam.q_j l1.beam.q_k ) ) ( + ( * 2 l1.horn.q_j l1.horn.q_k ) ( * 2 l1.horn.q_a l1.horn.q_i ) ) )
+( == ( + ( * 2 l1.beam.q_i l1.beam.q_k ) ( * -2 l1.beam.q_a l1.beam.q_j ) ) ( + ( * 2 l1.horn.q_i l1.horn.q_k ) ( * -2 l1.horn.q_a l1.horn.q_j ) ) )
+( == ( + ( * -2 l1.beam.q_a l1.beam.q_k ) ( * 2 l1.beam.q_i l1.beam.q_j ) ) ( + ( * -2 l1.horn.q_a l1.horn.q_k ) ( * 2 l1.horn.q_i l1.horn.q_j ) ) )
+( == ( + ( * -1 ( ^ l1.beam.q_j 2 ) ) ( * -1 ( ^ l1.beam.q_k 2 ) ) ( ^ l1.beam.q_i 2 ) ( ^ l1.beam.q_a 2 ) ) ( + ( ^ l1.horn.q_a 2 ) ( * -1 ( ^ l1.horn.q_k 2 ) ) ( * -1 ( ^ l1.horn.q_j 2 ) ) ( ^ l1.horn.q_i 2 ) ) )
+( == ( + ( * 2 l1.beam.q_i l1.beam.q_j ) ( * 2 l1.beam.q_a l1.beam.q_k ) ) ( + ( * 2 l1.horn.q_a l1.horn.q_k ) ( * 2 l1.horn.q_i l1.horn.q_j ) ) )
+( == ( + ( * 2 l1.beam.q_i l1.beam.q_k ) ( * 2 l1.beam.q_a l1.beam.q_j ) ) ( + ( * 2 l1.horn.q_i l1.horn.q_k ) ( * 2 l1.horn.q_a l1.horn.q_j ) ) )
+( == ( + ( * -1 ( ^ l1.beam.q_k 2 ) ) ( * -1 ( ^ l1.beam.q_i 2 ) ) ( ^ l1.beam.q_j 2 ) ( ^ l1.beam.q_a 2 ) ) ( + ( ^ l1.horn.q_a 2 ) ( * -1 ( ^ l1.horn.q_k 2 ) ) ( * -1 ( ^ l1.horn.q_i 2 ) ) ( ^ l1.horn.q_j 2 ) ) )
+( == l1.beam.dz l1.horn.dz )
+( == l1.beam.dx l1.horn.dx )
+( == ( + l1.beam.dy ( * ( / 1 2 ) l1.length ) ) l1.horn.dy )
+( == ( + ( * 2 l1.beam.q_j l1.beam.q_k ) ( * -2 l1.beam.q_a l1.beam.q_i ) ) ( + ( * 2 l1.horn.q_j l1.horn.q_k ) ( * -2 l1.horn.q_a l1.horn.q_i ) ) )
+( == ( + ( * -1 ( ^ l1.beam.q_j 2 ) ) ( ^ l1.beam.q_k 2 ) ( * -1 ( ^ l1.beam.q_i 2 ) ) ( ^ l1.beam.q_a 2 ) ) ( + ( ^ l1.servo.q_k 2 ) ( ^ l1.servo.q_a 2 ) ( * -1 ( ^ l1.servo.q_i 2 ) ) ( * -1 ( ^ l1.servo.q_j 2 ) ) ) )
+( == ( + ( * 2 l1.beam.q_a l1.beam.q_i ) ( * 2 l1.beam.q_j l1.beam.q_k ) ) ( + ( * 2 l1.servo.q_j l1.servo.q_k ) ( * 2 l1.servo.q_a l1.servo.q_i ) ) )
+( == ( + ( * 2 l1.beam.q_i l1.beam.q_k ) ( * -2 l1.beam.q_a l1.beam.q_j ) ) ( + ( * 2 l1.servo.q_i l1.servo.q_k ) ( * -2 l1.servo.q_a l1.servo.q_j ) ) )
+( == ( + ( * -2 l1.beam.q_a l1.beam.q_k ) ( * 2 l1.beam.q_i l1.beam.q_j ) ) ( + ( * 2 l1.servo.q_i l1.servo.q_j ) ( * -2 l1.servo.q_a l1.servo.q_k ) ) )
+( == ( + ( * -1 ( ^ l1.beam.q_j 2 ) ) ( * -1 ( ^ l1.beam.q_k 2 ) ) ( ^ l1.beam.q_i 2 ) ( ^ l1.beam.q_a 2 ) ) ( + ( ^ l1.servo.q_a 2 ) ( * -1 ( ^ l1.servo.q_j 2 ) ) ( ^ l1.servo.q_i 2 ) ( * -1 ( ^ l1.servo.q_k 2 ) ) ) )
+( == ( + ( * 2 l1.beam.q_i l1.beam.q_j ) ( * 2 l1.beam.q_a l1.beam.q_k ) ) ( + ( * 2 l1.servo.q_i l1.servo.q_j ) ( * 2 l1.servo.q_a l1.servo.q_k ) ) )
+( == ( + ( * 2 l1.beam.q_i l1.beam.q_k ) ( * 2 l1.beam.q_a l1.beam.q_j ) ) ( + ( * 2 l1.servo.q_i l1.servo.q_k ) ( * 2 l1.servo.q_a l1.servo.q_j ) ) )
+( == ( + ( * -1 ( ^ l1.beam.q_k 2 ) ) ( * -1 ( ^ l1.beam.q_i 2 ) ) ( ^ l1.beam.q_j 2 ) ( ^ l1.beam.q_a 2 ) ) ( + ( ^ l1.servo.q_a 2 ) ( * -1 ( ^ l1.servo.q_i 2 ) ) ( ^ l1.servo.q_j 2 ) ( * -1 ( ^ l1.servo.q_k 2 ) ) ) )
+( == l1.beam.dz l1.servo.dz )
+( == l1.beam.dx l1.servo.dx )
+( == ( + l1.beam.dy ( * ( / -1 2 ) l1.length ) ) l1.servo.dy )
+( == ( + ( * 2 l1.beam.q_j l1.beam.q_k ) ( * -2 l1.beam.q_a l1.beam.q_i ) ) ( + ( * -2 l1.servo.q_a l1.servo.q_i ) ( * 2 l1.servo.q_j l1.servo.q_k ) ) )
+( == ( + ( * -1 ( ^ l0.servo.q_i 2 ) ) ( ^ l0.servo.q_k 2 ) ( * -1 ( ^ l0.servo.q_j 2 ) ) ( ^ l0.servo.q_a 2 ) ) ( + ( ^ l1.horn.q_a 2 ) ( ^ l1.horn.q_k 2 ) ( * -1 ( ^ l1.horn.q_i 2 ) ) ( * -1 ( ^ l1.horn.q_j 2 ) ) ) )
+( == ( + ( * ( + ( * 2 l0.servo.q_j l0.servo.q_k ) ( * 2 l0.servo.q_a l0.servo.q_i ) ) ( cos ( * l0.servo.input l0.servo.scale ) ) ) ( * -1 ( + ( * -2 l0.servo.q_a l0.servo.q_j ) ( * 2 l0.servo.q_i l0.servo.q_k ) ) ( sin ( * l0.servo.input l0.servo.scale ) ) ) ) ( + ( * 2 l1.horn.q_j l1.horn.q_k ) ( * 2 l1.horn.q_a l1.horn.q_i ) ) )
+( == ( + ( * ( + ( * 2 l0.servo.q_j l0.servo.q_k ) ( * 2 l0.servo.q_a l0.servo.q_i ) ) ( sin ( * l0.servo.input l0.servo.scale ) ) ) ( * ( + ( * -2 l0.servo.q_a l0.servo.q_j ) ( * 2 l0.servo.q_i l0.servo.q_k ) ) ( cos ( * l0.servo.input l0.servo.scale ) ) ) ) ( + ( * 2 l1.horn.q_i l1.horn.q_k ) ( * -2 l1.horn.q_a l1.horn.q_j ) ) )
+( == ( + ( * ( + ( * -2 l0.servo.q_a l0.servo.q_k ) ( * 2 l0.servo.q_i l0.servo.q_j ) ) ( cos ( * l0.servo.input l0.servo.scale ) ) ) ( * -1 ( + ( ^ l0.servo.q_i 2 ) ( * -1 ( ^ l0.servo.q_j 2 ) ) ( * -1 ( ^ l0.servo.q_k 2 ) ) ( ^ l0.servo.q_a 2 ) ) ( sin ( * l0.servo.input l0.servo.scale ) ) ) ) ( + ( * -2 l1.horn.q_a l1.horn.q_k ) ( * 2 l1.horn.q_i l1.horn.q_j ) ) )
+( == ( + ( * ( + ( ^ l0.servo.q_i 2 ) ( * -1 ( ^ l0.servo.q_j 2 ) ) ( * -1 ( ^ l0.servo.q_k 2 ) ) ( ^ l0.servo.q_a 2 ) ) ( cos ( * l0.servo.input l0.servo.scale ) ) ) ( * ( + ( * -2 l0.servo.q_a l0.servo.q_k ) ( * 2 l0.servo.q_i l0.servo.q_j ) ) ( sin ( * l0.servo.input l0.servo.scale ) ) ) ) ( + ( ^ l1.horn.q_a 2 ) ( * -1 ( ^ l1.horn.q_k 2 ) ) ( * -1 ( ^ l1.horn.q_j 2 ) ) ( ^ l1.horn.q_i 2 ) ) )
+( == ( + ( * ( + ( * 2 l0.servo.q_i l0.servo.q_j ) ( * 2 l0.servo.q_a l0.servo.q_k ) ) ( cos ( * l0.servo.input l0.servo.scale ) ) ) ( * ( + ( * -1 ( ^ l0.servo.q_i 2 ) ) ( * -1 ( ^ l0.servo.q_k 2 ) ) ( ^ l0.servo.q_j 2 ) ( ^ l0.servo.q_a 2 ) ) ( sin ( * l0.servo.input l0.servo.scale ) ) ) ) ( + ( * 2 l1.horn.q_a l1.horn.q_k ) ( * 2 l1.horn.q_i l1.horn.q_j ) ) )
+( == ( + ( * 2 l0.servo.q_i l0.servo.q_k ) ( * 2 l0.servo.q_a l0.servo.q_j ) ) ( + ( * 2 l1.horn.q_i l1.horn.q_k ) ( * 2 l1.horn.q_a l1.horn.q_j ) ) )
+( == ( + ( * -1 ( + ( * 2 l0.servo.q_i l0.servo.q_j ) ( * 2 l0.servo.q_a l0.servo.q_k ) ) ( sin ( * l0.servo.input l0.servo.scale ) ) ) ( * ( + ( * -1 ( ^ l0.servo.q_i 2 ) ) ( * -1 ( ^ l0.servo.q_k 2 ) ) ( ^ l0.servo.q_j 2 ) ( ^ l0.servo.q_a 2 ) ) ( cos ( * l0.servo.input l0.servo.scale ) ) ) ) ( + ( ^ l1.horn.q_a 2 ) ( * -1 ( ^ l1.horn.q_k 2 ) ) ( * -1 ( ^ l1.horn.q_i 2 ) ) ( ^ l1.horn.q_j 2 ) ) )
+( == ( + ( * l0.servo.hornheight ( + ( * -1 ( ^ l0.servo.q_i 2 ) ) ( ^ l0.servo.q_k 2 ) ( * -1 ( ^ l0.servo.q_j 2 ) ) ( ^ l0.servo.q_a 2 ) ) ) l0.servo.dz ) l1.horn.dz )
+( == ( + l0.servo.dx ( * l0.servo.hornheight ( + ( * 2 l0.servo.q_i l0.servo.q_k ) ( * 2 l0.servo.q_a l0.servo.q_j ) ) ) ) l1.horn.dx )
+( == ( + ( * l0.servo.hornheight ( + ( * 2 l0.servo.q_j l0.servo.q_k ) ( * -2 l0.servo.q_a l0.servo.q_i ) ) ) l0.servo.dy ) l1.horn.dy )
+( == ( + ( * 2 l0.servo.q_j l0.servo.q_k ) ( * -2 l0.servo.q_a l0.servo.q_i ) ) ( + ( * 2 l1.horn.q_j l1.horn.q_k ) ( * -2 l1.horn.q_a l1.horn.q_i ) ) )
+( == ( + ( ^ l1.servo.q_k 2 ) ( ^ l1.servo.q_a 2 ) ( * -1 ( ^ l1.servo.q_i 2 ) ) ( * -1 ( ^ l1.servo.q_j 2 ) ) ) ( + ( * -1 ( ^ l2.horn.q_j 2 ) ) ( * -1 ( ^ l2.horn.q_i 2 ) ) ( ^ l2.horn.q_k 2 ) ( ^ l2.horn.q_a 2 ) ) )
+( == ( + ( * ( + ( * 2 l1.servo.q_j l1.servo.q_k ) ( * 2 l1.servo.q_a l1.servo.q_i ) ) ( cos ( * l1.servo.input l1.servo.scale ) ) ) ( * -1 ( + ( * 2 l1.servo.q_i l1.servo.q_k ) ( * -2 l1.servo.q_a l1.servo.q_j ) ) ( sin ( * l1.servo.input l1.servo.scale ) ) ) ) ( + ( * 2 l2.horn.q_j l2.horn.q_k ) ( * 2 l2.horn.q_a l2.horn.q_i ) ) )
+( == ( + ( * ( + ( * 2 l1.servo.q_i l1.servo.q_k ) ( * -2 l1.servo.q_a l1.servo.q_j ) ) ( cos ( * l1.servo.input l1.servo.scale ) ) ) ( * ( + ( * 2 l1.servo.q_j l1.servo.q_k ) ( * 2 l1.servo.q_a l1.servo.q_i ) ) ( sin ( * l1.servo.input l1.servo.scale ) ) ) ) ( + ( * 2 l2.horn.q_i l2.horn.q_k ) ( * -2 l2.horn.q_a l2.horn.q_j ) ) )
+( == ( + ( * -1 ( + ( ^ l1.servo.q_a 2 ) ( * -1 ( ^ l1.servo.q_j 2 ) ) ( ^ l1.servo.q_i 2 ) ( * -1 ( ^ l1.servo.q_k 2 ) ) ) ( sin ( * l1.servo.input l1.servo.scale ) ) ) ( * ( + ( * 2 l1.servo.q_i l1.servo.q_j ) ( * -2 l1.servo.q_a l1.servo.q_k ) ) ( cos ( * l1.servo.input l1.servo.scale ) ) ) ) ( + ( * 2 l2.horn.q_i l2.horn.q_j ) ( * -2 l2.horn.q_a l2.horn.q_k ) ) )
+( == ( + ( * ( + ( ^ l1.servo.q_a 2 ) ( * -1 ( ^ l1.servo.q_j 2 ) ) ( ^ l1.servo.q_i 2 ) ( * -1 ( ^ l1.servo.q_k 2 ) ) ) ( cos ( * l1.servo.input l1.servo.scale ) ) ) ( * ( + ( * 2 l1.servo.q_i l1.servo.q_j ) ( * -2 l1.servo.q_a l1.servo.q_k ) ) ( sin ( * l1.servo.input l1.servo.scale ) ) ) ) ( + ( * -1 ( ^ l2.horn.q_j 2 ) ) ( ^ l2.horn.q_i 2 ) ( * -1 ( ^ l2.horn.q_k 2 ) ) ( ^ l2.horn.q_a 2 ) ) )
+( == ( + ( * ( + ( * 2 l1.servo.q_i l1.servo.q_j ) ( * 2 l1.servo.q_a l1.servo.q_k ) ) ( cos ( * l1.servo.input l1.servo.scale ) ) ) ( * ( + ( ^ l1.servo.q_a 2 ) ( * -1 ( ^ l1.servo.q_i 2 ) ) ( ^ l1.servo.q_j 2 ) ( * -1 ( ^ l1.servo.q_k 2 ) ) ) ( sin ( * l1.servo.input l1.servo.scale ) ) ) ) ( + ( * 2 l2.horn.q_i l2.horn.q_j ) ( * 2 l2.horn.q_a l2.horn.q_k ) ) )
+( == ( + ( * 2 l1.servo.q_i l1.servo.q_k ) ( * 2 l1.servo.q_a l1.servo.q_j ) ) ( + ( * 2 l2.horn.q_a l2.horn.q_j ) ( * 2 l2.horn.q_i l2.horn.q_k ) ) )
+( == ( + ( * -1 ( + ( * 2 l1.servo.q_i l1.servo.q_j ) ( * 2 l1.servo.q_a l1.servo.q_k ) ) ( sin ( * l1.servo.input l1.servo.scale ) ) ) ( * ( + ( ^ l1.servo.q_a 2 ) ( * -1 ( ^ l1.servo.q_i 2 ) ) ( ^ l1.servo.q_j 2 ) ( * -1 ( ^ l1.servo.q_k 2 ) ) ) ( cos ( * l1.servo.input l1.servo.scale ) ) ) ) ( + ( * -1 ( ^ l2.horn.q_i 2 ) ) ( * -1 ( ^ l2.horn.q_k 2 ) ) ( ^ l2.horn.q_a 2 ) ( ^ l2.horn.q_j 2 ) ) )
+( == ( + ( * l1.servo.hornheight ( + ( ^ l1.servo.q_k 2 ) ( ^ l1.servo.q_a 2 ) ( * -1 ( ^ l1.servo.q_i 2 ) ) ( * -1 ( ^ l1.servo.q_j 2 ) ) ) ) l1.servo.dz ) l2.horn.dz )
+( == ( + ( * l1.servo.hornheight ( + ( * 2 l1.servo.q_i l1.servo.q_k ) ( * 2 l1.servo.q_a l1.servo.q_j ) ) ) l1.servo.dx ) l2.horn.dx )
+( == ( + l1.servo.dy ( * l1.servo.hornheight ( + ( * -2 l1.servo.q_a l1.servo.q_i ) ( * 2 l1.servo.q_j l1.servo.q_k ) ) ) ) l2.horn.dy )
+( == ( + ( * -2 l1.servo.q_a l1.servo.q_i ) ( * 2 l1.servo.q_j l1.servo.q_k ) ) ( + ( * -2 l2.horn.q_a l2.horn.q_i ) ( * 2 l2.horn.q_j l2.horn.q_k ) ) )
+( == siminput0_input l0.servo.input )
+( == siminput1_input l1.servo.input )
+
+

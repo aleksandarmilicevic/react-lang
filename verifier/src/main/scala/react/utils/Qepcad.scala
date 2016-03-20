@@ -6,6 +6,10 @@ import dzufferey.utils.LogLevel._
 
 object Qepcad {
 
+  val defaultMemory = 100000000l
+  val defaultPrime = 2000
+  val defaultTimeout = 120 * 1000 // 2 min
+  
   def sanitize(str: String): String = str.replaceAll("_", "").replaceAll("\\.", "")
   
   def sanitizeNames(rename: Map[Variable, Variable], f: Formula): Formula = f match {
@@ -66,10 +70,6 @@ object Qepcad {
       printAssume.foreach(println)
     }
 
-    val defaultMemory = 100000000l
-    val defaultPrime = 2000
-    val defaultTimeout = 300 * 1000 // 5 min
-  
     def execute(mcCallum: Boolean = true,
                 memory: Long = defaultMemory,
                 primeList: Int = defaultPrime,
@@ -148,18 +148,18 @@ object Qepcad {
        
         val formula = QepcadParser(line)
 
-        dumpQuery(Some(formula))
+        //dumpQuery(Some(formula))
 
         sanitizeNames(derenaming, formula)
       } catch {
         case t: Throwable =>
-          dumpQuery(None)
+          //dumpQuery(None)
           throw t
       }
     }
 
     def dumpQuery(result: Option[Formula]) = {
-      if (true && !toEliminate.isEmpty) {
+      if (!toEliminate.isEmpty) {
         val fname = Namer("eliminationQuery") + ".txt"
         val query =
           "free variables:\n" + freeVariables.map(renaming).mkString(", ") + "\n" +
@@ -198,6 +198,10 @@ object QepcadParser extends StandardTokenParsers {
     "(", ")", "[", "]", "/\\", "\\/",
     "=", "/=", "<", ">", ">=", "<=",
     "+", "-", "*", "/", "^"
+  )
+
+  lexical.reserved += (
+    "TRUE", "FALSE"
   )
 
   def lit(l: Long) = Literal(l).setType(Real)
@@ -273,9 +277,11 @@ object QepcadParser extends StandardTokenParsers {
   //         | '[' repsep1(equation, /\) ']'
   //         | '[' repsep1(equation, \/) ']'
   def system: Parser[Formula] = (
-    equation
-  | "[" ~> rep1sep(equation, "/\\") <~ "]" ^^ ( lst => And(lst:_*) )
-  | "[" ~> rep1sep(equation, "\\/") <~ "]" ^^ ( lst => Or(lst:_*) )
+    "TRUE" ^^^ True()
+  | "FALSE" ^^^ False()
+  | "[" ~> system <~ "]"
+  | rep1sep(equation, "/\\") ^^ ( lst => if (lst.size == 1) lst.head else And(lst:_*) )
+  | rep1sep(equation, "\\/") ^^ ( lst => Or(lst:_*) )
   )
 
   def apply(str: String): Formula = {
@@ -323,6 +329,8 @@ object QepcadPrinter {
 
   def printFormula(formula: Formula)(implicit level: Level = Error): String = formula match {
     case Variable(name) => name
+    case Literal(true) => "TRUE"
+    case Literal(false) => "FALSE"
     case Literal(l: Long) => l.toString
     case Literal(d: Double) => assert(d.isWhole); d.toLong.toString //TODO check for overflow
     case ForAll(vs, f) => vs.map(v => "(A "+v+")").mkString + "[ " + printFormula(f) + " ]"

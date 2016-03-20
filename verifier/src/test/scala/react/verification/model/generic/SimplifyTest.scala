@@ -37,15 +37,32 @@ class SimplifyTest extends FunSuite {
 //  val robot = GenericRobot("r1", Resources.playground, Resources.path + "folded_arm_2servos.txt")
 //  val simplifier = new Simplify(robot)
 //  //val robot2 = simplifier.normalize(Some(25)) //TODO put a smaller timout
-//  val robot2 = simplifier.normalize(Some(6))
+//  val robot2 = simplifier.normalize(Some(12))
 //  println("before")
 //  robot.aboutTheEqns
+//  Console.println(robot.modelDescription)
 //  println("after")
 //  robot2.aboutTheEqns
-//  IO.writeInFile( Resources.path + "folded_arm_2servos_simplified.txt", robot2.modelDescription)
+//  Console.println(robot2.modelDescription)
+//  //IO.writeInFile( Resources.path + "folded_arm_2servos_simplified.txt", robot2.modelDescription)
 //  ()
-//  //Console.println(robot.modelDescription)
-//  //Console.println(robot2.modelDescription)
+//}
+
+//test("normalization 4") {
+//  val robot = GenericRobot("r1", Resources.playground, Resources.path + "armeqns.txt")
+//  val simplifier = new Simplify(robot)
+//  simplifier.qepcadSafeProjection = false
+//  simplifier.qepcadTimeout = 30000
+//  simplifier.qepcadBound = 8
+//  val robot2 = simplifier.normalize()
+//  println("before")
+//  robot.aboutTheEqns
+//  Console.println(robot.modelDescription)
+//  println("after")
+//  robot2.aboutTheEqns
+//  Console.println(robot2.modelDescription)
+//  IO.writeInFile( Resources.path + "armeqns_simplified.txt", robot2.modelDescription)
+//  ()
 //}
 
   test("stats") {

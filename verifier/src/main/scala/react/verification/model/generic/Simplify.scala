@@ -14,6 +14,10 @@ import Utils._
 
 class Simplify(robot: GenericRobot) {
 
+  var qepcadSafeProjection = true
+  var qepcadTimeout = Qepcad.defaultTimeout
+  var qepcadBound = 6
+
   //TODO generalize: instead of x = y, we can do x = f(\vec y)
   protected def findEqualVariables(conjuncts: List[Formula]): List[(Variable, Variable)] = {
     conjuncts.flatMap{
@@ -39,7 +43,7 @@ class Simplify(robot: GenericRobot) {
     f.alpha(eqs)
   }
 
-  protected class QeSimplifier(f: Formula, bound: Int, useAssumptions: Boolean) {
+  protected class QeSimplifier(f: Formula, useAssumptions: Boolean) {
 
     val conjuncts = FormulaUtils.getConjuncts(f)
 
@@ -91,14 +95,17 @@ class Simplify(robot: GenericRobot) {
       assert(nfvs.forall( v => unabstract(v).freeVariables.intersect(vars).isEmpty ))
 
       val fvs = clauses1.freeVariables -- vars
-      if (fvs.size + vars.size > bound) {
+      if (fvs.size + vars.size > qepcadBound) {
         Logger("Simplify", Info, "too many variable to eliminate " + vars.mkString(",") + " using qepcad: " + fvs.size)
         None
       } else {
         Logger("Simplify", Info, "try to eliminate " + vars.mkString(",") + " using qepcad.")
         val query = Qepcad.query(fvs.toList, vars.toList, clauses1, assumptions(fvs))
         try {
-          val clauses2 = query.execute(false) //TODO option for McCallum proj, changing TO
+          val clauses2 = query.execute(!qepcadSafeProjection,
+                                       Qepcad.defaultMemory,
+                                       Qepcad.defaultPrime,
+                                       qepcadTimeout)
           val clauses3 = unabstract(clauses2)
           val f2 = FormulaUtils.getConjuncts(clauses3)
           val ir = irrelevant(vars)
@@ -116,7 +123,7 @@ class Simplify(robot: GenericRobot) {
       def tryEliminate(vs: List[Variable]): Formula = vs match {
         case x :: xs =>
           mkQuery(Set(x)) match {
-            case Some(f2) => new QeSimplifier(f2, bound, useAssumptions).result
+            case Some(f2) => new QeSimplifier(f2, useAssumptions).result
             case None => tryEliminate(xs)
           }
         case Nil => f
@@ -134,27 +141,23 @@ class Simplify(robot: GenericRobot) {
   )
 
   def isNeeded(v: Variable): Boolean = {
-    frameVariables.contains(v) || robot.inputs.exists(_.v == v)
+    frameVariables.contains(v) ||
+    robot.inputs.exists(_.v == v) //||
+    //!robot.dynamic.contains(v)
   }
 
-  //TODO try a global slqf query
-  def slfqQuery {
-    //TODO further normalization
-    val allSupported = And(robot.conjuncts.filter(Qepcad.isSupported):_*)
-    println(QepcadPrinter.printFormula(allSupported))
-  }
-
-
-  def normalize(useQepcad: Option[Int], safe: Boolean = true) = {
+  def normalize() = {
 
     def query(f: Formula): Formula = {
       val vars = f.freeVariables
-      useQepcad match {
-        case Some(b) if vars.size <= b && vars.size > 0 =>
+      if (vars.size <= qepcadBound && vars.size > 0) {
           val query = Qepcad.query(vars.toList, Nil, f, None)
-          try query.execute(!safe)
-          catch { case _: Throwable => f }
-        case _ => f
+          try query.execute(!qepcadSafeProjection,
+                            Qepcad.defaultMemory,
+                            Qepcad.defaultPrime,
+                            qepcadTimeout)
+      } else {
+        f
       }
     }
 
@@ -171,24 +174,23 @@ class Simplify(robot: GenericRobot) {
     }
 
     def process(f: Formula, fct: Formula => Formula): Formula = f match {
-      case And(lst @ _*) => And(lst.map(process(_, fct)):_*)
-      case Or(lst @ _*) => Or(lst.map(process(_, fct)):_*)
+      case And(lst @ _*) =>
+        val lst2 = lst.par.map(process(_, fct)).seq
+        And(lst2:_*)
+      case Or(lst @ _*) =>
+        val lst2 = lst.par.map(process(_, fct)).seq
+        Or(lst2:_*)
       case other => fct(other)
     }
 
-    def tryQE(f: Formula) = {
-      useQepcad match {
-        case Some(b) => new QeSimplifier(f, b, false).result
-        case None => f
-      }
-    }
+    def tryQE(f: Formula) = new QeSimplifier(f, false).result
 
     var constraints = robot.constraints 
     var nFv = constraints.freeVariables.size
     var oFv = nFv + 1
     while (nFv < oFv) {
       oFv = nFv
-      val constraints2 = process(constraints, simplify)
+      val constraints2 = constraints //process(constraints, simplify)
       val constraints3 = equalityPropagation(constraints2)
       val constraints4 = process(constraints3, syntacic)
       constraints = tryQE(constraints4)
