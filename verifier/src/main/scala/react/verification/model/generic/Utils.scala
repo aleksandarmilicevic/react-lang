@@ -31,6 +31,8 @@ object Utils {
       (symbol, args2) match {
         case (Minus, List(Literal(d: Double))) => Literal(-d)
         case (Minus, List(f)) => Times(Literal(-1.0),f)
+        case (Times, List(f)) => f
+        case (Plus,  List(f)) => f
         case _ => symbol(args2:_*)
       }
     case SNil => 

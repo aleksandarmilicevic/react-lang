@@ -1,0 +1,27 @@
+/* strucutres for the different elements:
+ *  -p: vector for the position in the parent frame
+ *  -q: unit quaternion for the orientation
+ */
+defstruct(frame(p, q));
+
+/* macro to move things in and out of frames
+ */
+vecFromFrame(f, p) := f@p + rotate(p, f@q);
+vecToFrame(p, f) := rotate(p - f@p, inverse(f@q));
+quatFromFrame(f, q) := mult(f@q, q);
+quatToFrame(q, f) := mult(inverse(f@q), q);
+
+/* domain constraints
+ */
+boundFrame(f, lb, ub) := [
+    unit(f@q),
+    f@q[1] >= -1, f@q[1] <= 1,
+    f@q[2] >= -1, f@q[2] <= 1,
+    f@q[3] >= -1, f@q[3] <= 1,
+    f@q[4] >= -1, f@q[4] <= 1,
+    f@p[1] >= lb, f@p[1] <= ub,
+    f@p[2] >= lb, f@p[2] <= ub,
+    f@p[3] >= lb, f@p[3] <= ub
+];
+boundAngle(a) := [a >= - 3.15, a <= 3.15];
+

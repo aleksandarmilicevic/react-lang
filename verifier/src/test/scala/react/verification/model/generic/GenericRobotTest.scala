@@ -35,20 +35,8 @@ class GenericRobotTest extends FunSuite {
     robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (10: Short))
     robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
     robot.useKINSOL = true
-    Console.println("(1k) before: " + robot)
     robot.elapse(100)
-    Console.println("(1k) after:  " + robot)
-  }
-
-  test("moveFor 1 kinsol,ida") {
-    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
-    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (10: Short))
-    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
-    robot.useKINSOL = true
-    robot.useIDA = true
-    Console.println("(1i) before: " + robot)
-    robot.elapse(100)
-    Console.println("(1i) after:  " + robot)
+    Console.println("(1k) after: " + robot)
   }
 
   test("moveFor 2") {
@@ -60,6 +48,15 @@ class GenericRobotTest extends FunSuite {
     Console.println("(2) after:  " + robot)
   }
 
+  test("moveFor 2 kinsol") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (0: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
+    robot.useKINSOL = true
+    robot.elapse(100)
+    Console.println("(2k) after: " + robot)
+  }
+
   test("moveFor 3") {
     val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
     robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (10: Short))
@@ -67,6 +64,15 @@ class GenericRobotTest extends FunSuite {
     Console.println("(3) before: " + robot)
     robot.elapse(100)
     Console.println("(3) after:  " + robot)
+  }
+  
+  test("moveFor 3 kinsol") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (10: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (0: Short))
+    robot.useKINSOL = true
+    robot.elapse(100)
+    Console.println("(3k) after: " + robot)
   }
   
   test("moveFor 4") {
@@ -78,13 +84,34 @@ class GenericRobotTest extends FunSuite {
     Console.println("(4) after:  " + robot)
   }
 
+  test("moveFor 4 kinsol") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (-10: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
+    robot.useKINSOL = true
+    robot.elapse(100)
+    Console.println("(4k) after: " + robot)
+  }
+
 //test("init 2") {
 //  val robot = GenericRobot(Resources.playground, Resources.path + "seg_eqns_simple_normal.txt")
-//  robot.store = robot.store + (Variable("siminput0_input").setType(Real) -> (1: Short))
-//  robot.store = robot.store + (Variable("siminput1_input").setType(Real) -> (1: Short))
+//  robot.store = robot.store + (Variable("siminput0_input").setType(Real) -> (10: Short))
+//  robot.store = robot.store + (Variable("siminput1_input").setType(Real) -> (10: Short))
 //  robot.aboutTheEqns
 //  robot.initSolution
 //}
+
+//test("moveFor 1 kinsol,ida") {
+//  val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+//  robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (10: Short))
+//  robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
+//  robot.useKINSOL = true
+//  robot.useIDA = true
+//  Console.println("(1i) before: " + robot)
+//  robot.elapse(100)
+//  Console.println("(1i) after:  " + robot)
+//}
+
 
   test("make IDA file 0") {
     val robot = GenericRobot("r1", Resources.playground, Resources.path + "trivial.txt")

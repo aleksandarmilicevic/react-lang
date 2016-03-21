@@ -31,6 +31,7 @@ class GenericRobot( val id: String,
                     val dynamic: List[Variable],
                     val constraints: Formula ) extends GroundRobot(bBox, None) with SymmetryAndMemoization {
 
+  var dRealTO = 10000
   var tolerance = 1e-16
   var useIDA = false
   var useKINSOL = false
@@ -155,7 +156,7 @@ class GenericRobot( val id: String,
                          case x => x }, f)
     }
     val cstr = replace(cstr0) //?? ArithmeticSimplification.polynomialNF ??
-    DRealQuery.getSolutions(cstr, precision, 1000, dynamic) match {
+    DRealQuery.getSolutions(cstr, precision, dRealTO, dynamic) match {
       case Some(values) =>
         val knownValues = known.map{
           case (k, Literal(d: Double)) => k -> d
@@ -333,24 +334,6 @@ class GenericRobot( val id: String,
     }
   }
 
-//override protected def moveFor(t: Int) = {
-//  try {
-//    val tolerance = 1e-16
-//    val (init, initDt) = initSolution(tolerance)
-//    val (_, value, valueDt) = ida.solve( t / 1000.0, store.mapValues(_.toDouble), init, initDt)
-//    x = value(frame.x) / 1000.0
-//    y = value(frame.y) / 1000.0 
-//    //z = value(frame.z) / 1000.0
-//    val q = Quaternion(value(frame.a), value(frame.i), value(frame.j), value(frame.k))
-//    orientation = Angle.thetaFromQuaternion(q)
-//    //TODO should we save the dt and other value to solve the next thing ??
-//  } catch {
-//    case e: Throwable =>
-//      Logger("GenericRobot", Error, "could not compute motion") //TODO print more
-//      throw e
-//  }
-//}
-  
   override def elapseBP(t: Int): BranchingPoint = {
 
     new BranchingPoint {

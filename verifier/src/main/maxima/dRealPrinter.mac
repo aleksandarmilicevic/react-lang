@@ -1,0 +1,36 @@
+/* preprocess(f,[[v1,cst1], ...]);
+ *   replace occurances of v1 in f by cst1*v1
+ */
+varp(v) := atom(v) and not constantp(v) $
+matchdeclare([patI1, patI2], constantp, patV, varp) $
+defrule(bound1, patI1 * patV >= patI2, patV >= float(patI2/patI1)) $
+defrule(bound2, patI1 * patV <= patI2, patV <= float(patI2/patI1)) $
+defrule(bound3, patI1 * patV > patI2, patV > float(patI2/patI1)) $
+defrule(bound4, patI1 * patV < patI2, patV < float(patI2/patI1)) $
+simpBnd(f) := apply1(f, bound1, bound2, bound3, bound4) $
+scale0(f, var, factor) := float(fullratsimp(simpBnd(subst(factor*var, var, f)))) $
+scale(f, scaling) := lreduce(lambda([f,vs], scale0(f, vs[1], vs[2])), scaling, f) $
+preprocess(f, scaling) := scale(f, scaling);
+
+/* create a dReal query in the SMT format.
+ * this prints the new lines correctly in the console
+ */
+dRealHeader: printf(false, "(set-option :precision 0.01)~%(set-logic QF_NRA)");
+dRealFooter: printf(false, "(check-sat)~%(exit)");
+concatLines(lst) := lreduce(lambda([x,y], printf(false, "~a~%~a", x, y)), lst);
+var(v) := printf(false, "(declare-fun ~a () Real)", v);
+declareVars(t) := concatLines(map(var, listofvars(t)));
+assert(t) := printf(false, "(assert ~a)", pp(t));
+pp(t) := if atom(t) then sconcat(t, " ")
+         else if op(t) = "[" then pp(apply("and", t))
+         else lreduce(sconcat, append(map(pp, args(t)), [") "]),sconcat("( ", op(t), " "));
+dRealQuery(t) := block([ d0: declareVars(t),
+                         d1: if op(t) = "[" then concatLines(map(assert, t)) else assert(t)
+                       ],
+                       concatLines([dRealHeader, d0, d1, dRealFooter]));
+
+/* printing in a file and coeffs for a list of variables, variables in an expression
+ */
+printIn(file, eqs) := block([s: openw(file),
+                             q: dRealQuery(eqs)],
+                            [printf(s, q), close(s)]);

@@ -1,0 +1,26 @@
+/* Alternative equations for wheels
+ */
+
+/* parameters
+ */
+wheel_radius : r;
+wheel_p : [wx, wy, wz];
+wheel_q : [wqa, wqi, wqj, wqk];
+rotation_axis : rotate([0,1,0], wheel_q);
+depends([wx, wy, wz, wqa, wqi, wqj, wjk], t);
+angular_speed : 2 * mult(diff(wheel_q, t), inverse(wheel_q));
+
+/* point of contact (intersection of the plane defining the wheel with the ground and orthogonal projection of the center of the wheel on the resulting line)
+ */
+n: [0,0,1]$
+o: [0,0,0]$
+p1: point_plane(wheel_p, o, n)$
+p2: point_plane(p1, wheel_p, rotation_axis)$
+proj: line_plane(wheel_p, p2 - wheel_p, o, n);
+
+/* equations
+ */
+norm(wheel_p - proj) = wheel_radius;    //wheel touch the ground
+wz > 0;                                 //wheel above the ground
+angular_speed[1] = 0;                   //the 1st component of angular_speed = 0 because it is a vector in quaternion form
+diff(proj, t) = crossprod(q2v(angular_speed), proj - wheel_p); //linear speed depends on angular speed and radius

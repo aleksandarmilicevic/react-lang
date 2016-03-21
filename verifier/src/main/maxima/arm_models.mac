@@ -1,0 +1,357 @@
+/* Import definitions
+  */
+batch("quaternions.mac") $
+batch("frame.mac") $
+batch("joint.mac") $
+batch("dRealPrinter.mac") $
+coeffList(expr, coeff) := map(lambda([x], [x,coeff]), listofvars(expr)) $
+
+/* inputs of the servo
+ */
+alpha;
+beta;
+gamma;
+
+/* parameter of the model:
+ * - arm_a is the length of the upper arm and the connector
+ * - arm_b is the length of the lower arm
+ * - arm_a_servo is the length of the piece connecting the beta servo to the connector arm
+ */
+arm_a: [148, 0, 0];
+arm_b: [160, 0, 0];
+servo2arma: [-50, 0, 0];
+zero: [0, 0, 0];
+
+/* structural elements:
+ *  -base
+ *  -lower arm
+ *  -upper arm (the one controlled by alpha)
+ *  -connector arm (the one controlled by beta)
+ *  -(x,y,z) position of the effector
+ *  each element has a position vector and an rotation quaternion
+ *  since the servo for the lower arm is connected to the base, the rotation of the lower arm depends only on the base.
+ */
+ground: new (frame ([0,0,0], [1,0,0,0]));
+base: new (frame ([bx,by,bz], [ba,bi,bj,bk]));
+upper: new (frame ([ux, uy, uz], [ua, ui, uj, uk]));
+lower: new (frame ([lx, ly, lz], [la, li, lj, lk]));
+effector: new (frame ([x,y,z], [ea, ei, ej, ek]));
+
+servo0: mkQuat(gamma, [0,0,1]) $
+servo1: mkQuat(alpha, [0,1,0]) $
+servo2: mkQuat(beta,  [0,1,0]) $
+
+/* model with only the upper arm
+ */
+model0(lb, ub) := append(
+    boundFrame(upper, lb, ub),
+    boundFrame(effector, lb, ub),
+    boundFrame(base, lb, ub),
+    boundAngle(alpha),
+    boundAngle(gamma),
+    fixed([ground, zero, servo0],   [base, zero, [1,0,0,0]]),
+    fixed([base, zero, servo1],   [upper, zero, [1,0,0,0]]),
+    fixed([upper, arm_a, [1,0,0,0]],   [effector, zero, [1,0,0,0]])
+);
+/* dReal query
+ */
+eqs: preprocess(model0(-200, 200), []) $
+printIn("unscaled0.smt2", eqs);
+sc0(coeff) := coeffList([bx,by,bz,ux,uy,uz,x,y,z], coeff) $
+eqs: preprocess(model0(-200, 200), sc0(1000)) $
+printIn("model0.smt2", eqs);
+
+/* model without connector (servo on joint between the 2 arms)
+ */
+model1(lb, ub) := append(
+    boundFrame(upper, lb, ub),
+    boundFrame(lower, lb, ub),
+    boundFrame(effector, lb, ub),
+    boundFrame(base, lb, ub),
+    boundAngle(alpha),
+    boundAngle(beta),
+    boundAngle(gamma),
+    fixed([ground, zero,  servo0],    [base,     zero, [1,0,0,0]]),
+    fixed([base,   zero,  servo1],    [upper,    zero, [1,0,0,0]]),
+    fixed([upper,  arm_a, servo2],    [lower,    zero, [1,0,0,0]]),
+    fixed([lower,  arm_b, [1,0,0,0]], [effector, zero, [1,0,0,0]])
+);
+/* dReal query
+ */
+eqs: preprocess(model1(-500, 500), []) $
+printIn("unscaled1.smt2", eqs);
+sc1(coeff) := coeffList([bx,by,bz,ux,uy,uz,lx,ly,lz,x,y,z], coeff) $
+eqs: preprocess(model1(-500, 500), sc1(1000)) $
+printIn("model1.smt2", eqs);
+
+/* model with connector
+ */
+
+/* new structural elements:
+ * -connector: the parts that connects the servo to upperC
+ * -upperC: the second upper arm
+  */
+connector: new (frame ([cx, cy, cz], [ca, ci, cj, ck]));
+upperC: new (frame ([ucx, ucy, ucz], [uca, uci, ucj, uck]));
+
+/* constraints
+ */
+model2(lb, ub) := append(
+    boundFrame(upper, lb, ub),
+    boundFrame(lower, lb, ub),
+    boundFrame(effector, lb, ub),
+    boundFrame(base, lb, ub),
+    boundFrame(upperC, lb, ub),
+    boundFrame(connector, lb, ub),
+    boundAngle(alpha),
+    boundAngle(beta),
+    boundAngle(gamma),
+    fixed([ground, zero, servo0], [base, zero, [1,0,0,0]]),
+    fixed([base,   zero, servo1], [upper, zero, [1,0,0,0]]),
+    fixed([base,   zero, servo2], [connector, zero, [1,0,0,0]]),
+    revolute([connector, servo2arma, [0,1,0]], [upperC, zero,       [0,1,0]]),
+    revolute([upper,     arm_a,      [0,1,0]], [lower,  zero,       [0,1,0]]),
+    revolute([upperC,    arm_a,      [0,1,0]], [lower,  servo2arma, [0,1,0]]),
+    fixed([lower, arm_b, [1,0,0,0]], [effector, zero, [1,0,0,0]])
+);
+/* dReal query
+ */
+eqs: preprocess(model2(-500, 500), []) $
+printIn("unscaled2.smt2", eqs);
+sc2(coeff) := coeffList([bx,by,bz,ux,uy,uz,lx,ly,lz,x,y,z,cx,cy,cz,ucx,ucy,ucz], coeff) $
+eqs: preprocess(model2(-500, 500), sc2(1000)) $
+printIn("model2.smt2", eqs);
+
+/* a sighly simpler model to test the revolute joints:
+ */
+model2a(lb, ub) := append(
+    boundFrame(upper, lb, ub),
+    boundFrame(lower, lb, ub),
+    boundFrame(effector, lb, ub),
+    boundFrame(upperC, lb, ub),
+    boundFrame(connector, lb, ub),
+    boundAngle(alpha),
+    boundAngle(beta),
+    fixed([ground, zero, servo1], [upper, zero, [1,0,0,0]]),
+    fixed([ground, zero, servo2], [connector, zero, [1,0,0,0]]),
+    revolute([connector, servo2arma, [0,1,0]], [upperC, zero,       [0,1,0]]),
+    revolute([upper,     arm_a,      [0,1,0]], [lower,  zero,       [0,1,0]]),
+    revolute([upperC,    arm_a,      [0,1,0]], [lower,  servo2arma, [0,1,0]]),
+    fixed([lower, arm_b, [1,0,0,0]], [effector, zero, [1,0,0,0]])
+);
+/* dReal query
+ */
+eqs: preprocess(model2a(-500, 500), sc2(1000)) $
+printIn("model2a.smt2", eqs);
+
+/* model with effector offset and second connector
+ */
+
+/* new structural elements:
+ * -balance: part at the joint between the two arms
+ * -upperB: part connected to the base and the balance
+ * -lowerB: part connected to the balance and the effector
+ */
+balance: new (frame ([blx, bly, blz], [bla, bli, blj, bk]));
+upperB: new (frame ([ubx, uby, ubz], [uba, ubi, ubj, ubk]));
+lowerB: new (frame ([lbx, lby, lbz], [lba, lbi, lbj, lbk]));
+offset1: [-50,0,50];
+offset2: [ 50,0,50];
+
+/* constraints
+ */
+model3(lb, ub) := append(
+    boundFrame(upper, lb, ub),
+    boundFrame(lower, lb, ub),
+    boundFrame(effector, lb, ub),
+    boundFrame(base, lb, ub),
+    boundFrame(upperC, lb, ub),
+    boundFrame(connector, lb, ub),
+    boundFrame(balance, lb, ub),
+    boundFrame(upperB, lb, ub),
+    boundFrame(lowerB, lb, ub),
+    boundAngle(alpha),
+    boundAngle(beta),
+    boundAngle(gamma),
+    fixed([ground, zero, servo0], [base, zero, [1,0,0,0]]),
+    fixed([base, zero, servo1],   [upper, zero, [1,0,0,0]]),
+    fixed([base, zero, servo2],   [connector, zero, [1,0,0,0]]),
+    revolute([connector, servo2arma, [0,1,0]], [upperC, zero, [0,1,0]]),
+    revolute([upper, arm_a, [0,1,0]], [lower, zero, [0,1,0]]),
+    revolute([upperC, arm_a, [0,1,0]], [lower, servo2arma, [0,1,0]]),
+    revolute([lower, arm_b, [0,1,0]], [effector, zero, [0,1,0]]),
+    revolute([base, offset1, [0,1,0]], [upperB, zero, [0,1,0]]),
+    revolute([upper, arm_a, [0,1,0]], [balance, zero, [0,1,0]]),
+    revolute([upperB, arm_a, [0,1,0]], [balance, offset1, [0,1,0]]),
+    revolute([balance, offset2, [0,1,0]], [lowerB, zero, [0,1,0]]),
+    revolute([lowerB, zero, [0,1,0]], [effector, offset2, [0,1,0]])
+);
+
+/* dReal query
+ */
+eqs: preprocess(model3(-500, 500), []) $
+printIn("unscaled3.smt2", eqs);
+sc3(coeff) := coeffList([bx,by,bz,ux,uy,uz,lx,ly,lz,x,y,z,cx,cy,cz,ucx,ucy,ucz,blx,bly,blz,ubx,uby,ubz,lbx,lby,lbz], coeff) $
+eqs: preprocess(model3(-500, 500), sc3(1000)) $
+printIn("model3.smt2", eqs);
+
+/* equations for Stewart platform
+ */  
+
+/* semi-regular hexagon:
+ * -frame
+ * -radius
+ * -alpha (>= 0, < pi/3)
+ * -legs
+ * -index (1, 2) in the legs array
+ */
+hexa(f, r, a, l, i) := trigreduce(append(
+  vecEq(l[1][i], vecFromFrame(f, rotate([radius,0,0], mkQuat(       -alpha, [0,0,1])))),
+  vecEq(l[2][i], vecFromFrame(f, rotate([radius,0,0], mkQuat(        alpha, [0,0,1])))),
+  vecEq(l[3][i], vecFromFrame(f, rotate([radius,0,0], mkQuat(2*%pi/3-alpha, [0,0,1])))),
+  vecEq(l[4][i], vecFromFrame(f, rotate([radius,0,0], mkQuat(2*%pi/3+alpha, [0,0,1])))),
+  vecEq(l[5][i], vecFromFrame(f, rotate([radius,0,0], mkQuat(4*%pi/3-alpha, [0,0,1])))),
+  vecEq(l[6][i], vecFromFrame(f, rotate([radius,0,0], mkQuat(4*%pi/3+alpha, [0,0,1]))))
+));
+
+/* the 6 legs: two end points + control variables
+ */
+leg0: [[l00x, l00y, l00z], [l10x, l10y, l10z], l0];
+leg1: [[l01x, l01y, l01z], [l11x, l11y, l11z], l1];
+leg2: [[l02x, l02y, l02z], [l12x, l12y, l12z], l2];
+leg3: [[l03x, l03y, l03z], [l13x, l13y, l13z], l3];
+leg4: [[l04x, l04y, l04z], [l14x, l14y, l14z], l4];
+leg5: [[l05x, l05y, l05z], [l15x, l15y, l15z], l5];
+legs: [leg0, leg1, leg2, leg3, leg4, leg5];
+norm(a) := sqrt(a[1] * a[1] + a[2] * a[2] + a[3] * a[3]) $
+
+/* the base is the same as for the other arm
+ */
+
+/* the platform
+ */
+platform: new (frame ([sx,sy,sz], [sa,si,sj,sk]));
+
+/* the constraints
+ */
+model4(lb, ub) := append(
+    boundFrame(platform, lb, ub),
+    boundFrame(base, lb, ub),
+    map(lambda([x], x >= lb), listofvars(legs)),
+    map(lambda([x], x <= ub), listofvars(legs)),
+    vecEq(base@p, [0, 0, 0]),
+    quatEq(base@q, [1, 0, 0, 0]),
+    hexa(base, 10, %pi/12, legs, 1),
+    hexa(platform, 4, %pi/12, legs, 2),
+    map(lambda([x], x[3] = norm(x[1] - x[2])), legs)
+);
+/* dReal query
+ */
+eqs: preprocess(model4(-1000, 1000), []) $
+printIn("unscaled4.smt2", eqs);
+sc4(coeff) := coeffList([bx,by,bz,sx,sy,sz,legs],coeff)$
+eqs: preprocess(model4(-1000, 1000), sc4(4000)) $
+printIn("model4.smt2", eqs);
+
+/* model for the foldable arm from Ankur
+ */
+segment: [100,0,0];
+segment0: new (frame ([s0x,s0y,s0z], [s0a,s0i,s0j,s0k]));
+segment1: new (frame ([s1x,s1y,s1z], [s1a,s1i,s1j,s1k]));
+segment2: new (frame ([s2x,s2y,s2z], [s2a,s2i,s2j,s2k]));
+
+/* the contraints
+ */
+model5(lb, ub) := append(
+    boundFrame(segment0, lb, ub),
+    boundFrame(segment1, lb, ub),
+    boundFrame(segment2, lb, ub),
+    boundFrame(effector, lb, ub),
+    boundAngle(alpha),
+    boundAngle(beta),
+    boundAngle(gamma),
+    fixed([ground,   zero,    mkQuat(alpha, [0,0,1])], [segment0, zero, [1,0,0,0]]),
+    fixed([segment0, segment, mkQuat(beta,  [0,0,1])], [segment1, zero, [1,0,0,0]]),
+    fixed([segment1, segment, mkQuat(gamma, [0,0,1])], [segment2, zero, [1,0,0,0]]),
+    fixed([segment2, segment, [1,0,0,0]],              [effector, zero, [1,0,0,0]])
+);
+/* dReal query
+ */
+eqs: preprocess(model5(-1000, 1000), []) $
+printIn("unscaled5.smt2", eqs);
+sc5(coeff) := coeffList([x,y,z,s0x,s0y,s0z,s1x,s1y,s1z,s2x,s2y,s2z], coeff) $
+eqs: preprocess(model5(-1000, 1000), sc5(1000)) $
+printIn("model5.smt2", eqs);
+
+/* parametric version of foldable arm
+ */
+
+/* different length per segment
+ */
+l1: [length1,0,0];
+l2: [length2,0,0];
+l3: [length3,0,0];
+
+model6(lb, ub) := append(
+    boundFrame(segment0, lb, ub),
+    boundFrame(segment1, lb, ub),
+    boundFrame(segment2, lb, ub),
+    boundFrame(effector, lb, ub),
+    boundAngle(alpha),
+    boundAngle(beta),
+    boundAngle(gamma),
+    fixed([ground,   zero,    mkQuat(alpha, [0,0,1])], [segment0, zero, [1,0,0,0]]),
+    fixed([segment0, l1, mkQuat(beta,  [0,0,1])], [segment1, zero, [1,0,0,0]]),
+    fixed([segment1, l2, mkQuat(gamma, [0,0,1])], [segment2, zero, [1,0,0,0]]),
+    fixed([segment2, l3, [1,0,0,0]],               [effector, zero, [1,0,0,0]])
+);
+
+eqs: preprocess(model6(-1000, 1000), []) $
+printIn("unscaled6.smt2", eqs);
+
+/* uniform segments
+ */
+segment: [length,0,0];
+
+model7(lb, ub) := append(
+    boundFrame(segment0, lb, ub),
+    boundFrame(segment1, lb, ub),
+    boundFrame(segment2, lb, ub),
+    boundFrame(effector, lb, ub),
+    boundAngle(alpha),
+    boundAngle(beta),
+    boundAngle(gamma),
+    fixed([ground,   zero,    mkQuat(alpha, [0,0,1])], [segment0, zero, [1,0,0,0]]),
+    fixed([segment0, segment, mkQuat(beta,  [0,0,1])], [segment1, zero, [1,0,0,0]]),
+    fixed([segment1, segment, mkQuat(gamma, [0,0,1])], [segment2, zero, [1,0,0,0]]),
+    fixed([segment2, segment, [1,0,0,0]],               [effector, zero, [1,0,0,0]])
+);
+
+eqs: preprocess(model7(-1000, 1000), []) $
+printIn("unscaled7.smt2", eqs);
+
+/* model with only two motor
+ */
+l1: [length1,0,0];
+l2: [length2,0,0];
+l3: [length3,0,0];
+
+model8(lb, ub) := append(
+    boundFrame(segment0, lb, ub),
+    boundFrame(segment1, lb, ub),
+    boundFrame(segment2, lb, ub),
+    boundFrame(effector, lb, ub),
+    boundAngle(alpha),
+    boundAngle(beta),
+    fixed([ground,   zero,  [1,0,0,0]],                [segment0, zero, [1,0,0,0]]),
+    fixed([segment0, l1,    mkQuat(alpha,  [0,0,1])], [segment1, zero, [1,0,0,0]]),
+    fixed([segment1, l2,    mkQuat(beta, [0,0,1])],   [segment2, zero, [1,0,0,0]]),
+    fixed([segment2, l3,    [1,0,0,0]],                [effector, zero, [1,0,0,0]])
+);
+
+eqs: preprocess(model8(-1000, 1000), []) $
+printIn("unscaled8.smt2", eqs);
+
+sc8(coeff) := coeffList([x,y,z,s0x,s0y,s0z,s1x,s1y,s1z,s2x,s2y,s2z], coeff) $
+eqs: preprocess(model8(-1000, 1000), sc8(1000)) $
+printIn("model8.smt2", eqs);
