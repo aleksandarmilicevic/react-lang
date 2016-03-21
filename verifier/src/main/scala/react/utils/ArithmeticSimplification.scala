@@ -195,12 +195,10 @@ object ArithmeticSimplification {
           acc *= p
         }
         acc
-      case Literal(l: Long) => constant(l)
-      case Literal(d: Double) if d.isWhole => constant(d.toLong) 
-      case Divides(Literal(n: Long), Literal(d: Long)) => ratio(n, d)
-      case Divides(Literal(n: Double), Literal(d: Double)) if n.isWhole && d.isWhole => ratio(n.toLong, d.toLong)
+      case LonIntLit(l) => constant(l) 
+      case Divides(LonIntLit(n), LonIntLit(d)) => ratio(n, d)
       case v @ Variable(_) => Polynomial(Seq(one * v))
-      case other => sys.error("mkPolynomial, not supported: " + other)
+      case other => sys.error("mkPolynomial, not supported: " + other.toStringFull)
     }
 
     def processEq(f: Formula): Formula = f match {
@@ -214,7 +212,10 @@ object ArithmeticSimplification {
         val lhs = pa + (pb * minusOne)
         Logger("ArithmeticSimplification", Debug, "lhs: " + lhs)
         Logger("ArithmeticSimplification", Debug, "lhs: " + lhs.toFormula)
-        fct(lhs.toFormula, Literal(0l))
+        val result = fct(lhs.toFormula, Literal(0l))
+        Logger("ArithmeticSimplification", Info, "original: " + f)
+        Logger("ArithmeticSimplification", Info, "result:   " + result)
+        result
         //TODO factor the gcd of coeffs in lhs
       case Not(ap) => Not(processEq(f))
       case And(lst @ _*) => And(lst.map(processEq):_*)
@@ -291,8 +292,12 @@ object ArithmeticSimplification {
 
   def simplifyPow(f: Formula) = {
     FormulaUtils.map({
-      case Application(DRealDecl.pow, List(Literal(l: Long), Literal(e: Long))) if e > 0 => Literal(math.pow(l, e).toLong) //TODO check overflow
+      case Application(DRealDecl.pow, List(LonIntLit(0l), LonIntLit(0l))) => sys.error("undefined: 0^0")
+      case Application(DRealDecl.pow, List(LonIntLit(0l), LonIntLit(e))) => LonIntLit(0l)
+      case Application(DRealDecl.pow, List(LonIntLit(l), LonIntLit(0l))) => LonIntLit(1l)
+      case Application(DRealDecl.pow, List(LonIntLit(l), LonIntLit(e))) if e > 0 => Literal(math.pow(l, e).toLong) //TODO check overflow
       case Application(DRealDecl.pow, List(Literal(l: Double), Literal(e: Double))) => Literal(math.pow(l, e))
+      //case a @ Application(DRealDecl.pow, _) => println(a); a
       case other => other
     }, f)
   }

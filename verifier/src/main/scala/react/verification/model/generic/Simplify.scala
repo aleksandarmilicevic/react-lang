@@ -31,6 +31,27 @@ class Simplify(robot: GenericRobot) {
         None
     }
   }
+  
+  protected def findConstantsVariables(conjuncts: List[Formula]): List[(Variable, Formula)] = {
+    conjuncts.flatMap{
+      case Eq( v2 @ Literal(_), v1 @ Variable(_)) =>
+        Some(v1 -> v2)
+      case Eq(v1 @ Variable(_), v2 @ Literal(_)) =>
+        Some(v1 -> v2)
+      case Eq(Times(IntegerLit(i), v1 @ Variable(_)), IntegerLit(0)) if i != 0 =>
+        Some(v1 -> IntegerLit(0))
+      case Eq(Plus(Times(IntegerLit(-1), v1 @ Variable(_)), v2 @ Literal(_)), IntegerLit(0)) =>
+        Some(v1 -> v2)
+      case Eq(Plus(v2 @ Literal(_), Times(IntegerLit(-1), v1 @ Variable(_))), IntegerLit(0)) =>
+        Some(v1 -> v2)
+      case Eq(Plus(v1 @ Variable(_), IntegerLit(i)), IntegerLit(0)) =>
+        Some(v1 -> IntegerLit(-i))
+      case Eq(Plus(IntegerLit(i), v1 @ Variable(_)), IntegerLit(0)) =>
+        Some(v1 -> IntegerLit(-i))
+      case _ =>
+        None
+    }
+  }
 
   def equalityPropagation(f: Formula): Formula = {
     val conjuncts = FormulaUtils.getConjuncts(f)
@@ -40,7 +61,16 @@ class Simplify(robot: GenericRobot) {
       case _ => None
     }.toMap
     Logger("Simplify", Info, "replacing: " + eqs.map{ case (k, v) => k+"->"+v }.mkString(", "))
-    f.alpha(eqs)
+    val f2 = f.alpha(eqs)
+    val csts = findConstantsVariables(FormulaUtils.getConjuncts(f2)).flatMap{
+      case (v1, v2) if !isNeeded(v1) => Some(v1->v2)
+      case _ => None
+    }.toMap
+    Logger("Simplify", Info, "replacing: " + csts.map{ case (k, v) => k+"->"+v }.mkString(", "))
+    FormulaUtils.map({
+      case v @ Variable(_) => csts.getOrElse(v, v)
+      case other => other
+    }, f2)
   }
 
   protected class QeSimplifier(f: Formula, useAssumptions: Boolean) {
@@ -152,10 +182,10 @@ class Simplify(robot: GenericRobot) {
       val vars = f.freeVariables
       if (vars.size <= qepcadBound && vars.size > 0) {
           val query = Qepcad.query(vars.toList, Nil, f, None)
-          try query.execute(!qepcadSafeProjection,
-                            Qepcad.defaultMemory,
-                            Qepcad.defaultPrime,
-                            qepcadTimeout)
+          query.execute(!qepcadSafeProjection,
+                        Qepcad.defaultMemory,
+                        Qepcad.defaultPrime,
+                        qepcadTimeout)
       } else {
         f
       }
@@ -175,10 +205,12 @@ class Simplify(robot: GenericRobot) {
 
     def process(f: Formula, fct: Formula => Formula): Formula = f match {
       case And(lst @ _*) =>
-        val lst2 = lst.par.map(process(_, fct)).seq
+        val lst2 = lst.map(process(_, fct))
+        //val lst2 = lst.par.map(process(_, fct)).seq
         And(lst2:_*)
       case Or(lst @ _*) =>
-        val lst2 = lst.par.map(process(_, fct)).seq
+        val lst2 = lst.map(process(_, fct))
+        //val lst2 = lst.par.map(process(_, fct)).seq
         Or(lst2:_*)
       case other => fct(other)
     }
@@ -189,11 +221,14 @@ class Simplify(robot: GenericRobot) {
     var nFv = constraints.freeVariables.size
     var oFv = nFv + 1
     while (nFv < oFv) {
+      Logger("Simplify", Notice, "number of variable: " + nFv)
       oFv = nFv
-      val constraints2 = constraints //process(constraints, simplify)
-      val constraints3 = equalityPropagation(constraints2)
-      val constraints4 = process(constraints3, syntacic)
-      constraints = tryQE(constraints4)
+      //constraints = process(constraints, simplify)
+      constraints = process(constraints, syntacic)
+      constraints = equalityPropagation(constraints)
+      constraints = process(constraints, syntacic)
+      constraints = tryQE(constraints)
+      constraints = FormulaUtils.simplifyBool(constraints)
       nFv = constraints.freeVariables.size
     } 
     DRealQuery.fixTypes(constraints)

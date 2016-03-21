@@ -13,6 +13,17 @@ object IntegerLit {
   def apply(i: Int) = Literal(i).setType(Int)
 }
 
+object LonIntLit{
+  def unapply(f: Formula): Option[Long] = f match {
+    case Literal(i: Int) => Some(i.toLong)
+    case Literal(l: Long) => Some(l.toInt)
+    case Literal(f: Float) if f.isWhole => Some(f.toLong)
+    case Literal(d: Double) if d.isWhole => Some(d.toLong)
+    case _ => None
+  }
+  def apply(i: Long) = Literal(i).setType(Int)
+}
+
 object FloatLit {
   def unapply(f: Formula): Option[Double] = f match {
     case Literal(i: Int) => Some(i.toDouble)

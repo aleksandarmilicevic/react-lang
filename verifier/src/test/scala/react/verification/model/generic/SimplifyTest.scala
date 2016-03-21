@@ -53,7 +53,7 @@ class SimplifyTest extends FunSuite {
 //  val simplifier = new Simplify(robot)
 //  simplifier.qepcadSafeProjection = false
 //  simplifier.qepcadTimeout = 30000
-//  simplifier.qepcadBound = 8
+//  simplifier.qepcadBound = 12
 //  val robot2 = simplifier.normalize()
 //  println("before")
 //  robot.aboutTheEqns

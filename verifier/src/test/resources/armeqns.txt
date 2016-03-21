@@ -221,6 +221,10 @@ siminput1_input
 ( > l2.servo.shoulderlength 0 )
 ( > l2.servo.width 0 )
 
+( = 1 l0.servo.scale )
+( = 1 l1.servo.scale )
+( = 1 l2.servo.scale )
+
 ( = 0 l0.servo.dx )
 ( = 0 l0.servo.dy )
 ( = 0 l0.servo.dz )

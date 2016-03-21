@@ -331,8 +331,9 @@ object QepcadPrinter {
     case Variable(name) => name
     case Literal(true) => "TRUE"
     case Literal(false) => "FALSE"
+    case Literal(i: Int) => i.toString
     case Literal(l: Long) => l.toString
-    case Literal(d: Double) => assert(d.isWhole); d.toLong.toString //TODO check for overflow
+    case Literal(d: Double) if d.isWhole => d.toLong.toString //TODO check for overflow
     case ForAll(vs, f) => vs.map(v => "(A "+v+")").mkString + "[ " + printFormula(f) + " ]"
     case Exists(vs, f) => vs.map(v => "(E "+v+")").mkString + "[ " + printFormula(f) + " ]"
     case And(lst @ _*) => lst.map(printFormula).mkString("[ ", " /\\ ", " ]")
