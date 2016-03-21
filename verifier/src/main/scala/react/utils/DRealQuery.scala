@@ -10,13 +10,13 @@ object DRealQuery {
 
     val cmd = "dReal"
     //val cmd = "/home/zufferey/work/projects/dreal3_dz/bin/dReal"
+    //val cmd = "/home/zufferey/work/projects/dreal3_ch/bin/dReal"
 
-    val arg = Array[String]("--in", "--model")
-    //val arg = Array[String]("--in", "--model", "--worklist-fp", "--ncbt")
+    //val arg = Array[String]("--in", "--model")
+    val arg = Array[String]("--in", "--model", "--worklist-fp", "--ncbt")
 
     val fname = if (Logger("DRealQuery", Debug)) Some(Namer("query") + ".smt2") else None
     val solver = new DRealHack(QF_NRA, cmd, arg, Some(precision), true, false, fname, 1)
-    //val solver = new DRealHack(QF_NRA, "dReal", arg, Some(precision), true, false, fname, 1)
     
     val conj = FormulaUtils.getConjuncts(f)
     conj.foreach( c => fixTypes(c) )

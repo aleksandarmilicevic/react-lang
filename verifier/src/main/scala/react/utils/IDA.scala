@@ -285,7 +285,7 @@ class IDA(inputs: Seq[Variable], formula: Formula) {
     val yp = varSeq.toArray.map(x => initialDt.getOrElse(x, 0.0).toString)
     val cmd = Array(binary, time.toString) ++ init ++ yy ++ yp
     val (res, out, err) = SysCmd(cmd)
-    if (res == 0) {
+    if (res == 0 && out != "") {
       val nums = out.split("\\s+").map(_.toDouble)
       var t = nums(0)
       val emp = Map[Variable, Double]()

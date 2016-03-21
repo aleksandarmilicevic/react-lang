@@ -6,16 +6,76 @@ import dzufferey.utils.{Logger, IO}
 import react.utils.IDA
 
 class GenericRobotTest extends FunSuite {
-  
+
   test("init 1") {
+    Logger.disallow("Typer")
+    //Logger.moreVerbose
+    //Logger.moreVerbose
     val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
     robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (1: Short))
     robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (1: Short))
     //robot.aboutTheEqns
-    val (init, initDt) = robot.initSolution(1e-10, true)
-    //Console.println("init:    " + init.mkString(" "))
-    //Console.println("init dt: " + initDt.mkString(" "))
+    val (init, initDt) = robot.initSolution(1e-10)
+    Console.println("init:    " + init.mkString(" "))
+    Console.println("init dt: " + initDt.mkString(" "))
     ()
+  }
+  
+  test("moveFor 1") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (10: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
+    Console.println("(1) before: " + robot)
+    robot.elapse(100)
+    Console.println("(1) after:  " + robot)
+  }
+
+  test("moveFor 1 kinsol") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (10: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
+    robot.useKINSOL = true
+    Console.println("(1k) before: " + robot)
+    robot.elapse(100)
+    Console.println("(1k) after:  " + robot)
+  }
+
+  test("moveFor 1 kinsol,ida") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (10: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
+    robot.useKINSOL = true
+    robot.useIDA = true
+    Console.println("(1i) before: " + robot)
+    robot.elapse(100)
+    Console.println("(1i) after:  " + robot)
+  }
+
+  test("moveFor 2") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (0: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
+    Console.println("(2) before: " + robot)
+    robot.elapse(100)
+    Console.println("(2) after:  " + robot)
+  }
+
+  test("moveFor 3") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (10: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (0: Short))
+    Console.println("(3) before: " + robot)
+    robot.elapse(100)
+    Console.println("(3) after:  " + robot)
+  }
+  
+  test("moveFor 4") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_simplest.txt")
+    robot.store = robot.store + (Variable("leftmotor.input").setType(Real) -> (-10: Short))
+    robot.store = robot.store + (Variable("rightmotor.input").setType(Real) -> (10: Short))
+    Console.println("(4) before: " + robot)
+    robot.elapse(100)
+    Console.println("(4) after:  " + robot)
   }
 
 //test("init 2") {
@@ -25,7 +85,7 @@ class GenericRobotTest extends FunSuite {
 //  robot.aboutTheEqns
 //  robot.initSolution
 //}
-  
+
   test("make IDA file 0") {
     val robot = GenericRobot("r1", Resources.playground, Resources.path + "trivial.txt")
     val l = Variable("dx.input").setType(Real)
@@ -33,7 +93,7 @@ class GenericRobotTest extends FunSuite {
     robot.store = robot.store + (l -> (10: Short))
     robot.store = robot.store + (r -> (10: Short))
 
-    val (init, initDt) = robot.initSolution(1e-10, true)
+    val (init, initDt) = robot.initSolution(1e-10)
 
     val in = robot.inputs.map(_.v)
     val ida = new IDA(in, robot.constraints)
@@ -60,7 +120,7 @@ class GenericRobotTest extends FunSuite {
     robot.store = robot.store + (r -> (1: Short))
 
     val tolerance = 1e-16
-    val (init, initDt) = robot.initSolution(tolerance, true)
+    val (init, initDt) = robot.initSolution(tolerance)
 
     //Console.println("init:   " + init.mkString)
     //Console.println("initDt: " + initDt.mkString)
@@ -80,5 +140,7 @@ class GenericRobotTest extends FunSuite {
       ida.clean
     }
   }
+
+
 
 }

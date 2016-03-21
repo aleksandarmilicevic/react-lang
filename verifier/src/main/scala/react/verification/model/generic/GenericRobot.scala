@@ -31,6 +31,10 @@ class GenericRobot( val id: String,
                     val dynamic: List[Variable],
                     val constraints: Formula ) extends GroundRobot(bBox, None) with SymmetryAndMemoization {
 
+  var tolerance = 1e-16
+  var useIDA = false
+  var useKINSOL = false
+
   //include t, the inputs (?dynamic? not for the moment, assumed to be transient)
   def getMotionDepsState(t: Int): Array[Byte] = {
     val deps = Array.ofDim[Byte](4 + inputs.length)
@@ -137,10 +141,8 @@ class GenericRobot( val id: String,
         List( Lt(v, Literal( 10000)),
               Gt(v, Literal(-10000)))
       })
-    val cstr2 = cstr1//.map(replace).map(ArithmeticSimplification.polynomialNF)
-    val bounds = bounds1 ::: bounds2//.map(replace)
-    val cstr3 = cstr2 //cstr2.flatMap(c => FormulaUtils.getConjuncts(weaken(c, precision/2)))
-    val cstr = bounds ::: cstr3
+    val bounds = bounds1 ::: bounds2
+    val cstr = poseConstraints ::: bounds ::: cstr1 //TODO if no dt then do not add the poseConstraints
     And(cstr:_*)
   }
 
@@ -166,12 +168,12 @@ class GenericRobot( val id: String,
     }
   }
   
-  def initSolution(precision: Double, useKinsol: Boolean): (Map[Variable, Double], Map[Variable, Double]) = {
+  def initSolution(precision: Double): (Map[Variable, Double], Map[Variable, Double]) = {
     val (guess1, guess2) = initSolutionDReal(precision)
     //Logger("GenericRobot", Error, "initSolution " + precision)
     //Logger("GenericRobot", Error, guess1.toString)
     //Logger("GenericRobot", Error, guess2.toString)
-    if (useKinsol) {
+    if (useKINSOL) {
       val (s1, s2) = initSolutionKinsol(guess1, guess2, precision)
     //Logger("GenericRobot", Error, s1.toString)
     //Logger("GenericRobot", Error, s2.toString)
@@ -183,7 +185,7 @@ class GenericRobot( val id: String,
 
 
   //from 2D pose (x,y,θ) to 3D vector + quaternion
-  def poseConstrains = {
+  def poseConstraints = {
     val q = Angle.quaternionFromTheta(orientation)
     List(
       Eq(frame.x, Literal(1000 * x)), //TODO discretization
@@ -277,56 +279,6 @@ class GenericRobot( val id: String,
     })
   }
 
-  def printDRealStub( endTime: Double, maxUnfold: Int): (DRealHack, Map[Variable,Variable]) = {
-    val solver = DReal(QF_NRA, 0.1, "test.smt2")
-    timeIndependentConstraints.foreach(solver.assert(_))
-    //the different modes
-    val modes = differentialConstraints.map(collectModes)
-    //versionning the variables by jump number
-    def alpha(i: Int): Map[Variable, Variable] = {
-      dynamic.foldLeft(Map[Variable,Variable]())( (acc, v) => {
-        val v1 = if (i == 0) v
-                 else if (i == maxUnfold) Variable(v.name + "_final").setType(v.tpe)
-                 else Variable(v.name + "_" + i).setType(v.tpe)
-        acc + (v -> v1)
-      }).toMap
-    }
-    val connect = UnInterpretedFct("connect", Some(Real ~> Real ~> Bool), Nil)
-    def holder(f: Formula) = {
-      ???
-    }
-    for (i <- 0 until maxUnfold) {
-      for ( part <- modes;
-            (guard, dyn) <- part ) {
-        if (guard == True()) {
-          dyn.foreach( d => {
-            val v = Variable(Namer("flow")).setType(Bool)
-            if(i == 0) solver.declareODE(v.name, d)
-            solver.assert(connect(holder(d), v))
-          })
-        } else {
-          //TODO the jump condition 
-          //TODO how variables changes at jump (x_n = x_{n-1})
-          //TODO connecting the flow to holder
-          ???
-        }
-      }
-    }
-    //time
-    val timeVars = (0 until maxUnfold).map( i => Variable(timeVar.name + "_" + i).setType(Real) )
-    solver.assert(Eq(Plus(timeVars:_*), Literal(endTime)))
-    timeVars.foreach(v => solver.assert(Leq(Literal(0.0), v)))
-    timeVars.foreach(v => solver.assert(Leq(v, Literal(endTime))))
-    //TODO integrating the holders between each jump and time variables
-    ???
-    //TODO should be done for all the version of the variables!
-    for (i <- 0 until maxUnfold) {
-      strucutralTimeDependentConstraints.foreach(solver.assertForallT(1, Literal(0.0), Literal(endTime), _))
-    }
-    //
-    (solver, ???) //solver still needs an objective
-  }
-
   val inK = (inputs.map(_.v) ++ Seq(frame.x, frame.y, frame.a, frame.i, frame.j, frame.k)).toIndexedSeq
   lazy val kinsol = new KINSOL(inK, replaceDt(constraints))
 
@@ -340,20 +292,30 @@ class GenericRobot( val id: String,
 
   override protected def moveFor(t: Int) = {
     try {
-      //val tolerance = 1e-14
-      val tolerance = 1e-3
       //Logger("GenericRobot", Error, this.toString)
-      val (init, initDt) = initSolution(tolerance, false)
+      val (init, initDt) = initSolution(tolerance)
       if (!initDt.isEmpty) {
-        x = (init(frame.x) + initDt.getOrElse(frame.x, 0.0) * t / 1000) / 1000
-        y = (init(frame.y) + initDt.getOrElse(frame.y, 0.0) * t / 1000) / 1000
-        val a = init(frame.a) + initDt.getOrElse(frame.a, 0.0) * t / 1000
-        val i = init(frame.i) + initDt.getOrElse(frame.i, 0.0) * t / 1000
-        val j = init(frame.j) + initDt.getOrElse(frame.j, 0.0) * t / 1000
-        val k = init(frame.k) + initDt.getOrElse(frame.k, 0.0) * t / 1000
-        val q = Quaternion(a, i, j, k)
-        orientation = Angle.thetaFromQuaternion(q)
-        //Logger("GenericRobot", Error, this.toString)
+        if (useIDA) {
+          val (_, r1, _) = ida.solve(t.toDouble / 1000, store.mapValues(_.toDouble), init, initDt)
+          x = r1(frame.x) / 1000.0
+          y = r1(frame.y) / 1000.0
+          val a = r1(frame.a)
+          val i = r1(frame.i)
+          val j = r1(frame.j)
+          val k = r1(frame.k)
+          val q = Quaternion(a, i, j, k)
+          orientation = Angle.thetaFromQuaternion(q)
+        } else {
+          x = (init(frame.x) + initDt.getOrElse(frame.x, 0.0) * t / 1000) / 1000
+          y = (init(frame.y) + initDt.getOrElse(frame.y, 0.0) * t / 1000) / 1000
+          val a = init(frame.a) + initDt.getOrElse(frame.a, 0.0) * t / 1000
+          val i = init(frame.i) + initDt.getOrElse(frame.i, 0.0) * t / 1000
+          val j = init(frame.j) + initDt.getOrElse(frame.j, 0.0) * t / 1000
+          val k = init(frame.k) + initDt.getOrElse(frame.k, 0.0) * t / 1000
+          val q = Quaternion(a, i, j, k)
+          orientation = Angle.thetaFromQuaternion(q)
+          //Logger("GenericRobot", Error, this.toString)
+        }
       } else {
         x = init(frame.x) / 1000
         y = init(frame.y) / 1000

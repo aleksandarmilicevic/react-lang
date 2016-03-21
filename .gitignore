@@ -6,3 +6,5 @@ project/
 /ros-zone/husky/src/
 *.bak
 deps-*
+*.smt2
+*.model
