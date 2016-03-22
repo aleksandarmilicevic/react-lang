@@ -17,7 +17,6 @@ preprocess(f, scaling) := scale(f, scaling);
  */
 dRealHeader: printf(false, "(set-option :precision 0.01)~%(set-logic QF_NRA)");
 dRealFooter: printf(false, "(check-sat)~%(exit)");
-concatLines(lst) := lreduce(lambda([x,y], printf(false, "~a~%~a", x, y)), lst);
 var(v) := printf(false, "(declare-fun ~a () Real)", v);
 declareVars(t) := concatLines(map(var, listofvars(t)));
 assert(t) := printf(false, "(assert ~a)", pp(t));

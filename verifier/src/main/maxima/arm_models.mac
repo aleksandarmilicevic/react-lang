@@ -1,10 +1,10 @@
 /* Import definitions
   */
-batch("quaternions.mac") $
-batch("frame.mac") $
-batch("joint.mac") $
-batch("dRealPrinter.mac") $
-coeffList(expr, coeff) := map(lambda([x], [x,coeff]), listofvars(expr)) $
+load("utils.mac") $
+load("quaternions.mac") $
+load("frame.mac") $
+load("joint.mac") $
+load("dRealPrinter.mac") $
 
 /* inputs of the servo
  */

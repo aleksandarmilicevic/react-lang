@@ -1,0 +1,31 @@
+var(v) := printf(false, "~a", v);
+inp(v) := printf(false, "( input ~a )", v);
+dyn(v) := printf(false, "( dynamic ~a )", v);
+
+pp(t) := if atom(t) then sconcat(t, " ")
+         else if op(t) = "[" then pp(apply("and", t))
+         else if string(op(t)) = "derivative" then pp(apply(D, [args(t)[1]]))
+         else if string(op(t)) = "del" then pp(apply(D, [args(t)[1]]))
+         else if string(op(t)) = "diff" then pp(apply(D, [args(t)[1]]))
+         else lreduce(sconcat, append(map(pp, args(t)), [") "]),sconcat("( ", op(t), " "));
+
+dynamic(vars, input, parameters) :=  sublist(vars, lambda([v], (not (member(v, parameters)) and (not( member(v, input))))));
+
+printModel(inputs, parameters, frame, bbox, constraints) :=
+  block(
+    [
+      paramHeader: "~~~ Parameters:",
+      equationHeader: "~~~ Equations:",
+      d0: concatLines(map(var, listofvars([inputs, parameters, frame, constraints]))),
+      d1: printf(false, "( frame ~a ~a ~a ~a ~a ~a ~a )", frame@p[1], frame@p[2], frame@p[3], frame@q[1], frame@q[2], frame@q[3], frame@q[4]),
+      d2: printf(false, "( bbox ~a ~a ~a ~a ~a )", bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]),
+      d3: concatLines(map(inp, inputs)),
+      d4: concatLines(map(dyn, dynamic(listofvars([frame, constraints]), inputs, parameters))),
+      d5: concatLines(map(pp, constraints))
+    ],
+    concatLines([paramHeader, d0, equationHeader, d1, d2, d3, d4, d5])
+  );
+
+/* example
+ *  printModel([i], [p], new (frame ([x,y,z], [a,i,j,k])), [0,0,0,50,50], ['diff(i - p) = x + y + z]);
+ */

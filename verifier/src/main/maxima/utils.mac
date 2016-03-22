@@ -1,0 +1,2 @@
+coeffList(expr, coeff) := map(lambda([x], [x,coeff]), listofvars(expr));
+concatLines(lst) := lreduce(lambda([x,y], printf(false, "~a~%~a", x, y)), lst);
