@@ -1,0 +1,56 @@
+/* Import definitions
+  */
+load("utils.mac") $
+load("quaternions.mac") $
+load("frame.mac") $
+load("joint.mac") $
+load("wheel.mac") $
+load("modelPrinter.mac") $
+
+/* angles of the servo and corresponding inputs */
+alpha;
+beta;
+alpha_input;
+beta_input;
+depends([alpha, beta], time);
+
+/* structural parameters */
+length: 100;
+width: 50;
+radius: 30;
+
+/* Structure of the seg:
+ * - body
+ *   - motor (left) as joint
+ *     - wheel (left)
+ *   - motor (right) as joint
+ *     - wheel (right)
+ *   - tail
+ */
+body: new (frame ([bx,by,bz], [ba,bi,bj,bk]));
+wheelL: new (frame ([wlx,wly,wlz], [wla,wli,wlj,wlk]));
+wheelR: new (frame ([wrx,wry,wrz], [wra,wri,wrj,wrk]));
+tail: new (frame ([tx,ty,tz], [ta,ti,tj,tk]));
+
+motorL: mkQuat(alpha, [0, 1,0]);
+motorR: mkQuat(beta,  [0,-1,0]);
+
+zero: [0,0,0];
+noRot: [1,0,0,0];
+
+constraints: append(
+  fixed([body, [0,-width/2,0], motorL],     [wheelL, zero, noRot]),
+  fixed([body, [0, width/2,0], motorR],     [wheelR, zero, noRot]),
+  fixed([body, [-length,0,0], noRot],   [tail,   zero, noRot]),
+  [ diff(alpha, time) = alpha_input,
+    diff(beta, time) = beta_input,
+    tail@p[3] = radius],
+  vertical_wheel_equations(wheelL, radius, time),
+  vertical_wheel_equations(wheelR, radius, time)
+);
+  
+seg: printModel([alpha_input, beta_input],
+                [],
+                body,
+                [-width/2,-length,0,width,length],
+                constraints);

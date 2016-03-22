@@ -16,7 +16,7 @@ point_of_contact(frame) :=
   block(
     [
       rotation_axis : rotate([0,1,0], frame@q),
-      p1: point_plane(frame@p, o, n),
+      p1: point_plane(frame@p, o, n)
     ],
     line_plane(frame@p, point_plane(p1, frame@p, rotation_axis) - frame@p, o, n)
   );
@@ -28,16 +28,32 @@ point_of_contact(frame) :=
 wheel_equations(frame, radius, time) :=
   block(
     [
-      d: depends(frame, time),
+      d: depends(listofvars(frame), time),
       angular_speed: 2 * mult(diff(frame@q, time), inverse(frame@q)),
-      proj: point_of_contact(frame),
+      proj: point_of_contact(frame)
     ],
     [
       norm(frame@p - proj) = radius,    /* wheel touches the ground. */
       frame@p[3] > o[3],                /* wheel is above the ground. TODO take n into account */
       angular_speed[1] = 0,             /* the 1st component of angular_speed = 0 because it is a vector in quaternion form */
-      diff(proj, time) = crossprod(q2v(angular_speed), proj - frame@p) /* linear speed depends on angular speed and radius */
+      vecEq(diff(proj, time), crossprod(q2v(angular_speed), proj - frame@p)) /* linear speed depends on angular speed and radius */
     ]
   );
 
 
+/* Simplified Equations which assumes that the wheel is vertical.
+ * We assume that the frame of the wheel is the center of the rotation axis.
+ * The default rotation axis is [0,1,0].
+ */
+vertical_wheel_equations(frame, radius, time) :=
+  block(
+    [
+      d: depends(listofvars(frame), time),
+      angular_speed: 2 * mult(diff(frame@q, time), inverse(frame@q))
+    ],
+    [
+      frame@p[3] = radius,              /* wheel touches the ground. TODO take n into account */
+      angular_speed[1] = 0,             /* the 1st component of angular_speed = 0 because it is a vector in quaternion form */
+      vecEq(diff(frame@p, time), crossprod(q2v(angular_speed), [0,0,-radius])) /* linear speed depends on angular speed and radius */
+    ]
+  );

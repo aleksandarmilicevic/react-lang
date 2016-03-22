@@ -26,6 +26,11 @@ printModel(inputs, parameters, frame, bbox, constraints) :=
     concatLines([paramHeader, d0, equationHeader, d1, d2, d3, d4, d5])
   );
 
+printModelIn(file, inputs, parameters, frame, bbox, constraints) :=
+    block([s: openw(file),
+           q: printModel(inputs, parameters, frame, bbox, constraints)],
+           [printf(s, q), close(s)]);
+
 /* example
  *  printModel([i], [p], new (frame ([x,y,z], [a,i,j,k])), [0,0,0,50,50], ['diff(i - p) = x + y + z]);
  */
