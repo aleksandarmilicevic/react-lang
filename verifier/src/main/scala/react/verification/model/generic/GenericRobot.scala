@@ -137,14 +137,15 @@ class GenericRobot( val id: String,
 
   protected def dRealInitEquations: Formula = {
     val bounds1 = angleRanges ::: ranges
-    //val cstr1 = conjuncts.map(replaceDt)
-    val cstr1 = conjunctsWithExtraDt.map(replaceDt)
+    //val cstr1 = conjuncts.map(replaceDt) //XXX use that for the arm
+    val cstr1 = conjunctsWithExtraDt.map(replaceDt) //XXX
     val bounds2 = And(cstr1:_*).freeVariables.toList.filter(_.name.endsWith(dtSuffix)).flatMap( v => {
         List( Lt(v, Literal( 10000)),
               Gt(v, Literal(-10000)))
       })
     val bounds = bounds1 ::: bounds2
-    val cstr = poseConstraints ::: bounds ::: cstr1 //TODO if no dt then do not add the poseConstraints
+    //val cstr = bounds ::: cstr1 //XXX use that for the arm
+    val cstr = poseConstraints ::: bounds ::: cstr1 //XXX
     And(cstr:_*)
   }
 

@@ -6,7 +6,8 @@ import dzufferey.utils.LogLevel._
 
 object ArithmeticSimplification {
 
-  //TODO this is not really arithmetic
+  //TODO this is not really arithmetic but algebra
+  //TODO bug in the derivative of the trig ?
   def pushDerivativesDown(dt: Variable, dynamic: Set[Variable], f: Formula): Formula = f match {
     case Application(DRealDecl.timeDerivative, List(expr)) if expr.freeVariables.forall(v  => !(dynamic contains v) && v != dt) =>
       Literal(0.0)
@@ -32,9 +33,13 @@ object ArithmeticSimplification {
       val p3 = DRealDecl.pow(g, Literal(2.0))
       Divides(Minus(p1, p2), p3)
     case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.sin, args))) =>
-      DRealDecl.cos(args:_*)
+      assert(args.length == 1)
+      val dArgs = pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(args(0)))
+      Times(DRealDecl.cos(args:_*), dArgs)
     case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.cos, args))) =>
-      Times(Literal(-1.0), DRealDecl.sin(args:_*))
+      assert(args.length == 1)
+      val dArgs = pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(args(0)))
+      Times(Literal(-1.0), DRealDecl.sin(args:_*), dArgs)
     case Application(DRealDecl.timeDerivative, List(Application(DRealDecl.pow, List(expr, Literal(n: Double))))) =>
       if (n == 0.0) Literal(0.0)
       else Times(Literal(n), DRealDecl.pow(expr, Literal(n-1)), pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(expr)))
@@ -291,14 +296,22 @@ object ArithmeticSimplification {
     check(f)
   }
 
-  def simplifyPow(f: Formula) = {
+  def isZero(l: Formula) = l match {
+    case LonIntLit(0l) => true
+    case _ => false
+  }
+
+  def simplifyCst(f: Formula) = {
     FormulaUtils.map({
       case Application(DRealDecl.pow, List(LonIntLit(0l), LonIntLit(0l))) => sys.error("undefined: 0^0")
       case Application(DRealDecl.pow, List(LonIntLit(0l), LonIntLit(e))) => LonIntLit(0l)
       case Application(DRealDecl.pow, List(LonIntLit(l), LonIntLit(0l))) => LonIntLit(1l)
       case Application(DRealDecl.pow, List(LonIntLit(l), LonIntLit(e))) if e > 0 => Literal(math.pow(l, e).toLong) //TODO check overflow
       case Application(DRealDecl.pow, List(Literal(l: Double), Literal(e: Double))) => Literal(math.pow(l, e))
-      //case a @ Application(DRealDecl.pow, _) => println(a); a
+      case Application(DRealDecl.cos, List(LonIntLit(0l))) => LonIntLit(1l)
+      case Application(DRealDecl.sin, List(LonIntLit(0l))) => LonIntLit(0l)
+      case Divides(l1, l2) if isZero(l1) && !isZero(l2)  => LonIntLit(0l)
+      case Times(lst @ _*) if lst.exists(isZero) => LonIntLit(0l)
       case other => other
     }, f)
   }
@@ -306,7 +319,7 @@ object ArithmeticSimplification {
   def polynomialNF(f: Formula): Formula = {
     val level = Debug
     Logger("ArithmeticSimplification", level, "simplifing: " + f)
-    val f1 = simplifyPow(f)
+    val f1 = simplifyCst(f)
     val (f2, unabstract) = abstractFormula(f1, isIntegerPolynomial)
     val f3 = new PolySimp(f2).result
     val f4 = unabstract(f3)
