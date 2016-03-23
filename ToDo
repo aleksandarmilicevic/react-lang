@@ -16,8 +16,6 @@ Runtime
 
 extends to use the `Robot.id` for inter-robot communication (actor model style), at least for ROS.
 
-make a BBB/rPi runtime using libbulldog
-
 
 Verification
 ============

@@ -9,12 +9,10 @@ object DRealQuery {
   def getSolutions(f: Formula, precision: Double, timeout: Long): Option[Map[Variable,Double]] = {
 
     val cmd = "dReal"
-    //val cmd = "dReal3"
-    //val cmd = "/home/zufferey/work/projects/dreal3_dz/bin/dReal"
-    //val cmd = "/home/zufferey/work/projects/dreal4_ch/bin/dReal"
 
     //val arg = Array[String]("--in", "--model")
-    val arg = Array[String]("--in", "--model", "--worklist-fp", "--ncbt")
+    //val arg = Array[String]("--in", "--model", "--worklist-fp", "--ncbt")
+    val arg = Array[String]("--in", "--model", "--polytope")
 
     val fname = if (Logger("DRealQuery", Debug)) Some(Namer("query") + ".smt2") else None
     val solver = new DRealHack(QF_NRA, cmd, arg, Some(precision), true, false, fname, 1)
