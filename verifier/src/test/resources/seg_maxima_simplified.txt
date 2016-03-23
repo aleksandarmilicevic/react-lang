@@ -1,0 +1,75 @@
+~~~ Parameters:
+alpha
+alpha_input
+b.dx
+b.dy
+b.dz
+b.q_a
+b.q_i
+b.q_j
+b.q_k
+beta
+beta_input
+wl.dx
+wl.dy
+wl.q_a
+wl.q_i
+wl.q_j
+wl.q_k
+wr.dx
+wr.dy
+wr.q_a
+wr.q_i
+wr.q_j
+wr.q_k
+
+~~~ Equations:
+(frame b.dx b.dy b.dz b.q_a b.q_i b.q_j b.q_k)
+(bbox -0.025 -0.1 0.1 0.0 0.05)
+(input beta_input)
+(input alpha_input)
+(dynamic wr.q_k)
+(dynamic wr.q_j)
+(dynamic wr.q_i)
+(dynamic wr.q_a)
+(dynamic beta)
+(dynamic wr.dy)
+(dynamic wr.dx)
+(dynamic wl.q_k)
+(dynamic wl.q_j)
+(dynamic wl.q_i)
+(dynamic wl.q_a)
+(dynamic alpha)
+(dynamic wl.dy)
+(dynamic wl.dx)
+(dynamic b.q_k)
+(dynamic b.q_j)
+(dynamic b.q_i)
+(dynamic b.q_a)
+(dynamic b.dz)
+(dynamic b.dy)
+(dynamic b.dx)
+(= (+ b.dz (* 200 b.q_a b.q_j) (- 30) (* (- 200) b.q_k b.q_i)) 0)
+(= (+ (D beta) (* (- 1) beta_input)) 0)
+(= (+ b.dy (* 25 (^ b.q_a 2.0)) (* (- 25) (^ b.q_k 2.0)) (* (- 1) wr.dy) (* (- 25) (^ b.q_i 2.0)) (* 25 (^ b.q_j 2.0))) 0)
+(= (+ b.dz (* (- 50) b.q_a b.q_i) (- 30) (* (- 50) b.q_k b.q_j)) 0)
+(= (+ (* (cos (/ alpha 2.0)) b.q_i) (* (- 1) wl.q_i) (* (- 1) b.q_k (sin (/ alpha 2.0)))) 0)
+(= (+ b.dx (* 50 b.q_j b.q_i) (* (- 1) wr.dx) (* (- 50) b.q_a b.q_k)) 0)
+(= (+ (* b.q_k (cos (/ alpha 2.0))) (* (- 1) wl.q_k) (* b.q_i (sin (/ alpha 2.0)))) 0)
+(= (+ (* b.q_k (sin (/ beta 2.0))) (* (- 1) wr.q_i) (* b.q_i (cos (/ beta 2.0)))) 0)
+(= (+ (* (- 60) (D wr.q_i) wr.q_a) (* 60 wr.q_k (D wr.q_j)) (* 60 wr.q_i (D wr.q_a)) (* (- 60) wr.q_j (D wr.q_k)) (D wr.dy)) 0)
+(= (+ b.dx (* (- 50) b.q_j b.q_i) (* (- 1) wl.dx) (* 50 b.q_a b.q_k)) 0)
+(= 0 0)
+(= (+ (* b.q_k (cos (/ beta 2.0))) (* (- 1) wr.q_k) (* (- 1) b.q_i (sin (/ beta 2.0)))) 0)
+(= (+ (* (- 60) wl.q_a (D wl.q_i)) (* 60 (D wl.q_j) wl.q_k) (* 60 wl.q_i (D wl.q_a)) (* (- 60) (D wl.q_k) wl.q_j) (D wl.dy)) 0)
+(= (+ (* 2 wr.q_i (D wr.q_i)) (* 2 (D wr.q_a) wr.q_a) (* 2 wr.q_k (D wr.q_k)) (* 2 (D wr.q_j) wr.q_j)) 0)
+(= (+ (* b.q_a (cos (/ alpha 2.0))) (* (- 1) wl.q_a) (* (- 1) b.q_j (sin (/ alpha 2.0)))) 0)
+(= (+ (* 60 wl.q_a (D wl.q_j)) (* 60 (D wl.q_i) wl.q_k) (* (- 60) wl.q_j (D wl.q_a)) (* (- 60) (D wl.q_k) wl.q_i) (D wl.dx)) 0)
+(= (+ (* 60 (D wr.q_j) wr.q_a) (* 60 wr.q_k (D wr.q_i)) (* (- 60) wr.q_j (D wr.q_a)) (* (- 60) wr.q_i (D wr.q_k)) (D wr.dx)) 0)
+(= (+ (D alpha) (* (- 1) alpha_input)) 0)
+(= (+ b.dy (* (- 25) (^ b.q_a 2.0)) (* 25 (^ b.q_k 2.0)) (* (- 1) wl.dy) (* 25 (^ b.q_i 2.0)) (* (- 25) (^ b.q_j 2.0))) 0)
+(= (+ (* (cos (/ beta 2.0)) b.q_j) (* (- 1) wr.q_j) (* (- 1) b.q_a (sin (/ beta 2.0)))) 0)
+(= (+ (* (sin (/ beta 2.0)) b.q_j) (* (- 1) wr.q_a) (* b.q_a (cos (/ beta 2.0)))) 0)
+(= (+ b.dz (* 50 b.q_a b.q_i) (- 30) (* 50 b.q_k b.q_j)) 0)
+(= (+ (* 2 wl.q_i (D wl.q_i)) (* 2 wl.q_a (D wl.q_a)) (* 2 (D wl.q_k) wl.q_k) (* 2 (D wl.q_j) wl.q_j)) 0)
+(= (+ (* (cos (/ alpha 2.0)) b.q_j) (* (- 1) wl.q_j) (* b.q_a (sin (/ alpha 2.0)))) 0)

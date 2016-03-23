@@ -137,7 +137,8 @@ class GenericRobot( val id: String,
 
   protected def dRealInitEquations: Formula = {
     val bounds1 = angleRanges ::: ranges
-    val cstr1 = conjuncts.map(replaceDt)
+    //val cstr1 = conjuncts.map(replaceDt)
+    val cstr1 = conjunctsWithExtraDt.map(replaceDt)
     val bounds2 = And(cstr1:_*).freeVariables.toList.filter(_.name.endsWith(dtSuffix)).flatMap( v => {
         List( Lt(v, Literal( 10000)),
               Gt(v, Literal(-10000)))
@@ -156,7 +157,7 @@ class GenericRobot( val id: String,
                          case x => x }, f)
     }
     val cstr = replace(cstr0) //?? ArithmeticSimplification.polynomialNF ??
-    DRealQuery.getSolutions(cstr, precision, dRealTO, dynamic) match {
+    DRealQuery.getSolutions(cstr, precision, dRealTO/*, dynamic*/) match {
       case Some(values) =>
         val knownValues = known.map{
           case (k, Literal(d: Double)) => k -> d
@@ -251,6 +252,24 @@ class GenericRobot( val id: String,
 
   def conjuncts = FormulaUtils.getConjuncts(constraints)
 
+  def conjunctsWithExtraDt: List[Formula] = {
+    val indep = timeIndependentConstraints
+    val differential = differentialConstraints
+    val structural = strucutralTimeDependentConstraints
+    val strucutralDifferential = structural.collect{
+      case Eq(lhs, rhs) =>
+        val dSet = dynamic.toSet
+        val lhs2 = DRealDecl.timeDerivative(lhs)
+        val lhs3 = ArithmeticSimplification.pushDerivativesDown(timeVar, dSet, lhs2)
+        val lhs4 = ArithmeticSimplification.polynomialNF(lhs3)
+        val rhs2 = DRealDecl.timeDerivative(rhs)
+        val rhs3 = ArithmeticSimplification.pushDerivativesDown(timeVar, dSet, rhs2)
+        val rhs4 = ArithmeticSimplification.polynomialNF(rhs3)
+        Eq(lhs4, rhs4)
+    }
+    indep ::: differential ::: structural ::: strucutralDifferential
+  }
+
   val timeIndependentConstraints = {
     conjuncts.filter(c => c.freeVariables.forall(v => !dynamic.contains(v)))
   }
@@ -281,10 +300,18 @@ class GenericRobot( val id: String,
   }
 
   val inK = (inputs.map(_.v) ++ Seq(frame.x, frame.y, frame.a, frame.i, frame.j, frame.k)).toIndexedSeq
-  lazy val kinsol = new KINSOL(inK, replaceDt(constraints))
+  lazy val kinsol = {
+    val cstr = constraints
+    //val cstr = And(conjunctsWithExtraDt:_*) 
+    new KINSOL(inK, replaceDt(cstr))
+  }
 
   val inV = inputs.map(_.v)
-  lazy val ida = new IDA(inV, constraints)
+  lazy val ida = {
+    val cstr = constraints
+    //val cstr = And(conjunctsWithExtraDt:_*) 
+    new IDA(inV, cstr)
+  }
 
   override def finalize {
     ida.clean
@@ -414,15 +441,18 @@ object GenericRobot {
   def mkVar(s: String) = Variable(s).setType(Real)
 
   def preprocess(content: String): (Iterable[Variable], Iterable[SExpr]) = {
-    val param = "~~~ Parameters:"
-    val eqns = "~~~ Equations:"
-    val pStart = content.indexOf(param)
-    val eStart = content.indexOf(eqns)
+    //TODO match using a regex
+    val param1 = "~~~ Parameters:"
+    val param2 = "### Parameters:"
+    val eqns1 = "~~~ Equations:"
+    val eqns2 = "### Equations:"
+    val pStart = math.max(content.indexOf(param1), content.indexOf(param2))
+    val eStart = math.max(content.indexOf(eqns1), content.indexOf(eqns2))
     assert(pStart >= 0, "no parameters")
-    val ps = content.substring(pStart+param.length, eStart).split("\\n").map(_.trim).filter(_ != "")
+    val ps = content.substring(pStart+param1.length, eStart).split("\\n").map(_.trim).filter(_ != "")
     val vs = ps.map( v => Variable(v).setType(Real) )
     assert(eStart >= 0, "no equations")
-    val es = content.substring(eStart+eqns.length)
+    val es = content.substring(eStart+eqns1.length)
     SExprParser.parse(es) match {
       case Some(lst) => (vs, lst)
       case None =>

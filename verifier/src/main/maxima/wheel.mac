@@ -32,12 +32,12 @@ wheel_equations(frame, radius, time) :=
       angular_speed: 2 * mult(diff(frame@q, time), inverse(frame@q)),
       proj: point_of_contact(frame)
     ],
-    [
+    append([
       norm(frame@p - proj) = radius,    /* wheel touches the ground. */
       frame@p[3] > o[3],                /* wheel is above the ground. TODO take n into account */
-      angular_speed[1] = 0,             /* the 1st component of angular_speed = 0 because it is a vector in quaternion form */
+      angular_speed[1] = 0],            /* the 1st component of angular_speed = 0 because it is a vector in quaternion form */
       vecEq(diff(proj, time), crossprod(q2v(angular_speed), proj - frame@p)) /* linear speed depends on angular speed and radius */
-    ]
+    )
   );
 
 
@@ -51,9 +51,9 @@ vertical_wheel_equations(frame, radius, time) :=
       d: depends(listofvars(frame), time),
       angular_speed: 2 * mult(diff(frame@q, time), inverse(frame@q))
     ],
-    [
+    append([
       frame@p[3] = radius,              /* wheel touches the ground. TODO take n into account */
-      angular_speed[1] = 0,             /* the 1st component of angular_speed = 0 because it is a vector in quaternion form */
+      angular_speed[1] = 0],            /* the 1st component of angular_speed = 0 because it is a vector in quaternion form */
       vecEq(diff(frame@p, time), crossprod(q2v(angular_speed), [0,0,-radius])) /* linear speed depends on angular speed and radius */
-    ]
+    )
   );

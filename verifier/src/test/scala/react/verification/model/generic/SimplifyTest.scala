@@ -65,6 +65,23 @@ class SimplifyTest extends FunSuite {
 //  ()
 //}
 
+//test("normalization 4") {
+//  val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_maxima.txt")
+//  val simplifier = new Simplify(robot)
+//  simplifier.qepcadSafeProjection = false
+//  simplifier.qepcadTimeout = 30000
+//  simplifier.qepcadBound = 12
+//  val robot2 = simplifier.normalize()
+//  println("before")
+//  robot.aboutTheEqns
+//  Console.println(robot.modelDescription)
+//  println("after")
+//  robot2.aboutTheEqns
+//  Console.println(robot2.modelDescription)
+//  IO.writeInFile( Resources.path + "seg_maxima_simplified.txt", robot2.modelDescription)
+//  ()
+//}
+
   test("stats") {
     val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_eqns_simple_normal.txt")
     robot.aboutTheEqns

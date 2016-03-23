@@ -6,6 +6,7 @@ import dzufferey.utils.LogLevel._
 
 object ArithmeticSimplification {
 
+  //TODO this is not really arithmetic
   def pushDerivativesDown(dt: Variable, dynamic: Set[Variable], f: Formula): Formula = f match {
     case Application(DRealDecl.timeDerivative, List(expr)) if expr.freeVariables.forall(v  => !(dynamic contains v) && v != dt) =>
       Literal(0.0)

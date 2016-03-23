@@ -12,7 +12,7 @@ alpha;
 beta;
 alpha_input;
 beta_input;
-depends([alpha, beta], time);
+depends([alpha, beta], t);
 
 /* structural parameters */
 length: 100;
@@ -42,15 +42,12 @@ constraints: append(
   fixed([body, [0,-width/2,0], motorL],     [wheelL, zero, noRot]),
   fixed([body, [0, width/2,0], motorR],     [wheelR, zero, noRot]),
   fixed([body, [-length,0,0], noRot],   [tail,   zero, noRot]),
-  [ diff(alpha, time) = alpha_input,
-    diff(beta, time) = beta_input,
+  [ diff(alpha, t) = alpha_input,
+    diff(beta, t) = beta_input,
     tail@p[3] = radius],
-  vertical_wheel_equations(wheelL, radius, time),
-  vertical_wheel_equations(wheelR, radius, time)
+  vertical_wheel_equations(wheelL, radius, t),
+  vertical_wheel_equations(wheelR, radius, t)
 );
   
-seg: printModel([alpha_input, beta_input],
-                [],
-                body,
-                [-width/2,-length,0,width,length],
-                constraints);
+seg: new (model ([alpha_input, beta_input], [], body, [-width/2,-length,0,width,length], constraints));
+

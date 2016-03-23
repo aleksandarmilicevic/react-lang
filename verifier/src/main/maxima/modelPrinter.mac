@@ -1,6 +1,18 @@
+/* strucutres for the models:
+ *  -inputs: list of variables
+ *  -parameters: list of variables
+ *  -baseFrame: the base frame where each element is a variable
+ *  -boundingBox: x y theta width length
+ *  -constraints: list of (in)equalities
+ */
+defstruct(model(inputs, parameters, baseFrame, boundingBox, constraints));
+
+
 var(v) := printf(false, "~a", v);
 inp(v) := printf(false, "( input ~a )", v);
 dyn(v) := printf(false, "( dynamic ~a )", v);
+frm(f) := printf(false, "( frame ~a ~a ~a ~a ~a ~a ~a )", f@p[1], f@p[2], f@p[3], f@q[1], f@q[2], f@q[3], f@q[4]);
+box(b) := printf(false, "( bbox ~a ~a ~a ~a ~a )", b[1], b[2], b[3], b[4], b[5]);
 
 pp(t) := if atom(t) then sconcat(t, " ")
          else if op(t) = "[" then pp(apply("and", t))
@@ -9,27 +21,33 @@ pp(t) := if atom(t) then sconcat(t, " ")
          else if string(op(t)) = "diff" then pp(apply(D, [args(t)[1]]))
          else lreduce(sconcat, append(map(pp, args(t)), [") "]),sconcat("( ", op(t), " "));
 
-dynamic(vars, input, parameters) :=  sublist(vars, lambda([v], (not (member(v, parameters)) and (not( member(v, input))))));
+dynamic(vars, input, parameters) :=
+    sublist(vars,
+            lambda([v],
+                (not (member(v, parameters))) and
+                (not (member(v, input))) and
+                (not (member(v, [t])))));
 
-printModel(inputs, parameters, frame, bbox, constraints) :=
+printModel(m) :=
   block(
     [
-      paramHeader: "~~~ Parameters:",
-      equationHeader: "~~~ Equations:",
-      d0: concatLines(map(var, listofvars([inputs, parameters, frame, constraints]))),
-      d1: printf(false, "( frame ~a ~a ~a ~a ~a ~a ~a )", frame@p[1], frame@p[2], frame@p[3], frame@q[1], frame@q[2], frame@q[3], frame@q[4]),
-      d2: printf(false, "( bbox ~a ~a ~a ~a ~a )", bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]),
-      d3: concatLines(map(inp, inputs)),
-      d4: concatLines(map(dyn, dynamic(listofvars([frame, constraints]), inputs, parameters))),
-      d5: concatLines(map(pp, constraints))
+      paramHeader: "### Parameters:",
+      equationHeader: "### Equations:",
+      d0: concatLines(map(var, delete(t, listofvars([m@inputs, m@parameters, m@baseFrame, constraints])))),
+      d1: frm(m@baseFrame),
+      d2: box(m@boundingBox),
+      d3: concatLines(map(inp, m@inputs)),
+      d4: concatLines(map(dyn, dynamic(listofvars([m@baseFrame, m@constraints]), m@inputs, m@parameters))),
+      d5: concatLines(map(pp, m@constraints))
     ],
     concatLines([paramHeader, d0, equationHeader, d1, d2, d3, d4, d5])
   );
 
-printModelIn(file, inputs, parameters, frame, bbox, constraints) :=
+printModelIn(file, m) :=
     block([s: openw(file),
-           q: printModel(inputs, parameters, frame, bbox, constraints)],
-           [printf(s, q), close(s)]);
+           q: printModel(m)],
+          [printf(s, q),
+           close(s)]);
 
 /* example
  *  printModel([i], [p], new (frame ([x,y,z], [a,i,j,k])), [0,0,0,50,50], ['diff(i - p) = x + y + z]);

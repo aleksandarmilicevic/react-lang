@@ -18,7 +18,14 @@ object DRealQuery {
     val fname = if (Logger("DRealQuery", Debug)) Some(Namer("query") + ".smt2") else None
     val solver = new DRealHack(QF_NRA, cmd, arg, Some(precision), true, false, fname, 1)
     
-    val conj = FormulaUtils.getConjuncts(f)
+    val conj = {
+      val f2 = FormulaUtils.map({
+          case Literal(i: Int) => Literal(i.toDouble)
+          case Literal(l: Long) => Literal(l.toDouble)
+          case other => other
+        }, f)
+      FormulaUtils.getConjuncts(f2)
+    }
     conj.foreach( c => fixTypes(c) )
     conj.foreach( c => solver.assert(c) )
 
