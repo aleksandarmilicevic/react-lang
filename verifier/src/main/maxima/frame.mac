@@ -4,6 +4,22 @@
  */
 defstruct(frame(p, q));
 
+/* create a frame from the given string prefix
+ * example: makeFrame("base\\.beam");
+ */
+makeFrame(prefix) ::= 
+    new (frame (
+        [ parse_string(concat(prefix, "\\.dx")),
+          parse_string(concat(prefix, "\\.dy")),
+          parse_string(concat(prefix, "\\.dz"))
+        ],
+        [ parse_string(concat(prefix, "\\.q_a")),
+          parse_string(concat(prefix, "\\.q_i")),
+          parse_string(concat(prefix, "\\.q_j")),
+          parse_string(concat(prefix, "\\.q_k"))
+        ]
+    ));
+
 /* macro to move things in and out of frames
  */
 vecFromFrame(f, p) := f@p + rotate(p, f@q);

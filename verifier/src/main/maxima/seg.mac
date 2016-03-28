@@ -27,10 +27,10 @@ radius: 30;
  *     - wheel (right)
  *   - tail
  */
-body: new (frame ([bx,by,bz], [ba,bi,bj,bk]));
-wheelL: new (frame ([wlx,wly,wlz], [wla,wli,wlj,wlk]));
-wheelR: new (frame ([wrx,wry,wrz], [wra,wri,wrj,wrk]));
-tail: new (frame ([tx,ty,tz], [ta,ti,tj,tk]));
+body: makeFrame("base");
+wheelL: makeFrame("wheel\\.left");
+wheelR: makeFrame("wheel\\.right");
+body: makeFrame("tail");
 
 motorL: mkQuat(alpha, [0, 1,0]);
 motorR: mkQuat(beta,  [0,-1,0]);

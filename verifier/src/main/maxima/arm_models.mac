@@ -32,10 +32,10 @@ zero: [0, 0, 0];
  *  since the servo for the lower arm is connected to the base, the rotation of the lower arm depends only on the base.
  */
 ground: new (frame ([0,0,0], [1,0,0,0]));
-base: new (frame ([bx,by,bz], [ba,bi,bj,bk]));
-upper: new (frame ([ux, uy, uz], [ua, ui, uj, uk]));
-lower: new (frame ([lx, ly, lz], [la, li, lj, lk]));
-effector: new (frame ([x,y,z], [ea, ei, ej, ek]));
+base: makeFrame("base");
+upper: makeFrame("upper");
+lower: makeFrame("lower");
+lower: makeFrame("effector");
 
 servo0: mkQuat(gamma, [0,0,1]) $
 servo1: mkQuat(alpha, [0,1,0]) $
@@ -91,8 +91,8 @@ printIn("model1.smt2", eqs);
  * -connector: the parts that connects the servo to upperC
  * -upperC: the second upper arm
   */
-connector: new (frame ([cx, cy, cz], [ca, ci, cj, ck]));
-upperC: new (frame ([ucx, ucy, ucz], [uca, uci, ucj, uck]));
+connector: makeFrame("connector");
+upperC: makeFrame("upperC");
 
 /* constraints
  */
@@ -152,9 +152,9 @@ printIn("model2a.smt2", eqs);
  * -upperB: part connected to the base and the balance
  * -lowerB: part connected to the balance and the effector
  */
-balance: new (frame ([blx, bly, blz], [bla, bli, blj, bk]));
-upperB: new (frame ([ubx, uby, ubz], [uba, ubi, ubj, ubk]));
-lowerB: new (frame ([lbx, lby, lbz], [lba, lbi, lbj, lbk]));
+balance: makeFrame("balance");
+upperB: makeFrame("upperB");
+lowerB: makeFrame("lowerB");
 offset1: [-50,0,50];
 offset2: [ 50,0,50];
 
@@ -256,9 +256,9 @@ printIn("model4.smt2", eqs);
 /* model for the foldable arm from Ankur
  */
 segment: [100,0,0];
-segment0: new (frame ([s0x,s0y,s0z], [s0a,s0i,s0j,s0k]));
-segment1: new (frame ([s1x,s1y,s1z], [s1a,s1i,s1j,s1k]));
-segment2: new (frame ([s2x,s2y,s2z], [s2a,s2i,s2j,s2k]));
+segment0: makeFrame("s0");
+segment1: makeFrame("s1");
+segment2: makeFrame("s2");
 
 /* the contraints
  */

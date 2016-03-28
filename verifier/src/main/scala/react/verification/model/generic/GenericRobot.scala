@@ -435,6 +435,27 @@ class GenericRobot( val id: String,
     cstr2
   }
 
+  def getFrame(part: String): Frame = {
+    def mkFrameVar(suffix: String) = {
+      val v1 = mkVar(part + "." + suffix)
+      if (dynamic contains v1) {
+        v1
+      } else {
+        val v2 = mkVar(part + "_" + suffix)
+        Logger.assert(dynamic contains v2, "GenericRobot", "'getFrame' could not find: " + v1 + " or " + v2)
+        v2
+      }
+    }
+    val x = mkFrameVar("dx")
+    val y = mkFrameVar("dy")
+    val z = mkFrameVar("dz")
+    val a = mkFrameVar("q_a")
+    val i = mkFrameVar("q_i")
+    val j = mkFrameVar("q_j")
+    val k = mkFrameVar("q_k")
+    Frame(x, y, z, a, i, j, k)
+  }
+
 }
 
 object GenericRobot {

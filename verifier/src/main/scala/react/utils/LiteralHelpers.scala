@@ -13,7 +13,7 @@ object IntegerLit {
   def apply(i: Int) = Literal(i).setType(Int)
 }
 
-object LonIntLit{
+object LongIntLit{
   def unapply(f: Formula): Option[Long] = f match {
     case Literal(i: Int) => Some(i.toLong)
     case Literal(l: Long) => Some(l.toInt)

@@ -201,8 +201,8 @@ object ArithmeticSimplification {
           acc *= p
         }
         acc
-      case LonIntLit(l) => constant(l) 
-      case Divides(LonIntLit(n), LonIntLit(d)) => ratio(n, d)
+      case LongIntLit(l) => constant(l) 
+      case Divides(LongIntLit(n), LongIntLit(d)) => ratio(n, d)
       case v @ Variable(_) => Polynomial(Seq(one * v))
       case other => sys.error("mkPolynomial, not supported: " + other.toStringFull)
     }
@@ -297,21 +297,21 @@ object ArithmeticSimplification {
   }
 
   def isZero(l: Formula) = l match {
-    case LonIntLit(0l) => true
+    case LongIntLit(0l) => true
     case _ => false
   }
 
   def simplifyCst(f: Formula) = {
     FormulaUtils.map({
-      case Application(DRealDecl.pow, List(LonIntLit(0l), LonIntLit(0l))) => sys.error("undefined: 0^0")
-      case Application(DRealDecl.pow, List(LonIntLit(0l), LonIntLit(e))) => LonIntLit(0l)
-      case Application(DRealDecl.pow, List(LonIntLit(l), LonIntLit(0l))) => LonIntLit(1l)
-      case Application(DRealDecl.pow, List(LonIntLit(l), LonIntLit(e))) if e > 0 => Literal(math.pow(l, e).toLong) //TODO check overflow
+      case Application(DRealDecl.pow, List(LongIntLit(0l), LongIntLit(0l))) => sys.error("undefined: 0^0")
+      case Application(DRealDecl.pow, List(LongIntLit(0l), LongIntLit(e))) => LongIntLit(0l)
+      case Application(DRealDecl.pow, List(LongIntLit(l), LongIntLit(0l))) => LongIntLit(1l)
+      case Application(DRealDecl.pow, List(LongIntLit(l), LongIntLit(e))) if e > 0 => Literal(math.pow(l, e).toLong) //TODO check overflow
       case Application(DRealDecl.pow, List(Literal(l: Double), Literal(e: Double))) => Literal(math.pow(l, e))
-      case Application(DRealDecl.cos, List(LonIntLit(0l))) => LonIntLit(1l)
-      case Application(DRealDecl.sin, List(LonIntLit(0l))) => LonIntLit(0l)
-      case Divides(l1, l2) if isZero(l1) && !isZero(l2)  => LonIntLit(0l)
-      case Times(lst @ _*) if lst.exists(isZero) => LonIntLit(0l)
+      case Application(DRealDecl.cos, List(LongIntLit(0l))) => LongIntLit(1l)
+      case Application(DRealDecl.sin, List(LongIntLit(0l))) => LongIntLit(0l)
+      case Divides(l1, l2) if isZero(l1) && !isZero(l2)  => LongIntLit(0l)
+      case Times(lst @ _*) if lst.exists(isZero) => LongIntLit(0l)
       case other => other
     }, f)
   }
