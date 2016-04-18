@@ -6,6 +6,12 @@ import dzufferey.utils.LogLevel._
 
 object Qepcad {
 
+  val command = "maxima"
+
+  lazy val isPresent =
+    try SysCmd(Array(command, "-h"))._1 == 0 
+    catch { case _: Throwable => false }
+
   val defaultMemory = 100000000l
   val defaultPrime = 2000
   val defaultTimeout = 120 * 1000 // 2 min
@@ -76,7 +82,7 @@ object Qepcad {
                 timeout: Long = defaultTimeout): Formula = {
       try {
         import java.io._
-        val solver = java.lang.Runtime.getRuntime.exec(Array("qepcad", "-noecho", "+N"+memory, "+L"+primeList), null, null)
+        val solver = java.lang.Runtime.getRuntime.exec(Array(command, "-noecho", "+N"+memory, "+L"+primeList), null, null)
         val output = new BufferedWriter(new OutputStreamWriter(solver.getOutputStream()))
         val input = new BufferedReader(new InputStreamReader(solver.getInputStream()))
         val error = new BufferedReader(new InputStreamReader(solver.getErrorStream()))
