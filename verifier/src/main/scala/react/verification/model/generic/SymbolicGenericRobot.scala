@@ -20,7 +20,8 @@ class SymbolicGenericRobot( _id: String,
                             _frame: Frame,
                             _inputs: List[Input],
                             _dynamic: List[Variable],
-                            _constraints: Formula ) extends GenericRobot(_id, _pg, _bBox, _frame, _inputs, _dynamic, _constraints) {
+                            _transient: Map[Variable,Double],
+                            _constraints: Formula ) extends GenericRobot(_id, _pg, _bBox, _frame, _inputs, _dynamic, _transient, _constraints) {
 
   var symStore = Map[Variable, Variable]()
   
@@ -100,7 +101,7 @@ object SymbolicGenericRobot {
 
   def apply(id: String, pg: Playground, fileName: String): SymbolicGenericRobot = {
     val gr = GenericRobot(id, pg, fileName)
-    new SymbolicGenericRobot(gr.id, gr.pg, gr.bBox, gr.frame, gr.inputs, gr.dynamic, gr.constraints)
+    new SymbolicGenericRobot(gr.id, gr.pg, gr.bBox, gr.frame, gr.inputs, gr.dynamic, gr.transient, gr.constraints)
   }
 
 }

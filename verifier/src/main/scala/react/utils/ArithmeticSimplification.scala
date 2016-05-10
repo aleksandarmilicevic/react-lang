@@ -20,7 +20,7 @@ object ArithmeticSimplification {
     case Application(DRealDecl.timeDerivative, List(Times(args @ _*))) =>
       val n = args.length
       val parts = (0 until n).map( i => {
-        val prefix = args.take(i-1)
+        val prefix = args.take(i)
         val d = pushDerivativesDown(dt, dynamic, DRealDecl.timeDerivative(args(i)))
         val suffix = args.drop(i+1)
         val together = (prefix :+ d) ++ suffix

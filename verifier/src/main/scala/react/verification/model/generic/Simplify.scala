@@ -75,7 +75,7 @@ class Simplify(robot: GenericRobot) {
 
   protected class QeSimplifier(f: Formula, useAssumptions: Boolean) {
 
-    val conjuncts = FormulaUtils.getConjuncts(f)
+    protected var conjuncts = FormulaUtils.getConjuncts(f)
 
     //constraints that involves only the given variables
     def assumptions(vs: Set[Variable]) = {
@@ -117,7 +117,7 @@ class Simplify(robot: GenericRobot) {
       mkQuery( cs.toSet)
     }
 
-    def mkQuery(vars: Set[Variable]) = {
+    def qeDeltaQuery(vars: Set[Variable]): Option[(List[Formula],List[Formula])] = {
       val clauses0 = clausesFor(vars)
       val (clauses1, unabstract) = ArithmeticSimplification.abstractFormula(clauses0, ArithmeticSimplification.isIntegerPolynomial)
       //sanity check
@@ -138,8 +138,8 @@ class Simplify(robot: GenericRobot) {
                                        qepcadTimeout)
           val clauses3 = unabstract(clauses2)
           val f2 = FormulaUtils.getConjuncts(clauses3)
-          val ir = irrelevant(vars)
-          Some( And(f2 ::: ir :_*) )
+          val f0 = FormulaUtils.getConjuncts(clauses0)
+          Some(f0 -> f2)
         } catch {
           case t: Throwable =>
             Logger("Simplify", Info, "failed to eliminate " + t)
@@ -149,7 +149,35 @@ class Simplify(robot: GenericRobot) {
       }
     }
 
-    def result: Formula = {
+    def mkQuery(vars: Set[Variable]) = {
+      qeDeltaQuery(vars).map{ case (before, after) =>
+        assert(before.forall(conjuncts contains _), "QeSimplifier: before not in conjuncts")
+        And( after ::: conjuncts.filter( f => !before.contains(f) ):_* )
+      }
+    }
+
+    def worklistFixedPoint: Formula = {
+      val cnd = findCandidates
+      val varsToCheck = scala.collection.mutable.Set[Variable]()
+      varsToCheck ++= cnd
+      while (!varsToCheck.isEmpty) {
+        var v = varsToCheck.head
+        varsToCheck -= v
+        qeDeltaQuery(Set(v)) match {
+          case Some((before,after)) =>
+            conjuncts = after ::: conjuncts.filter( f => !before.contains(f) )
+            after.foreach( f => {
+              val vs = f.freeVariables.filter(cnd)
+              varsToCheck ++= vs
+            })
+          case None =>
+            ()
+        }
+      }
+      And(conjuncts: _*)
+    }
+
+    def stupidFixedPoint: Formula = {
       def tryEliminate(vs: List[Variable]): Formula = vs match {
         case x :: xs =>
           mkQuery(Set(x)) match {
@@ -160,6 +188,12 @@ class Simplify(robot: GenericRobot) {
       }
       val cnd = findCandidates.toList
       tryEliminate(cnd)
+    }
+
+
+    def result: Formula = {
+      //stupidFixedPoint
+      worklistFixedPoint
     }
 
   }
@@ -233,7 +267,8 @@ class Simplify(robot: GenericRobot) {
     } 
     DRealQuery.fixTypes(constraints)
     val dynamic = robot.dynamic.filter(constraints.freeVariables)
-    new GenericRobot(robot.id, robot.pg, robot.bBox, robot.frame, robot.inputs, dynamic, constraints)
+    val transient = robot.transient.filterKeys(constraints.freeVariables)
+    new GenericRobot(robot.id, robot.pg, robot.bBox, robot.frame, robot.inputs, dynamic, transient, constraints)
   }
 
 }

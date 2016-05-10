@@ -29,7 +29,13 @@ class GenericRobot( val id: String,
                     val frame: Frame,
                     val inputs: List[Input],
                     val dynamic: List[Variable],
+                    val transient: Map[Variable, Double],
                     val constraints: Formula ) extends GroundRobot(bBox, None) with SymmetryAndMemoization {
+
+  assert(
+    transient.keys.forall(dynamic contains _),
+    "transients are not dynamic: " + transient + ", " + dynamic
+  )
 
   var dRealTO = 10000
   var tolerance = 1e-16
@@ -47,7 +53,7 @@ class GenericRobot( val id: String,
     }
     deps
   }
-  override def motionClass = Some("GenericRobot("+inputs.mkString(",")+","+dynamic.mkString(",")+","+constraints)
+  override def motionClass = Some("GenericRobot("+inputs.mkString(",")+","+dynamic.mkString(",")+","+transient.mkString(",")+","+constraints)
 
   protected def mkVar(str: String) = Variable(str).setType(Real)
 
@@ -68,9 +74,10 @@ class GenericRobot( val id: String,
     "\n\n" +
     "~~~ Equations:\n" +
     frame.description + "\n" +
-    "(bbox "+bBox.x+" "+bBox.y+" "+bBox.orientation+" "+bBox.width+" "+bBox.depth+")\n" +
+    "(bbox " + (bBox.x * 1000) + " " + (bBox.y * 1000) + " " + (bBox.width * 1000) + " " + (bBox.depth * 1000) + " " + bBox.orientation + ")\n" +
     inputs.map( i => "(input "+i.v+")\n").mkString +
     dynamic.map( d => "(dynamic "+d+")\n").mkString +
+    transient.map{ case (k,v) => "(transient "+k+" "+v+")\n"}.mkString +
     cjt.map(Printer.toString).mkString("\n")
   }
 
@@ -207,6 +214,7 @@ class GenericRobot( val id: String,
     Map(
       frame.x -> Literal(1000 * x),
       frame.y -> Literal(1000 * y),
+      //TODO z ?
       frame.a -> Literal(q.x),
       frame.i -> Literal(q.y),
       frame.j -> Literal(q.z),
@@ -229,6 +237,7 @@ class GenericRobot( val id: String,
       } else if (v.name endsWith ".dy") {
         List( Lt(v, Literal(1000 * (pg.yMax + pg.yDiscretization))),
               Gt(v, Literal(1000 * (pg.yMin - pg.yDiscretization))))
+      //TODO z ?
     //} else if (v.name endsWith "dz") {
     //  List(
     //  )
@@ -254,6 +263,7 @@ class GenericRobot( val id: String,
   def conjuncts = FormulaUtils.getConjuncts(constraints)
 
   def conjunctsWithExtraDt: List[Formula] = {
+    val initTransient = transient.toList.map{ case (k,v) => Eq(k, Literal(v)) }
     val indep = timeIndependentConstraints
     val differential = differentialConstraints
     val structural = strucutralTimeDependentConstraints
@@ -268,7 +278,7 @@ class GenericRobot( val id: String,
         val rhs4 = ArithmeticSimplification.polynomialNF(rhs3)
         Eq(lhs4, rhs4)
     }
-    indep ::: differential ::: structural ::: strucutralDifferential
+    initTransient ::: indep ::: differential ::: structural ::: strucutralDifferential
   }
 
   val timeIndependentConstraints = {
@@ -328,6 +338,7 @@ class GenericRobot( val id: String,
           val (_, r1, _) = ida.solve(t.toDouble / 1000, store.mapValues(_.toDouble), init, initDt)
           x = r1(frame.x) / 1000.0
           y = r1(frame.y) / 1000.0
+          //TODO z ?
           val a = r1(frame.a)
           val i = r1(frame.i)
           val j = r1(frame.j)
@@ -337,6 +348,7 @@ class GenericRobot( val id: String,
         } else {
           x = (init(frame.x) + initDt.getOrElse(frame.x, 0.0) * t / 1000) / 1000
           y = (init(frame.y) + initDt.getOrElse(frame.y, 0.0) * t / 1000) / 1000
+          //TODO z ?
           val a = init(frame.a) + initDt.getOrElse(frame.a, 0.0) * t / 1000
           val i = init(frame.i) + initDt.getOrElse(frame.i, 0.0) * t / 1000
           val j = init(frame.j) + initDt.getOrElse(frame.j, 0.0) * t / 1000
@@ -348,6 +360,7 @@ class GenericRobot( val id: String,
       } else {
         x = init(frame.x) / 1000
         y = init(frame.y) / 1000
+        //TODO z ?
         val a = init(frame.a)
         val i = init(frame.i)
         val j = init(frame.j)
@@ -428,7 +441,7 @@ class GenericRobot( val id: String,
     //val vf = variablesAt(fromIndex)
     val toIndex = fromIndex + 1
     val vt = variablesAt(toIndex)
-    val cstr = dRealInitEquations
+    val cstr = dRealInitEquations //TODO also handle transient
     assert(!hasDt(cstr), "dt not yet implemented")
     val cstr2 = cstr.alpha(vt)
     Logger("GenericRobot", Debug, "unrollEquations("+fromIndex+")\n" + cstr2)
@@ -493,13 +506,14 @@ object GenericRobot {
     var bBox = List[Box2D]()
     var inputs = List[Input]()
     var dynamic = List[Variable]()
+    var transient = Map[Variable,Double]()
     var cstrs = List[Formula]()
     var frame = Frame(mkVar("x"), mkVar("y"), mkVar("z"), mkVar("a"), mkVar("i"), mkVar("j"), mkVar("k"))
 
     for (se <- sexprs) {
       se match {
         case SApplication("bbox", List(SAtom(x), SAtom(y), SAtom(w), SAtom(h), SAtom(theta))) =>
-          bBox ::= new Box2D(x.toDouble / 1000.0, y.toDouble / 1000.0, theta.toDouble / 1000.0,
+          bBox ::= new Box2D(x.toDouble / 1000.0, y.toDouble / 1000.0, theta.toDouble,
                              w.toDouble / 1000.0, h.toDouble / 1000.0)
         case SApplication("frame", List(SAtom(x), SAtom(y), SAtom(z), SAtom(a), SAtom(i), SAtom(j), SAtom(k))) =>
           frame = Frame(mkVar(x), mkVar(y), mkVar(z), mkVar(a), mkVar(i), mkVar(j), mkVar(k))
@@ -509,6 +523,8 @@ object GenericRobot {
           inputs ::= Input(mkVar(name), name)
         case SApplication("dynamic", List(SAtom(name))) =>
           dynamic ::= mkVar(name)
+        case SApplication("transient", List(SAtom(name), SAtom(value))) =>
+          transient += (mkVar(name) -> value.toDouble)
       //case Application("input", List(Atom(name), Atom(port))) =>
       //  inputs ::= Input(Variable(name).setType(Real), port)
       //case Application("output", List(Atom(name), formula)) =>
@@ -533,7 +549,7 @@ object GenericRobot {
         b
     }
 
-    new GenericRobot(id, pg, bb, frame, inputs, dynamic, And(cstrs:_*))
+    new GenericRobot(id, pg, bb, frame, inputs, dynamic, transient, And(cstrs:_*))
   }
 
 }

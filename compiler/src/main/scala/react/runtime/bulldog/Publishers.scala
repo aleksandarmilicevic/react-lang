@@ -7,7 +7,8 @@ import org.ros.message.MessageFactory
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import io.silverspoon.bulldog.core.platform.{Platform,Board}
-import io.silverspoon.bulldog.core.gpio.{DigitalOutput,Pwm}
+import io.silverspoon.bulldog.core.gpio.DigitalOutput
+import io.silverspoon.bulldog.core.pwm.Pwm
 import io.silverspoon.bulldog.core.Signal
 import io.silverspoon.bulldog.core.util.BulldogUtil
 import io.silverspoon.bulldog.devices.servo.{Servo,TowerProMicroSG90}

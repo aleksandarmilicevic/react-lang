@@ -47,6 +47,8 @@ sin_leftmotor.angle
 ( frame beam.dx beam.dy beam.dz beam.q_a beam.q_i beam.q_j beam.q_k )
 ( input siminput0_input )
 ( input siminput1_input )
+( transient leftmotor.angle 0 )
+( transient rightmotor.angle 0 )
 ( dynamic beam.dx )
 ( dynamic beam.dy )
 ( dynamic beam.dz )

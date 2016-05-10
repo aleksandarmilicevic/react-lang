@@ -53,6 +53,8 @@ tail.q_k
 (bbox -0.5 0.5 0.0 1.0 1.0)
 ( input siminput0_input )
 ( input siminput1_input )
+( transient leftmotor.angle 0 )
+( transient rightmotor.angle 0 )
 ( dynamic beam.dx )
 ( dynamic beam.dy )
 ( dynamic beam.dz )

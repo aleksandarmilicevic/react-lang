@@ -6,7 +6,7 @@ import dzufferey.utils.LogLevel._
 
 object Qepcad {
 
-  val command = "maxima"
+  val command = "qepcad"
 
   lazy val isPresent =
     try SysCmd(Array(command, "-h"))._1 == 0 

@@ -5,8 +5,9 @@ import react.message._
 import org.ros.message.MessageFactory
 import java.util.concurrent.TimeUnit
 import io.silverspoon.bulldog.core.platform.{Platform,Board}
-import io.silverspoon.bulldog.core.gpio.{AnalogInput,DigitalInput}
-import io.silverspoon.bulldog.core.gpio.event.ThresholdListener
+import io.silverspoon.bulldog.core.gpio.DigitalInput
+import io.silverspoon.bulldog.core.pwm.AnalogInput
+import io.silverspoon.bulldog.core.event.ThresholdListener
 import io.silverspoon.bulldog.core.Signal
 import io.silverspoon.bulldog.core.util.BulldogUtil
 import io.silverspoon.bulldog.devices.switches.{Button,ButtonListener}

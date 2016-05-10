@@ -50,10 +50,11 @@ object MyBuild extends Build {
           "org.ros.rosjava_messages" % "gazebo_msgs" % "2.4.7",
           /* Other dependencies */
           "org.scream3r" % "jssc" % "2.8.0",
-          "io.silverspoon" % "bulldog-distro" % "0.1.2",
-          //"io.silverspoon" % "bulldog-board-beagleboneblack" % "0.1.2",
-          //"io.silverspoon" % "bulldog-devices" % "0.1.2",
-          "io.github.dzufferey" %% "misc-scala-utils" % "0.1-SNAPSHOT"
+          //"io.silverspoon" % "bulldog-distro" % "0.1.2",
+          "io.silverspoon" % "bulldog-board-beagleboneblack" % "0.2.1",
+          "io.silverspoon" % "bulldog-devices" % "0.2.1",
+          "io.github.dzufferey" %% "misc-scala-utils" % "0.1-SNAPSHOT",
+          "net.jcazevedo" %% "moultingyaml" % "0.2"
       )
     )
   )
