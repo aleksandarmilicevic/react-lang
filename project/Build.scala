@@ -54,6 +54,7 @@ object MyBuild extends Build {
           "io.silverspoon" % "bulldog-board-beagleboneblack" % "0.2.1",
           "io.silverspoon" % "bulldog-devices" % "0.2.1",
           "io.github.dzufferey" %% "misc-scala-utils" % "0.1-SNAPSHOT",
+          "io.github.dzufferey" %% "scala-smtlib-interface" % "0.1-SNAPSHOT",
           "net.jcazevedo" %% "moultingyaml" % "0.2"
       )
     )
@@ -81,8 +82,7 @@ object MyBuild extends Build {
           "net.automatalib" % "automata-commons-util" % "0.5.2",
           "net.automatalib" % "automata-commons-smartcollections" % "0.5.2",
           "net.automatalib" % "automata-commons-dotutil" % "0.5.2",
-          "io.github.dzufferey" %% "misc-scala-utils" % "0.1-SNAPSHOT",
-          "io.github.dzufferey" %% "scala-smtlib-interface" % "0.1-SNAPSHOT"
+          "io.github.dzufferey" %% "misc-scala-utils" % "0.1-SNAPSHOT"
       )
     )
   ).dependsOn(compiler)
