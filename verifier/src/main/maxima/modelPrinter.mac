@@ -33,7 +33,7 @@ printModel(m) :=
     [
       paramHeader: "### Parameters:",
       equationHeader: "### Equations:",
-      d0: concatLines(map(var, delete(t, listofvars([m@inputs, m@parameters, m@baseFrame, constraints])))),
+      d0: concatLines(map(var, delete(t, listofvars([m@inputs, m@parameters, m@baseFrame, m@constraints])))),
       d1: frm(m@baseFrame),
       d2: box(m@boundingBox),
       d3: concatLines(map(inp, m@inputs)),

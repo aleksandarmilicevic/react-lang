@@ -122,7 +122,11 @@ class Simplify(robot: GenericRobot) {
       val (clauses1, unabstract) = ArithmeticSimplification.abstractFormula(clauses0, ArithmeticSimplification.isIntegerPolynomial)
       //sanity check
       val nfvs = clauses1.freeVariables -- clauses0.freeVariables
-      assert(nfvs.forall( v => unabstract(v).freeVariables.intersect(vars).isEmpty ))
+      assert(
+        nfvs.forall( v => unabstract(v).freeVariables.intersect(vars).isEmpty ),
+        "clauses1:\n" + clauses1 +
+        "nvfs:\n" + nfvs.map( v => " " + v + " → " + unabstract(v) + " ⇒ " + unabstract(v).freeVariables.intersect(vars) ).mkString("\n")
+      )
 
       val fvs = clauses1.freeVariables -- vars
       if (fvs.size + vars.size > qepcadBound) {

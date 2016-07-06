@@ -1,0 +1,74 @@
+/* Import definitions
+  */
+load("utils.mac") $
+load("quaternions.mac") $
+load("frame.mac") $
+load("joint.mac") $
+load("modelPrinter.mac") $
+
+/* four-bar linkage */
+
+/* inputs of the servo
+ */
+alpha;
+beta;
+a;
+b;
+
+/* the structural elements */
+zero: [0, 0, 0];
+ground: new (frame ([0,0,0], [1,0,0,0]));
+segment0: makeFrame("s0");
+segment1: makeFrame("s1");
+segment2: makeFrame("s2");
+segment3: makeFrame("s3");
+effector: makeFrame("effector");
+
+fbl: new (model (
+    [alpha,beta],
+    [length0, length1, length2, length3],
+    effector,
+    [0,0,0,0,0],
+    append(
+        boundFrame(segment0, -1000, 1000),
+        boundFrame(segment1, -1000, 1000),
+        boundFrame(segment2, -1000, 1000),
+        boundFrame(segment3, -1000, 1000),
+        boundFrame(effector, -1000, 1000),
+        boundAngle(a),
+        boundAngle(b),
+        [a = alpha * 180 / 3.14159,
+         b = beta * 180 / 3.14159],
+        fixed(    [ground,   zero,  [1,0,0,0]],                 [segment0, zero, [1,0,0,0]]),
+        fixed(    [segment0, [0,0,0],  mkQuat(a, [0,0,1])],     [segment1, zero, [1,0,0,0]]),
+        revolute( [segment0, [length0,0,0], [0,1,0]],           [segment2, zero, [0,1,0]]),
+        fixed(    [segment1, [length1,0,0], mkQuat(b, [0,0,1])],[segment3, zero, [1,0,0,0]]),
+        revolute( [segment2, [length2,0,0], [0,1,0]],           [segment3, [0,length3,0], [0,1,0]]),
+        fixed(    [segment3, [0,length3/2,0], [1,0,0,0]],       [effector, zero, [1,0,0,0]])
+    )));
+
+fbl0: new (model (
+    [alpha,beta],
+    [length],
+    effector,
+    [0,0,0,0,0],
+    append(
+        boundFrame(segment0, -1000, 1000),
+        boundFrame(segment1, -1000, 1000),
+        boundFrame(segment2, -1000, 1000),
+        boundFrame(segment3, -1000, 1000),
+        boundFrame(effector, -1000, 1000),
+        boundAngle(a),
+        boundAngle(b),
+        [a = alpha * 180 / 3.14159,
+         b = beta * 180 / 3.14159],
+        fixed(    [ground,   zero,  [1,0,0,0]],                 [segment0, zero, [1,0,0,0]]),
+        fixed(    [segment0, [0,0,0],  mkQuat(a, [0,0,1])],     [segment1, zero, [1,0,0,0]]),
+        revolute( [segment0, [length,0,0], [0,1,0]],            [segment2, zero, [0,1,0]]),
+        fixed(    [segment1, [length,0,0], mkQuat(b, [0,0,1])], [segment3, zero, [1,0,0,0]]),
+        revolute( [segment2, [length,0,0], [0,1,0]],            [segment3, [0,length,0], [0,1,0]]),
+        fixed(    [segment3, [0,length/2,0], [1,0,0,0]],        [effector, zero, [1,0,0,0]])
+    )));
+
+printModelIn("fbl.txt", fbl);
+printModelIn("fbl0.txt", fbl0);

@@ -65,27 +65,27 @@ class SimplifyTest extends FunSuite {
 //  ()
 //}
 
-  test("normalization 4") {
-    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_maxima.txt")
-    val simplifier = new Simplify(robot)
-    simplifier.qepcadSafeProjection = false
-    simplifier.qepcadTimeout = 30000
-    simplifier.qepcadBound = 12
-    val robot2 = simplifier.normalize()
-  //println("before")
-  //robot.aboutTheEqns
-  //Console.println(robot.modelDescription)
-  //println("after")
-  //robot2.aboutTheEqns
-  //Console.println(robot2.modelDescription)
-  //IO.writeInFile( Resources.path + "seg_maxima_simplified.txt", robot2.modelDescription)
-    ()
-  }
+//test("normalization 5") {
+//  val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_maxima.txt")
+//  val simplifier = new Simplify(robot)
+//  simplifier.qepcadSafeProjection = false
+//  simplifier.qepcadTimeout = 30000
+//  simplifier.qepcadBound = 12
+//  val robot2 = simplifier.normalize()
+//  println("before")
+//  robot.aboutTheEqns
+//  Console.println(robot.modelDescription)
+//  println("after")
+//  robot2.aboutTheEqns
+//  Console.println(robot2.modelDescription)
+//  IO.writeInFile( Resources.path + "seg_maxima_simplified.txt", robot2.modelDescription)
+//  ()
+//}
 
-  test("stats") {
-    val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_eqns_simple_normal.txt")
-    robot.aboutTheEqns
-  }
+//test("stats") {
+//  val robot = GenericRobot("r1", Resources.playground, Resources.path + "seg_eqns_simple_normal.txt")
+//  robot.aboutTheEqns
+//}
 
   test("scaling") {
     val v1 = Variable("v1").setType(Real)
@@ -111,5 +111,39 @@ class SimplifyTest extends FunSuite {
   f0 = Simplify(f);
   print Simplify(tac(f0).as_expr());
   */
+  
+//test("normalization 6") {
+//  val robot = GenericRobot("r1", Resources.playground, Resources.path + "fbl0.txt")
+//  val simplifier = new Simplify(robot)
+//  simplifier.qepcadSafeProjection = false
+//  simplifier.qepcadTimeout = 30000
+//  simplifier.qepcadBound = 12
+//  val robot2 = simplifier.normalize()
+//  println("before")
+//  robot.aboutTheEqns
+//  Console.println(robot.modelDescription)
+//  println("after")
+//  robot2.aboutTheEqns
+//  Console.println(robot2.modelDescription)
+//  IO.writeInFile( Resources.path + "fbl0_simplified.txt", robot2.modelDescription)
+//  ()
+//}
+
+  test("normalization 7") {
+    val robot = GenericRobot("r1", Resources.playground, Resources.path + "fbl.txt")
+    val simplifier = new Simplify(robot)
+    simplifier.qepcadSafeProjection = false
+    simplifier.qepcadTimeout = 30000
+    simplifier.qepcadBound = 12
+    val robot2 = simplifier.normalize()
+    println("before")
+    robot.aboutTheEqns
+    Console.println(robot.modelDescription)
+    println("after")
+    robot2.aboutTheEqns
+    Console.println(robot2.modelDescription)
+    IO.writeInFile( Resources.path + "fbl_simplified.txt", robot2.modelDescription)
+    ()
+  }
 
 }

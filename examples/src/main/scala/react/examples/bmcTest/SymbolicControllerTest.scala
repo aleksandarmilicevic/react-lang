@@ -128,6 +128,17 @@ class SymTest3(steps: Int) extends SymArmWorld(steps) {
   robot(new SymArm(i), mkArm)
 }
 
+class SymFbl0(steps: Int) extends SymArmWorld(steps) {
+  //val file = "fbl0.txt"
+  val file = "fbl0_simplified.txt"
+  robot(new SymArm(i), mkArm)
+}
+
+class SymFbl(steps: Int) extends SymArmWorld(steps) {
+  val file = "fbl.txt"
+  robot(new SymArm(i), mkArm)
+}
+
 object SymRun {
 
   def apply(test: String, args: McOptions) {
@@ -135,6 +146,8 @@ object SymRun {
       case "1" => (() => new SymTest1(args.timeBound))
       case "2" => (() => new SymTest2(args.timeBound))
       case "3" => (() => new SymTest3(args.timeBound))
+      case "fbl0" => (() => new SymFbl0(args.timeBound))
+      case "fbl" => (() => new SymFbl(args.timeBound))
       case _ =>   (() => sys.error("unknown"))
     }
     val runner = new react.verification.McRunner(args, world)

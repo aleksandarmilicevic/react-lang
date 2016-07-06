@@ -203,6 +203,7 @@ object ArithmeticSimplification {
         acc
       case LongIntLit(l) => constant(l) 
       case Divides(LongIntLit(n), LongIntLit(d)) => ratio(n, d)
+      case Divides(a, LongIntLit(d)) =>  mkPolynomial(a) * ratio(1, d)
       case v @ Variable(_) => Polynomial(Seq(one * v))
       case other => sys.error("mkPolynomial, not supported: " + other.toStringFull)
     }
@@ -286,7 +287,7 @@ object ArithmeticSimplification {
       case _ => false
     }
     def check(f: Formula): Boolean = f match {
-      case Divides(l1 @ Literal(_), l2 @ Literal(_)) => isInteger(l1) && isInteger(l2)
+      case Divides(_, l2 @ Literal(_)) => isInteger(l2)
       case Application((Eq | Leq | Lt | Geq | Gt), List(_, _)) => true
       case Variable(_) | Plus(_*) | Minus(_*) | Times(_*) => true
       case Application(DRealDecl.pow, List(f, i)) => check(f) && !isInteger(f) && isInteger(i)

@@ -95,6 +95,18 @@ class ParserTest extends FunSuite {
     val bp = r.elapseBP(1000)
     assert(bp.alternatives == 1, "  alternatives: " + bp.alternatives)
   }
+  
+  test("parse fbl0") {
+    val robot = GenericRobot("id", Resources.playground, Resources.path + "fbl0.txt")
+    println(robot.modelDescription)
+    assert(true)
+  }
+
+  test("parse fbl") {
+    val robot = GenericRobot("id", Resources.playground, Resources.path + "fbl.txt")
+    println(robot.modelDescription)
+    assert(true)
+  }
 
 }
 
