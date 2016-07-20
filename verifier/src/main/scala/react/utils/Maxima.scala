@@ -30,31 +30,13 @@ object Maxima {
   def apply(query: String) = {
 
     import java.io._
-    val solver = java.lang.Runtime.getRuntime.exec(Array(command, "-q", "--disable-readline"), null, null)
+    val solver = java.lang.Runtime.getRuntime.exec(Array(command, "--very-quiet", "--disable-readline"), null, null)
     val output = new BufferedWriter(new OutputStreamWriter(solver.getOutputStream()))
     val input = new BufferedReader(new InputStreamReader(solver.getInputStream()))
     val error = new BufferedReader(new InputStreamReader(solver.getErrorStream()))
 
     def readUntilNewInput: String = {
       val buffer = new StringBuilder
-      val to = System.currentTimeMillis + timeout
-      var done = false
-      while (!done) {
-        while (!input.ready && System.currentTimeMillis <= to) {
-          Thread.sleep(10)
-        }
-        if (System.currentTimeMillis > to) {
-          sys.error("Timeout")
-        } else {
-          val line = input.readLine
-          Logger("Maxima <- ", Info, line)
-          if (line.trim matches "\\(%i\\d+\\)") {
-            done = true
-          } else {
-            buffer.append(line)
-          }
-        }
-      }
       buffer.toString
     }
 
@@ -65,27 +47,48 @@ object Maxima {
       output.flush()
     }
 
+    def endOfCommand(str: String) = str.endsWith(";") || str.endsWith("$")
+    def isSilent(str: String) = str.endsWith("$")
+
+    val maximaOut = new StringBuilder
+
+    def processLine(str: String) = {
+      write(str);
+      if (endOfCommand(str) && !isSilent(str)) {
+        val to = System.currentTimeMillis + timeout
+        var done = false
+        while (!done) {
+          while (!input.ready && System.currentTimeMillis <= to) {
+            Thread.sleep(10)
+          }
+          if (System.currentTimeMillis > to) {
+            sys.error("Timeout")
+          } else {
+            val line = input.readLine
+            Logger("Maxima <- ", Info, line)
+            if (line.trim != "") {
+              maximaOut.append(line)
+              maximaOut.append("\n")
+              done = true
+            }
+          }
+        }
+      }
+    }
+
     try {
 
-      write("display2d:false$")
-      readUntilNewInput
+      processLine("display2d:false$")
       for (i <- includes) {
-        write(includeCommand(i))
-        readUntilNewInput
+        processLine(includeCommand(i))
       }
-
-      def endOfCommand(str: String) = str.endsWith(";") || str.endsWith("$")
-        
-      val maximaOut = new StringBuilder
 
       //process the commands
       val lines = query.split("[\\r\\n]+").map(_.trim)
       assert(endOfCommand(lines.last))
+
       for (line <- lines) {
-        write(line)
-        if (endOfCommand(line)) {
-          maximaOut.append(readUntilNewInput)
-        }
+        processLine(line)
       }
       
       //quit
@@ -101,6 +104,6 @@ object Maxima {
       input.close
       error.close
     }
-
+    maximaOut.toString
   }
 }

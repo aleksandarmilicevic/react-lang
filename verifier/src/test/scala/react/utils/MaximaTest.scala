@@ -9,8 +9,8 @@ class MaximaTest extends FunSuite {
 
   test("1 + 2") {
     if (Maxima.isPresent) {
-      val out = Maxima("1 + 2;")
-      Console.println(out)
+      val out = Maxima("1 + 2;\n 1 + 2;")
+      assert(out == "3\n3\n")
     }
   }
 

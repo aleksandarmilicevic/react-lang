@@ -10,16 +10,16 @@ object Angle {
   def thetaFromQuaternion(q: Quaternion) = {
     // http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
     // with a 3-2-1 sequence
-    math.atan2(2*(q.x*q.w + q.y*q.z), 1-2*(q.z*q.z + q.w*q.w))
+    math.atan2(2*(q.w*q.z + q.x*q.y), 1-2*(q.y*q.y + q.z*q.z))
   }
 
   def quaternionFromTheta(theta: Double) = {
     // http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
     // with a 3-2-1 sequence
-    val x = math.cos(theta/2)
+    val w = math.cos(theta/2)
+    val x = 0
     val y = 0
-    val z = 0
-    val w = math.sin(theta/2)
+    val z = math.sin(theta/2)
     Quaternion(x, y, z, w)
   }
 

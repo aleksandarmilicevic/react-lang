@@ -2,18 +2,57 @@
  * -connect(frame0, offset0, frame1, offset1): make two frame agree on the same point (3-dof rotation)
  * -orient(frame0, orientation0, frame1, orientation1): match two rotations in different frames (3-dof translation)
  * -align(frame0, direction0, frame1, direction1): align two unit vectors in different frames (3-dof translation, 1-dof rotation normal to the direction)
+ * -collinear(vector0, vector1): check collinearity using cross product = 0
+ * -different(frame0, offset0, frame1, offset1): compute the difference in the global frame of two points in two frames
  */
 connect(f0, o0, f1, o1) := vecEq(vecFromFrame(f0, o0), vecFromFrame(f1, o1));
 orient(f0, d0, f1, d1) := quatEq(quatFromFrame(f0, d0), quatFromFrame(f1, d1));
 align(f0, d0, f1, d1) := vecEq(rotate(d0, f0@q), rotate(d1, f1@q));
+collinear(v0, v1) := vecEq(crossprod(v0, v1), [0, 0, 0]);
+difference(f0, o0, f1, o1) := vecFromFrame(f0, o0) - vecFromFrame(f1, o1);
 
 /* fixed joint: 0-dof
  * j0,1 are [frame, offset, rotation]
  */
-fixed(j0, j1) := append(connect(j0[1], j0[2], j1[1], j1[2]), orient(j0[1], j0[3], j1[1], j1[3]));
+fixed(j0, j1) := append(
+    connect(j0[1], j0[2], j1[1], j1[2]),
+    orient(j0[1], j0[3], j1[1], j1[3])
+);
 
 /* revolute joint: 1-dof rotation
  * j0,1 are [frame, offset, direction]
  */
-revolute(j0, j1) := append(connect(j0[1], j0[2], j1[1], j1[2]), align(j0[1], j0[3], j1[1], j1[3]));
+revolute(j0, j1) := append(
+    connect(j0[1], j0[2], j1[1], j1[2]),
+    align(j0[1], j0[3], j1[1], j1[3])
+);
 
+/* revolute joint: 1-dof rotation
+ * j0,1 are [frame, offset, direction]
+ * alpha is control angle
+ */
+revolute_controlled(j0, j1, alpha) := append(
+    connect(j0[1], j0[2], j1[1], j1[2]),
+    orient(j0[1], mkQuat(alpha, j0[3]), j1[1], mkQuat(0, j1[3]))
+);
+
+/* prismatic joint: 1-dof transaltion
+ * j0,1 are [frame, offset]
+ * direction in the frame of j0
+ * rotation in the frame of j0
+ */
+prismatic(j0, j1, direction, rotation) := append(
+    collinear(difference(j0[1], j0[2], j1[1], j1[2]), rotate(direction, j0[1]@q)),
+    quatEq(quatFromFrame(j0[1], rotation), j1[1])
+);
+
+/* prismatic joint: 1-dof transaltion
+ * j0,1 are [frame, offset]
+ * direction in the frame of j0
+ * rotation in the frame of j0
+ * distance is the control value
+ */
+prismatic_controlled(j0, j1, direction, rotation, distance) := append(
+    vecEq(difference(j0[1], j0[2], j1[1], j1[2]), d * rotate(direction, j0[1]@q)),
+    quatEq(quatFromFrame(j0[1], rotation), j1[1])
+);

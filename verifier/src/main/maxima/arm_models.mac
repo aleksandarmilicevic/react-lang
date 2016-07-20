@@ -324,7 +324,7 @@ model7(lb, ub) := append(
     fixed([ground,   zero,    mkQuat(alpha, [0,0,1])], [segment0, zero, [1,0,0,0]]),
     fixed([segment0, segment, mkQuat(beta,  [0,0,1])], [segment1, zero, [1,0,0,0]]),
     fixed([segment1, segment, mkQuat(gamma, [0,0,1])], [segment2, zero, [1,0,0,0]]),
-    fixed([segment2, segment, [1,0,0,0]],               [effector, zero, [1,0,0,0]])
+    fixed([segment2, segment, [1,0,0,0]],              [effector, zero, [1,0,0,0]])
 );
 
 eqs: preprocess(model7(-1000, 1000), []) $
@@ -343,10 +343,10 @@ model8(lb, ub) := append(
     boundFrame(effector, lb, ub),
     boundAngle(alpha),
     boundAngle(beta),
-    fixed([ground,   zero,  [1,0,0,0]],                [segment0, zero, [1,0,0,0]]),
+    fixed([ground,   zero,  [1,0,0,0]],               [segment0, zero, [1,0,0,0]]),
     fixed([segment0, l1,    mkQuat(alpha,  [0,0,1])], [segment1, zero, [1,0,0,0]]),
     fixed([segment1, l2,    mkQuat(beta, [0,0,1])],   [segment2, zero, [1,0,0,0]]),
-    fixed([segment2, l3,    [1,0,0,0]],                [effector, zero, [1,0,0,0]])
+    fixed([segment2, l3,    [1,0,0,0]],               [effector, zero, [1,0,0,0]])
 );
 
 eqs: preprocess(model8(-1000, 1000), []) $
